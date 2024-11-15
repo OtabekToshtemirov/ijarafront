@@ -58,8 +58,9 @@ export default function Component() {
     useEffect(() => {
         async function fetchUsers() {
             try {
-                const response = await fetch("www.jsonplaceholder.typicode.com/users")
+                const response = await fetch("https://jsonplaceholder.typicode.com/users")
                 const data = await response.json()
+                console.log(data)
                 setUsers(data)
             } catch (error) {
                 console.error("Failed to fetch users:", error)
@@ -100,12 +101,6 @@ export default function Component() {
             })
         }
     }
-
-    const [isClient, setIsClient] = useState(false)
-
-    useEffect(() => {
-        setIsClient(true)
-    }, [])
 
     return (
         <div className="max-w-2xl mx-auto p-6">

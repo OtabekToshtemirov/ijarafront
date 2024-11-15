@@ -47,7 +47,6 @@ export function AppSidebar() {
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel>Ijara mahsulotlari
-
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <ModeToggle />

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from "react"
-import { Search, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {useState, useEffect} from "react"
+import {Search, Plus} from "lucide-react"
+import {Button} from "@/components/ui/button"
+import {Input} from "@/components/ui/input"
 import {
     Table,
     TableBody,
@@ -19,8 +19,10 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-import { toast } from "/src/hooks/use-toast"
+import {Label} from "@/components/ui/label"
+import {toast} from "/src/hooks/use-toast"
+import {useDispatch} from "react-redux"
+import {fetchProducts} from "@/lib/features/products/productSlice"
 
 const initialProducts = [
     {
@@ -32,7 +34,78 @@ const initialProducts = [
         status: "Ijarada",
         quantity: 2,
     },
-    // Add more sample data as needed
+    {
+        id: 2,
+        name: "Item 2",
+        type: "Dona",
+        information: "beton qorish uskunasi",
+        dailyPrice: 50000,
+        status: "Ijarada",
+        quantity: 2,
+    },
+    {
+        id: 3,
+        name: "Item 3",
+        type: "Dona",
+        information: "beton qorish uskunasi",
+        dailyPrice: 50000,
+        status: "Ijarada",
+        quantity: 2,
+    },
+    {
+        id: 4,
+        name: "Item 4",
+        type: "Dona",
+        information: "beton qorish uskunasi",
+        dailyPrice: 50000,
+        status: "Ijarada",
+        quantity: 2,
+    },
+    {
+        id: 5,
+        name: "Item 5",
+        type: "Dona",
+        information: "beton qorish uskunasi",
+        dailyPrice: 50000,
+        status: "Ijarada",
+        quantity: 2,
+    },
+    {
+        id: 6,
+        name: "Item 6",
+        type: "Dona",
+        information: "beton qorish uskunasi",
+        dailyPrice: 50000,
+        status: "Ijarada",
+        quantity: 2,
+    },
+    {
+        id: 7,
+        name: "Item 7",
+        type: "Dona",
+        information: "beton qorish uskunasi",
+        dailyPrice: 50000,
+        status: "Ijarada",
+        quantity: 2,
+    },
+    {
+        id: 8,
+        name: "Item 8",
+        type: "Dona",
+        information: "beton qorish uskunasi",
+        dailyPrice: 50000,
+        status: "Ijarada",
+        quantity: 2,
+    },
+    {
+        id: 9,
+        name: "Meshalka 9",
+        type: "Dona",
+        information: "beton qorish uskunasi",
+        dailyPrice: 50000,
+        status: "Ijarada",
+        quantity: 2,
+    }
 ]
 
 export default function Component() {
@@ -47,12 +120,29 @@ export default function Component() {
         status: "Ijarada",
         quantity: 1,
     })
+    const dispatch = useDispatch();
 
-    const filteredProducts = products.filter((product) =>
-        Object.values(product).some((value) =>
-            value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+    useEffect(() => {
+        dispatch(fetchProducts())
+            .then((data) => {
+                if (Array.isArray(data)) {
+                    setProducts(data);
+                } else {
+                    console.error("Fetched data is not an array", data);
+                }
+            })
+            .catch((error) => {
+                console.error("Failed to fetch products:", error);
+            });
+    }, [dispatch]);
+
+    const filteredProducts = Array.isArray(products)
+        ? products.filter((product) =>
+            Object.values(product).some((value) =>
+                value.toString().toLowerCase().includes(searchQuery.toLowerCase())
+            )
         )
-    )
+        : [];
 
     const handleAddProduct = async () => {
         try {
@@ -71,7 +161,7 @@ export default function Component() {
 
             const addedProduct = await response.json()
 
-            setProducts([...products, { id: products.length + 1, ...addedProduct }])
+            setProducts([...products, {id: products.length + 1, ...addedProduct}])
             setNewProduct({
                 name: "",
                 type: "",
@@ -101,7 +191,7 @@ export default function Component() {
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
-                            <Plus className="w-4 h-4 mr-2" />
+                            <Plus className="w-4 h-4 mr-2"/>
                             Yangi mahsulot
                         </Button>
                     </DialogTrigger>
@@ -116,7 +206,7 @@ export default function Component() {
                                     id="name"
                                     value={newProduct.name}
                                     onChange={(e) =>
-                                        setNewProduct({ ...newProduct, name: e.target.value })
+                                        setNewProduct({...newProduct, name: e.target.value})
                                     }
                                 />
                             </div>
@@ -126,7 +216,7 @@ export default function Component() {
                                     id="type"
                                     value={newProduct.type}
                                     onChange={(e) =>
-                                        setNewProduct({ ...newProduct, type: e.target.value })
+                                        setNewProduct({...newProduct, type: e.target.value})
                                     }
                                 />
                             </div>
@@ -136,7 +226,7 @@ export default function Component() {
                                     id="information"
                                     value={newProduct.information}
                                     onChange={(e) =>
-                                        setNewProduct({ ...newProduct, information: e.target.value })
+                                        setNewProduct({...newProduct, information: e.target.value})
                                     }
                                 />
                             </div>
@@ -177,7 +267,7 @@ export default function Component() {
             </div>
 
             <div className="relative w-full md:w-96 mb-6">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground"/>
                 <Input
                     placeholder="Search for a products"
                     className="pl-8"
@@ -191,7 +281,6 @@ export default function Component() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Nomi</TableHead>
-                            <TableHead>Turi</TableHead>
                             <TableHead>Ma'lumot</TableHead>
                             <TableHead>Kunlik narxi</TableHead>
                             <TableHead>Status</TableHead>
@@ -200,12 +289,11 @@ export default function Component() {
                     </TableHeader>
                     <TableBody>
                         {filteredProducts.map((product) => (
-                            <TableRow key={product.id}>
+                            <TableRow key={product._id}>
                                 <TableCell>{product.name}</TableCell>
-                                <TableCell>{product.type}</TableCell>
                                 <TableCell>{product.information}</TableCell>
-                                <TableCell>{product.dailyPrice}</TableCell>
-                                <TableCell>{product.status}</TableCell>
+                                <TableCell>{product.dailyRate}</TableCell>
+                                <TableCell>{product.availibility}</TableCell>
                                 <TableCell>{product.quantity}</TableCell>
                             </TableRow>
                         ))}

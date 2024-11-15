@@ -81,15 +81,15 @@ export default function Component() {
         <div className="container mx-auto p-6 space-y-8">
             <Card>
                 <CardHeader>
-                    <CardTitle>New Rental</CardTitle>
+                    <CardTitle>Yangi ijara</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     {/* Customer Selection */}
                     <div className="space-y-2">
-                        <label className="text-sm font-medium">Select Customer</label>
+                        <label className="text-sm font-medium">Mijozni tanlash</label>
                         <Select value={selectedCustomer} onValueChange={setSelectedCustomer}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Select customer" />
+                                <SelectValue placeholder="Mijozni tanlash" />
                             </SelectTrigger>
                             <SelectContent>
                                 {customers.map(customer => (
@@ -104,10 +104,10 @@ export default function Component() {
                     {/* Add Product Form */}
                     <div className="flex gap-4 items-end">
                         <div className="flex-1 space-y-2">
-                            <label className="text-sm font-medium">Product</label>
+                            <label className="text-sm font-medium">Mahsulot</label>
                             <Select value={selectedProduct} onValueChange={setSelectedProduct}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Select product" />
+                                    <SelectValue placeholder="Mahsulot tanlash" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {products.map(product => (
@@ -119,7 +119,7 @@ export default function Component() {
                             </Select>
                         </div>
                         <div className="w-32 space-y-2">
-                            <label className="text-sm font-medium">Quantity</label>
+                            <label className="text-sm font-medium">Soni</label>
                             <Input
                                 type="number"
                                 min="1"
@@ -129,7 +129,7 @@ export default function Component() {
                         </div>
                         <Button onClick={addToCart}>
                             <Plus className="w-4 h-4 mr-2" />
-                            Add
+                            Qo'shish
                         </Button>
                     </div>
 
@@ -137,12 +137,12 @@ export default function Component() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Product</TableHead>
-                                <TableHead>Quantity</TableHead>
-                                <TableHead>Start Date</TableHead>
-                                <TableHead>End Date</TableHead>
-                                <TableHead>Days</TableHead>
-                                <TableHead className="text-right">Total</TableHead>
+                                <TableHead>Mahsulot</TableHead>
+                                <TableHead>Miqdori</TableHead>
+                                <TableHead>Boshlash sanasi</TableHead>
+                                <TableHead>Yakuniy sana</TableHead>
+                                <TableHead>Kunlar</TableHead>
+                                <TableHead className="text-right">Umumiy</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -154,7 +154,7 @@ export default function Component() {
                                     <TableCell>
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant="outline" className="w-[180px] justify-start text-left font-normal">
+                                                <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                                     {format(item.startDate, "PPP")}
                                                 </Button>
@@ -171,7 +171,7 @@ export default function Component() {
                                     <TableCell>
                                         <Popover>
                                             <PopoverTrigger asChild>
-                                                <Button variant="outline" className="w-[180px] justify-start text-left font-normal">
+                                                <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
                                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                                     {format(item.endDate, "PPP")}
                                                 </Button>
@@ -198,7 +198,7 @@ export default function Component() {
                     </Table>
                 </CardContent>
                 <CardFooter className="flex justify-between">
-                    <div className="text-lg font-semibold">Total Amount:</div>
+                    <div className="text-lg font-semibold">Umumiy ijara narxi:</div>
                     <div className="text-lg font-semibold">${totalAmount}</div>
                 </CardFooter>
             </Card>

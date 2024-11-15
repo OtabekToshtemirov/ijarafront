@@ -73,7 +73,7 @@ export default function Component() {
 
     return (
         <div className="container mx-auto py-10 relative w-full">
-            <h1 className="text-4xl font-bold mb-8">Rentals</h1>
+            <h1 className="text-4xl font-bold mb-8">Ijaralar</h1>
 
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-6">
                 <div className="relative w-full md:w-96">
@@ -88,8 +88,10 @@ export default function Component() {
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline">Filter</Button>
-                    <Link href={'/ijara/add-rental'}>
-                        Add Rental
+                    <Link href={'/ijara/add-rental'}
+                          // design like a button
+                        className="bg-background text-primary-background text-sm  px-4 py-2 rounded-lg shadow" >
+                        Yaratish
                     </Link>
                 </div>
             </div>
@@ -98,13 +100,13 @@ export default function Component() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Customer</TableHead>
-                            <TableHead>Item</TableHead>
-                            <TableHead>Qty.</TableHead>
-                            <TableHead>Daily rental cost</TableHead>
-                            <TableHead>Start date</TableHead>
-                            <TableHead>End date</TableHead>
-                            <TableHead>Rental status</TableHead>
+                            <TableHead>Mijoz</TableHead>
+                            <TableHead>Mahsulot</TableHead>
+                            <TableHead>Soni</TableHead>
+                            <TableHead>Kunlik ijara</TableHead>
+                            <TableHead>Boshlash sana</TableHead>
+                            <TableHead>Tugash sana</TableHead>
+                            <TableHead>Ijara statusi</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
