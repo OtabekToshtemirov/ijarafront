@@ -1,49 +1,44 @@
-'use client'
+// Component logic
+"use client";
 
-import { useState, useEffect } from "react"
-import { format } from "date-fns"
-import { Calendar as CalendarIcon, Check, ChevronsUpDown } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Calendar } from "@/components/ui/calendar"
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-} from "@/components/ui/command"
+import {useEffect, useState} from "react";
+import {useDispatch} from "react-redux";
+import {useForm} from "react-hook-form";
+import * as z from "zod";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {format} from "date-fns";
+import {Button} from "@/components/ui/button";
+import {Input} from "@/components/ui/input";
+import {Textarea} from "@/components/ui/textarea";
+import {Calendar} from "@/components/ui/calendar";
+import {useToast} from "@/hooks/use-toast";
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {
     Form,
-    FormControl,
-    FormDescription,
     FormField,
+    FormControl,
     FormItem,
     FormLabel,
     FormMessage,
-} from "@/components/ui/form"
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { useToast } from "/src/hooks/use-toast"
-import { useForm } from "react-hook-form"
-import * as z from "zod"
-import { zodResolver } from "@hookform/resolvers/zod"
+    FormDescription,
+} from "@/components/ui/form";
+import {Command, CommandGroup, CommandItem, CommandEmpty, CommandInput} from "@/components/ui/command";
+import {cn} from "@/lib/utils";
+import {addPayment} from "@/lib/features/payments/paymentSlice";
+import {fetchCustomers} from "@/lib/features/customers/customerSlice";
 
 // Validation schema
 const formSchema = z.object({
     userId: z.string().min(1, "Please select a tenant"),
     date: z.date(),
-    amount: z.string().min(1, "Please enter an amount"),
+    amount: z.number().min(1, "Amount must be greater than 0"),
     memo: z.string().optional(),
-})
+});
 
-export default function Component() {
-    const { toast } = useToast()
+export default function PaymentForm() {
+    const dispatch = useDispatch();
+    const {toast} = useToast();
+    const [users, setUsers] = useState([]);
     const form = useForm({
         resolver: zodResolver(formSchema),
         defaultValues: {
@@ -52,112 +47,65 @@ export default function Component() {
             amount: "",
             memo: "",
         },
-    })
-    const [users, setUsers] = useState([])
+    });
 
     useEffect(() => {
-        async function fetchUsers() {
-            try {
-                const response = await fetch("https://jsonplaceholder.typicode.com/users")
-                const data = await response.json()
-                console.log(data)
-                setUsers(data)
-            } catch (error) {
-                console.error("Failed to fetch users:", error)
+        dispatch(fetchCustomers()).then((result) => {
+                if (result.meta.requestStatus === "fulfilled") {
+                    setUsers(result.payload);
+                }
             }
-        }
-        fetchUsers()
-    }, [])
+        );
+    }, [
+        dispatch,
+    ]);
 
     const onSubmit = async (data) => {
         try {
-            const response = await fetch('/api/payments', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...data,
-                    amount: parseFloat(data.amount),
-                    date: format(data.date, 'yyyy-MM-dd'),
-                }),
-            })
-
-            if (!response.ok) {
-                throw new Error('Payment submission failed')
-            }
-
-            toast({
-                title: "Success",
-                description: "Payment has been recorded successfully.",
-            })
-
-            form.reset()
+            const parsedData = {
+                ...data,
+                amount: parseInt(data.amount * 100),
+            };
+            await dispatch(addPayment(parsedData)).unwrap();
+            toast({title: "Payment added successfully!"});
+            form.reset();
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to record payment. Please try again.",
-                variant: "destructive",
-            })
+            toast({title: "Error", description: error.message, status: "error"});
         }
-    }
+    };
 
     return (
         <div className="max-w-2xl mx-auto p-6">
-            <div className="mb-6">
-                <h1 className="text-2xl font-bold tracking-tight">Enter a payment</h1>
-                <p className="text-sm text-muted-foreground">
-                    You can also record a payment directly on the tenant's ledger.
-                </p>
-            </div>
-
+            <h1 className="text-2xl font-bold">Enter a Payment</h1>
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                     <FormField
                         control={form.control}
-                        name="userId"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
-                                <FormLabel>Choose a tenant</FormLabel>
+                        name="customer"
+                        render={({field}) => (
+                            <FormItem>
+                                <FormLabel>Choose a Tenant</FormLabel>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <FormControl>
-                                            <Button
-                                                variant="outline"
-                                                role="combobox"
-                                                className={cn(
-                                                    "w-full justify-between",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                            >
+                                            <Button variant="outline"
+                                                    className={cn("w-full", !field.value && "text-muted-foreground")}>
                                                 {field.value
-                                                    ? users.find((user) => user.id === field.value)?.name
+                                                    ? users.find((user) => user.id === field.value)?.name || "Tenant not found"
                                                     : "Search for a tenant"}
-                                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </FormControl>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-[200px] p-0">
+                                    <PopoverContent>
                                         <Command>
-                                            <CommandInput placeholder="Search for a tenant..." />
+                                            <CommandInput placeholder="Search for a tenant..."/>
                                             <CommandEmpty>No tenant found.</CommandEmpty>
                                             <CommandGroup>
                                                 {users.map((user) => (
                                                     <CommandItem
                                                         key={user.id}
-                                                        value={user.id}
-                                                        onSelect={() => {
-                                                            form.setValue("userId", user.id)
-                                                        }}
+                                                        onSelect={() => field.onChange(user.id)}
                                                     >
-                                                        <Check
-                                                            className={cn(
-                                                                "mr-2 h-4 w-4",
-                                                                user.id === field.value
-                                                                    ? "opacity-100"
-                                                                    : "opacity-0"
-                                                            )}
-                                                        />
                                                         {user.name}
                                                     </CommandItem>
                                                 ))}
@@ -165,50 +113,32 @@ export default function Component() {
                                         </Command>
                                     </PopoverContent>
                                 </Popover>
-                                <FormMessage />
+                                <FormMessage/>
                             </FormItem>
                         )}
                     />
-
                     <FormField
                         control={form.control}
-                        name="date"
-                        render={({ field }) => (
-                            <FormItem className="flex flex-col">
+                        name="paymentDate"
+                        render={({field}) => (
+                            <FormItem>
                                 <FormLabel>Date</FormLabel>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <FormControl>
-                                            <Button
-                                                variant="outline"
-                                                className={cn(
-                                                    "w-full pl-3 text-left font-normal",
-                                                    !field.value && "text-muted-foreground"
-                                                )}
-                                            >
-                                                {field.value ? (
-                                                    format(field.value, "PPP")
-                                                ) : (
-                                                    <span>Pick a date</span>
-                                                )}
-                                                <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                            <Button variant="outline" className="w-full">
+                                                {field.value ? format(field.value, "PPP") : "Pick a date"}
                                             </Button>
                                         </FormControl>
                                     </PopoverTrigger>
-                                    <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar
-                                            mode="single"
-                                            selected={field.value}
-                                            onSelect={field.onChange}
-                                            initialFocus
-                                        />
+                                    <PopoverContent>
+                                        <Calendar mode="single" selected={field.value} onSelect={field.onChange}/>
                                     </PopoverContent>
                                 </Popover>
-                                <FormMessage />
+                                <FormMessage/>
                             </FormItem>
                         )}
                     />
-
                     <FormField
                         control={form.control}
                         name="amount"
@@ -231,29 +161,22 @@ export default function Component() {
                     <FormField
                         control={form.control}
                         name="memo"
-                        render={({ field }) => (
+                        render={({field}) => (
                             <FormItem>
-                                <FormLabel>Memo (optional)</FormLabel>
+                                <FormLabel>Memo (Optional)</FormLabel>
                                 <FormControl>
-                                    <Textarea
-                                        placeholder="Enter a note about this payment"
-                                        className="resize-none"
-                                        {...field}
-                                    />
+                                    <Textarea placeholder="Add a note" {...field} />
                                 </FormControl>
-                                <FormDescription>
-                                    Add any additional notes about this payment.
-                                </FormDescription>
-                                <FormMessage />
+                                <FormDescription>Add additional notes about this payment.</FormDescription>
+                                <FormMessage/>
                             </FormItem>
                         )}
                     />
-
                     <Button type="submit" className="w-full">
                         Submit Payment
                     </Button>
                 </form>
             </Form>
         </div>
-    )
+    );
 }

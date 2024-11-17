@@ -3,8 +3,7 @@
     import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
     import { AppSidebar } from "@/components/app-sidebar";
     import { ThemeProvider } from "@/components/theme-provider";
-    import StoreProvider from "@/app/StoreProvider";
-    import { store } from "@/lib/store";
+    import {StoreProvider} from "./StoreProvider";
 
 
     const geistSans = localFont({
@@ -28,7 +27,7 @@
         return (
             <html lang="en">
             <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-            <StoreProvider store={store}>
+            <StoreProvider>
                 <ThemeProvider
                     attribute="class"
                     defaultTheme="system"

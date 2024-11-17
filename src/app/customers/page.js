@@ -1,9 +1,10 @@
-'use client'
+'use client';
 
-import { useState } from "react"
-import { Search, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { Search, Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     Table,
     TableBody,
@@ -11,66 +12,62 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from "@/components/ui/dialog"
-import { Label } from "@/components/ui/label"
-
-const initialCustomers = [
-    {
-        id: 1,
-        name: "John Smith",
-        address: "123 Main St, San Francisco",
-        phone: "123-456-7890",
-        balance: 0,
-    },
-    {
-        id: 2,
-        name: "John Smith",
-        address: "123 Main St, San Francisco",
-        phone: "123-456-7890",
-        balance: -125000,
-    },
-    // Add more sample data as needed
-]
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { fetchCustomers, addCustomer } from "@/lib/features/customers/customerSlice";
 
 export default function Component() {
-    const [customers, setCustomers] = useState(initialCustomers)
-    const [searchQuery, setSearchQuery] = useState("")
+    const dispatch = useDispatch();
+    const [searchQuery, setSearchQuery] = useState("");
     const [newCustomer, setNewCustomer] = useState({
         name: "",
         address: "",
         phone: "",
         balance: 0,
-    })
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    });
+
+    const customers = useSelector((state) => state.customers.customers);
+    const status = useSelector((state) => state.customers.status);
+    const error = useSelector((state) => state.customers.error);
+
+    useEffect(() => {
+        if (status === 'idle') {
+            dispatch(fetchCustomers());
+        }
+    }, [dispatch, status]);
+
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
 
     const filteredCustomers = customers.filter((customer) =>
         Object.values(customer).some((value) =>
             value.toString().toLowerCase().includes(searchQuery.toLowerCase())
         )
-    )
+    );
 
     const handleAddCustomer = () => {
-        setCustomers([
-            ...customers,
-            {
-                id: customers.length + 1,
-                ...newCustomer,
-            },
-        ])
+        dispatch(addCustomer(newCustomer));
+        setIsDialogOpen(false);
         setNewCustomer({
             name: "",
             address: "",
             phone: "",
             balance: 0,
-        })
-        setIsDialogOpen(false)
+        });
+    };
+
+    if (status === 'loading') {
+        return <div>Loading...</div>;
+    }
+
+    if (status === 'failed') {
+        return <div>Error: {error}</div>;
     }
 
     return (
@@ -156,7 +153,6 @@ export default function Component() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
-                            <TableHead>Address</TableHead>
                             <TableHead>Phone</TableHead>
                             <TableHead>Balance</TableHead>
                         </TableRow>
@@ -168,7 +164,6 @@ export default function Component() {
                                 className={customer.balance < 0 ? "bg-red-100" : ""}
                             >
                                 <TableCell>{customer.name}</TableCell>
-                                <TableCell>{customer.address}</TableCell>
                                 <TableCell>{customer.phone}</TableCell>
                                 <TableCell>${customer.balance}</TableCell>
                             </TableRow>
@@ -177,5 +172,5 @@ export default function Component() {
                 </Table>
             </div>
         </div>
-    )
+    );
 }
