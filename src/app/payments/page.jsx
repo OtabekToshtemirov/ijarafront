@@ -84,32 +84,33 @@ export default function PaymentForm() {
                         name="customer"
                         render={({field}) => (
                             <FormItem>
-                                <FormLabel>Choose a Tenant</FormLabel>
+                                <FormLabel>Mijozni tanlang</FormLabel>
                                 <Popover>
                                     <PopoverTrigger asChild>
                                         <FormControl>
                                             <Button variant="outline"
                                                     className={cn("w-full", !field.value && "text-muted-foreground")}>
                                                 {field.value
-                                                    ? users.find((user) => user.id === field.value)?.name || "Tenant not found"
-                                                    : "Search for a tenant"}
+                                                    ? users.find((user) => user.id === field.value)?.name || "Mijoz topilmadi"
+                                                    : "Qidiruv"}
                                             </Button>
                                         </FormControl>
                                     </PopoverTrigger>
                                     <PopoverContent>
                                         <Command>
-                                            <CommandInput placeholder="Search for a tenant..."/>
+                                            <CommandInput placeholder="Qidiruv..."/>
                                             <CommandEmpty>No tenant found.</CommandEmpty>
                                             <CommandGroup>
-                                                {users.map((user) => (
+                                                {users.map((user, index) => (
                                                     <CommandItem
-                                                        key={user.id}
+                                                        key={user.id || `user-${index}`} // Ensure a unique key
                                                         onSelect={() => field.onChange(user.id)}
                                                     >
                                                         {user.name}
                                                     </CommandItem>
                                                 ))}
                                             </CommandGroup>
+
                                         </Command>
                                     </PopoverContent>
                                 </Popover>
@@ -127,7 +128,7 @@ export default function PaymentForm() {
                                     <PopoverTrigger asChild>
                                         <FormControl>
                                             <Button variant="outline" className="w-full">
-                                                {field.value ? format(field.value, "PPP") : "Pick a date"}
+                                                {field.value ? format(field.value, "PPP") : "Sanani tanlang"}
                                             </Button>
                                         </FormControl>
                                     </PopoverTrigger>
@@ -165,7 +166,7 @@ export default function PaymentForm() {
                             <FormItem>
                                 <FormLabel>Memo (Optional)</FormLabel>
                                 <FormControl>
-                                    <Textarea placeholder="Add a note" {...field} />
+                                    <Textarea placeholder="Qo'shimcha ma'lumot" {...field} />
                                 </FormControl>
                                 <FormDescription>Add additional notes about this payment.</FormDescription>
                                 <FormMessage/>
@@ -173,7 +174,7 @@ export default function PaymentForm() {
                         )}
                     />
                     <Button type="submit" className="w-full">
-                        Submit Payment
+                        Yuborish
                     </Button>
                 </form>
             </Form>
