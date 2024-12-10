@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { Search, Plus } from "lucide-react";
+import { useRouter } from 'next/navigation';
+import { Search, Plus, Edit, Trash, X, Check } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,19 +22,31 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { fetchCustomers, addCustomer } from "@/lib/features/customers/customerSlice";
+import {
+    fetchCustomers,
+    addCustomerAsync,
+    updateCustomerAsync,
+    deleteCustomerAsync
+} from "@/lib/features/customers/customerSlice";
+import { fetchRentalsByCustomerId } from "@/lib/features/rentals/rentalsSlice";
+import { fetchPaymentsByCustomerId } from "@/lib/features/payments/paymentSlice";
 
 export default function Component() {
     const dispatch = useDispatch();
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState("");
     const [newCustomer, setNewCustomer] = useState({
         name: "",
-        address: "",
         phone: "",
+        address: "",
         balance: 0,
     });
+    const [editingCustomer, setEditingCustomer] = useState(null);
+    const [selectedCustomer, setSelectedCustomer] = useState(null);
 
     const customers = useSelector((state) => state.customers.customers);
+    const rentals = useSelector((state) => state.rentals.rentals);
+    const payments = useSelector((state) => state.payments.payments);
     const status = useSelector((state) => state.customers.status);
     const error = useSelector((state) => state.customers.error);
 
@@ -52,14 +65,37 @@ export default function Component() {
     );
 
     const handleAddCustomer = () => {
-        dispatch(addCustomer(newCustomer));
+        dispatch(addCustomerAsync(newCustomer));
         setIsDialogOpen(false);
         setNewCustomer({
             name: "",
-            address: "",
             phone: "",
+            address: "",
             balance: 0,
         });
+    };
+
+    const handleEditCustomer = (customer) => {
+        setEditingCustomer({ ...customer });
+    };
+
+    const handleSaveEdit = () => {
+        dispatch(updateCustomerAsync(editingCustomer));
+        setEditingCustomer(null);
+    };
+
+    const handleCancelEdit = () => {
+        setEditingCustomer(null);
+    };
+
+    const handleDeleteCustomer = (id) => {
+        if (window.confirm("Are you sure you want to delete this customer?")) {
+            dispatch(deleteCustomerAsync(id));
+        }
+    };
+
+    const handleCustomerClick = (customer) => {
+        router.push(`/customers/${customer._id}`);
     };
 
     if (status === 'loading') {
@@ -96,7 +132,7 @@ export default function Component() {
                                     }
                                 />
                             </div>
-                            <div className="grid gap-2">
+                            <div  className="grid gap-2">
                                 <Label htmlFor="address">Address</Label>
                                 <Input
                                     id="address"
@@ -153,19 +189,70 @@ export default function Component() {
                     <TableHeader>
                         <TableRow>
                             <TableHead>Name</TableHead>
+                            <TableHead>Address</TableHead>
                             <TableHead>Phone</TableHead>
                             <TableHead>Balance</TableHead>
+                            <TableHead>Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredCustomers.map((customer) => (
                             <TableRow
-                                key={customer.id}
-                                className={customer.balance < 0 ? "bg-red-100" : ""}
+                                key={customer._id}
                             >
-                                <TableCell>{customer.name}</TableCell>
-                                <TableCell>{customer.phone}</TableCell>
-                                <TableCell>${customer.balance}</TableCell>
+                                {editingCustomer && editingCustomer._id === customer._id ? (
+                                    <>
+
+                                        <TableCell>
+                                            <Input
+                                                value={editingCustomer.name}
+                                                onChange={(e) => setEditingCustomer({ ...editingCustomer, name: e.target.value })}
+                                            />
+                                        </TableCell>
+                                        <TableCell  className="grid gap-2">
+                                            <Input  value={editingCustomer.address} onChange={(e) => setEditingCustomer({ ...editingCustomer, address: e.target.value })} />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                value={editingCustomer.phone}
+                                                onChange={(e) => setEditingCustomer({ ...editingCustomer, phone: e.target.value })}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input  type="number" value={editingCustomer.balance} onChange={(e) => setEditingCustomer({ ...editingCustomer, balance: parseFloat(e.target.value) })} />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Button onClick={handleSaveEdit} className="mr-2">
+                                                <Check className="w-4 h-4" />
+                                            </Button>
+                                            <Button onClick={handleCancelEdit} variant="destructive">
+                                                <X className="w-4 h-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </>
+
+                                ) : (
+                                    <>
+
+                                        <TableCell>
+                                            <button onClick={() => handleCustomerClick(customer)} className="text-blue-500 hover:underline">
+                                                {customer.name}
+                                            </button>
+                                        </TableCell>
+                                        <TableCell>{customer.address}</TableCell>
+                                        <TableCell>{customer.phone}</TableCell>
+                                        <TableCell>{(customer.balance).toLocaleString()} so`m</TableCell>
+                                        <TableCell>
+                                            <Button onClick={() => handleEditCustomer(customer)} className="mr-2">
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button onClick={() => handleDeleteCustomer(customer._id)} variant="destructive">
+                                                <Trash className="w-4 h-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </>
+
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>

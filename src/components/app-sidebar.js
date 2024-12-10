@@ -1,4 +1,4 @@
-import { Home, Inbox, Search, BadgeDollarSign, PackageSearch } from "lucide-react"
+import { Home, Inbox, Search, BadgeDollarSign, PackageSearch, Car } from "lucide-react"
 import Link from "next/link"
 import {
     Sidebar,
@@ -30,6 +30,11 @@ const items = [
         icon: PackageSearch,
     },
     {
+        title: "Mashinalar",
+        url: "/cars",
+        icon: Car,
+    },
+    {
         title: "Statistika",
         url: "/statistics",
         icon: Search,
@@ -39,6 +44,11 @@ const items = [
         url: "/payments",
         icon: BadgeDollarSign,
     },
+    {
+        title: "Xarajatlar",
+        url: "/expenses",
+        icon: Inbox,
+    }
 ]
 
 export function AppSidebar() {

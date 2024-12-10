@@ -1,121 +1,194 @@
-'use client'
-
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Bar, BarChart, Line, LineChart, ResponsiveContainer, XAxis, YAxis } from "recharts"
-import { Package, Users, CreditCard } from "lucide-react"
-
-// Mock data
-const productRentals = [
-    { name: "Bike", count: 150 },
-    { name: "Camera", count: 120 },
-    { name: "Tent", count: 100 },
-    { name: "Surfboard", count: 80 },
-    { name: "Kayak", count: 60 },
-]
-
-const customerRentals = [
-    { month: "Jan", count: 65 },
-    { month: "Feb", count: 75 },
-    { month: "Mar", count: 100 },
-    { month: "Apr", count: 120 },
-    { month: "May", count: 150 },
-    { month: "Jun", count: 180 },
-]
-
-const paymentsData = [
-    { month: "Jan", amount: 5000 },
-    { month: "Feb", amount: 6000 },
-    { month: "Mar", amount: 7500 },
-    { month: "Apr", amount: 9000 },
-    { month: "May", amount: 11000 },
-    { month: "Jun", amount: 13000 },
-]
+'use client';
+import { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import {
+    fetchDailyRevenue,
+    fetchWeeklyRevenue,
+    fetchMonthlyRevenue,
+    fetchYearlyRevenue,
+    fetchTopCustomers,
+    fetchMostRentedCars,
+} from '@/lib/features/statistics/statisticsSlice';
+import {
+    Card,
+    CardContent,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { Loader2 } from 'lucide-react';
 
 export default function StatisticsPage() {
+    const dispatch = useDispatch();
+    const {
+        dailyRevenue,
+        weeklyRevenue,
+        monthlyRevenue,
+        yearlyRevenue,
+        topCustomers,
+        mostRentedCars,
+    } = useSelector((state) => state.statistics);
+
+    useEffect(() => {
+        dispatch(fetchDailyRevenue());
+        dispatch(fetchWeeklyRevenue());
+        dispatch(fetchMonthlyRevenue());
+        dispatch(fetchYearlyRevenue());
+        dispatch(fetchTopCustomers());
+        dispatch(fetchMostRentedCars());
+    }, [dispatch]);
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+        }).format(amount);
+    };
+
+    const StatCard = ({ title, data, loading, error }) => (
+        <Card className="col-span-1">
+            <CardHeader>
+                <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                    <div className="flex items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin" />
+                    </div>
+                ) : error ? (
+                    <p className="text-red-500">Error loading data</p>
+                ) : (
+                    <div className="text-2xl font-bold">
+                        {data?.stats?.totalAmount
+                            ? formatCurrency(data.stats.totalAmount)
+                            : 'No data'}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+
+    const CustomerCard = ({ customer, index }) => (
+        <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow mb-2">
+            <div className="flex items-center space-x-4">
+                <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-full">
+                    {index + 1}
+                </div>
+                <div>
+                    <p className="font-semibold">{customer.customerName}</p>
+                    <p className="text-sm text-gray-500">{customer.customerPhone}</p>
+                </div>
+            </div>
+            <div className="text-right">
+                <p className="font-semibold">{formatCurrency(customer.totalAmount)}</p>
+                <p className="text-sm text-gray-500">{customer.paymentCount} payments</p>
+            </div>
+        </div>
+    );
+
+    const CarCard = ({ car, index }) => (
+        <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow mb-2">
+            <div className="flex items-center space-x-4">
+                <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-full">
+                    {index + 1}
+                </div>
+                <div>
+                    <p className="font-semibold">{car.driverName}</p>
+                    <div className="flex flex-col">
+                        <p className="text-sm text-gray-500">Car: {car.carNumber}</p>
+                        <p className="text-sm text-gray-500">Phone: {car.driverPhone}</p>
+                    </div>
+                </div>
+            </div>
+            <div className="text-right">
+                <p className="font-semibold">{car.rentalCount} rentals</p>
+            </div>
+        </div>
+    );
+
     return (
-        <div className="min-h-screen bg-gray-100 p-8">
-            <header className="mb-8">
-                <h1 className="text-4xl font-bold text-gray-900">Rental App Statistics</h1>
-            </header>
+        <div className="container mx-auto p-6 space-y-6">
+            <h1 className="text-3xl font-bold mb-8">Statistics Dashboard</h1>
 
-            <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-                {/* Products Section */}
+            {/* Revenue Statistics */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard
+                    title="Daily Revenue"
+                    data={dailyRevenue.data}
+                    loading={dailyRevenue.loading}
+                    error={dailyRevenue.error}
+                />
+                <StatCard
+                    title="Weekly Revenue"
+                    data={weeklyRevenue.data}
+                    loading={weeklyRevenue.loading}
+                    error={weeklyRevenue.error}
+                />
+                <StatCard
+                    title="Monthly Revenue"
+                    data={monthlyRevenue.data}
+                    loading={monthlyRevenue.loading}
+                    error={monthlyRevenue.error}
+                />
+                <StatCard
+                    title="Yearly Revenue"
+                    data={yearlyRevenue.data}
+                    loading={yearlyRevenue.loading}
+                    error={yearlyRevenue.error}
+                />
+            </div>
+
+            {/* Top Customers and Most Rented Cars */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Total Products Rented
-                        </CardTitle>
-                        <Package className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader>
+                        <CardTitle>Top 5 Customers</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{productRentals.reduce((sum, product) => sum + product.count, 0)}</div>
-                        <p className="text-xs text-muted-foreground">
-                            Across {productRentals.length} product categories
-                        </p>
-                        <div className="h-[200px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={productRentals}>
-                                    <XAxis dataKey="name" />
-                                    <YAxis />
-                                    <Bar dataKey="count" fill="#8884d8" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
+                        {topCustomers.loading ? (
+                            <div className="flex items-center justify-center p-4">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            </div>
+                        ) : topCustomers.error ? (
+                            <p className="text-red-500">Error loading customers</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {topCustomers.data?.map((customer, index) => (
+                                    <CustomerCard
+                                        key={customer._id}
+                                        customer={customer}
+                                        index={index}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
 
-                {/* Customers Section */}
                 <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Customer Rentals
-                        </CardTitle>
-                        <Users className="h-4 w-4 text-muted-foreground" />
+                    <CardHeader>
+                        <CardTitle>Most Rented Cars</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{customerRentals.reduce((sum, month) => sum + month.count, 0)}</div>
-                        <p className="text-xs text-muted-foreground">
-                            Total rentals in the last 6 months
-                        </p>
-                        <div className="h-[200px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={customerRentals}>
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
-                                    <Line type="monotone" dataKey="count" stroke="#8884d8" />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-
-                {/* Payments Section */}
-                <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">
-                            Total Payments
-                        </CardTitle>
-                        <CreditCard className="h-4 w-4 text-muted-foreground" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            ${paymentsData.reduce((sum, month) => sum + month.amount, 0).toLocaleString()}
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            Total payments received in the last 6 months
-                        </p>
-                        <div className="h-[200px]">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <LineChart data={paymentsData}>
-                                    <XAxis dataKey="month" />
-                                    <YAxis />
-                                    <Line type="monotone" dataKey="amount" stroke="#82ca9d" />
-                                </LineChart>
-                            </ResponsiveContainer>
-                        </div>
+                        {mostRentedCars.loading ? (
+                            <div className="flex items-center justify-center p-4">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            </div>
+                        ) : mostRentedCars.error ? (
+                            <p className="text-red-500">Error loading cars</p>
+                        ) : (
+                            <div className="space-y-2">
+                                {mostRentedCars.data?.map((car, index) => (
+                                    <CarCard
+                                        key={car._id}
+                                        car={car}
+                                        index={index}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
         </div>
-    )
+    );
 }
