@@ -5,8 +5,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/navigation';
 import { 
     createRental, 
-    selectAddRentalStatus, 
-    selectAddRentalError,
     clearAddStatus 
 } from '@/lib/features/rentals/rentalsSlice';
 import { fetchCustomers } from '@/lib/features/customers/customerSlice';
@@ -35,15 +33,14 @@ export default function AddRentalPage() {
     const cars = useSelector((state) => state.cars.cars) || [];
     const carsStatus = useSelector((state) => state.cars.status);
     const carsError = useSelector((state) => state.cars.error);
-    const addStatus = useSelector(selectAddRentalStatus);
-    const addError = useSelector(selectAddRentalError);
+    const addStatus = useSelector((state) => state.rentals.addStatus);
+    const addError = useSelector((state) => state.rentals.error);
 
     const [rentalForm, setRentalForm] = useState({
         customer: '',
         car: '',
         startDate: new Date().toISOString().split('T')[0],
         endDate: new Date().toISOString().split('T')[0],
-        workStartDate: new Date().toISOString().split('T')[0],
         status: 'active',
         borrowedProducts: [{ 
             product: '', 
@@ -151,18 +148,7 @@ export default function AddRentalPage() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setRentalForm(prev => {
-            const newForm = { ...prev, [name]: value };
-            
-            if (name === 'workStartDate') {
-                newForm.borrowedProducts = prev.borrowedProducts.map(product => ({
-                    ...product,
-                    startDate: value
-                }));
-            }
-            
-            return newForm;
-        });
+        setRentalForm(prev => ({ ...prev, [name]: value }));
     };
 
     const handleSelectChange = (name, value) => {
@@ -213,7 +199,7 @@ export default function AddRentalPage() {
                 {
                     product: '',
                     quantity: 1,
-                    startDate: prev.workStartDate,
+                    startDate: prev.startDate,
                     endDate: prev.endDate
                 }
             ]
@@ -240,7 +226,23 @@ export default function AddRentalPage() {
             return;
         }
 
-        dispatch(createRental(rentalForm));
+        // Format dates properly
+        const formattedData = {
+            ...rentalForm,
+            startDate: new Date(rentalForm.startDate).toISOString(),
+            endDate: new Date(rentalForm.endDate).toISOString(),
+            borrowedProducts: rentalForm.borrowedProducts.map(product => ({
+                ...product,
+                startDate: new Date(product.startDate || rentalForm.startDate).toISOString(),
+                endDate: new Date(product.endDate || rentalForm.endDate).toISOString()
+            }))
+        };
+
+        try {
+            await dispatch(createRental(formattedData)).unwrap();
+        } catch (error) {
+            toast.error(error.message || 'Ijarani yaratishda xatolik yuz berdi');
+        }
     };
 
     return (
@@ -377,6 +379,32 @@ export default function AddRentalPage() {
                                         />
                                         {validationErrors[`borrowedProducts.${index}.quantity`] && (
                                             <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.quantity`]}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label>Boshlanish sanasi</label>
+                                        <Input
+                                            type="date"
+                                            value={product.startDate}
+                                            onChange={(e) => handleProductChange(index, 'startDate', e.target.value)}
+                                            className={validationErrors[`borrowedProducts.${index}.startDate`] ? 'border-red-500' : ''}
+                                        />
+                                        {validationErrors[`borrowedProducts.${index}.startDate`] && (
+                                            <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.startDate`]}</p>
+                                        )}
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        <label>Tugash sanasi</label>
+                                        <Input
+                                            type="date"
+                                            value={product.endDate}
+                                            onChange={(e) => handleProductChange(index, 'endDate', e.target.value)}
+                                            className={validationErrors[`borrowedProducts.${index}.endDate`] ? 'border-red-500' : ''}
+                                        />
+                                        {validationErrors[`borrowedProducts.${index}.endDate`] && (
+                                            <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.endDate`]}</p>
                                         )}
                                     </div>
 
