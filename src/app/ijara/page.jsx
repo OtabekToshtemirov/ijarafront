@@ -165,12 +165,12 @@ export default function RentalsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead>Raqam</TableHead>
                             <TableHead>Mijoz</TableHead>
                             <TableHead>Mashina</TableHead>
-                            <TableHead>Mahsulotlar</TableHead>
-                            <TableHead>Sanalar</TableHead>
                             <TableHead>Narxlar</TableHead>
-                            <TableHead>Holat</TableHead>
+                            <TableHead>Kunlar</TableHead>
+                            <TableHead>Mahsulotlar</TableHead>
                             <TableHead className="text-right">Amallar</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -178,143 +178,64 @@ export default function RentalsPage() {
                         {rentals.map((rental) => (
                             <TableRow key={rental._id}>
                                 <TableCell>
-                                    {editingId === rental._id ? (
-                                        <input
-                                            type="text"
-                                            value={editFormData.customerName}
-                                            onChange={(e) => setEditFormData({...editFormData, customerName: e.target.value})}
-                                            className="w-full p-1 border rounded"
-                                        />
-                                    ) : (
-                                        rental.customer?.name
-                                    )}
+                                    <div className="flex flex-col">
+                                        <span>{rental.rentalNumber || '-'}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                            {new Date(rental.startDate).toLocaleDateString()}
+                                        </span>
+                                    </div>
                                 </TableCell>
                                 <TableCell>
-                                    {editingId === rental._id ? (
-                                        <input
-                                            type="text"
-                                            value={editFormData.carInfo}
-                                            onChange={(e) => setEditFormData({...editFormData, carInfo: e.target.value})}
-                                            className="w-full p-1 border rounded"
-                                        />
-                                    ) : (
-                                        `${rental.car?.carNumber} - ${rental.car?.driverName}`
-                                    )}
+                                    <div className="flex flex-col">
+                                        <span>{rental.customer?.name}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                            {rental.customer?.phone}
+                                        </span>
+                                    </div>
                                 </TableCell>
                                 <TableCell>
-                                    <div>
-                                        <div className="font-medium mb-1">Olingan:</div>
-                                        <ul className="list-disc list-inside">
-                                            {rental.borrowedProducts.map((prod, index) => (
-                                                <li key={index}>
-                                                    {prod.product.name} - {prod.quantity} dona
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        {rental.returnedProducts?.length > 0 && (
-                                            <div className="mt-2">
-                                                <div className="font-medium mb-1">Qaytarilgan:</div>
-                                                <ul className="list-disc list-inside">
-                                                    {rental.returnedProducts.map((prod, index) => (
-                                                        <li key={index}>
-                                                            {prod.product.name} - {prod.quantity} dona
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            </div>
+                                    <div className="flex flex-col">
+                                        <span>{rental.car?.carNumber || '-'}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                            {rental.car?.driverName || '-'}
+                                        </span>
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span>{rental.totalCost?.toLocaleString()} so'm</span>
+                                        {rental.payments?.length > 0 && (
+                                            <span className="text-sm text-green-600">
+                                                To'langan: {rental.totalPayments?.toLocaleString()} so'm
+                                            </span>
+                                        )}
+                                        {rental.remainingAmount > 0 && (
+                                            <span className="text-sm text-orange-600">
+                                                Qoldi: {rental.remainingAmount?.toLocaleString()} so'm
+                                            </span>
                                         )}
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                    {editingId === rental._id ? (
-                                        <div className="space-y-1">
-                                            <label className="text-sm">Ish boshlash sanasi:</label>
-                                            <input
-                                                type="date"
-                                                value={editFormData.workStartDate}
-                                                onChange={(e) => setEditFormData({...editFormData, workStartDate: e.target.value})}
-                                                className="w-full p-1 border rounded"
-                                            />
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-1">
-                                            <p>Ish: {moment(rental.workStartDate).format('DD.MM.YYYY')}</p>
-                                        </div>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {editingId === rental._id ? (
-                                        <div className="space-y-2">
-                                            <div>
-                                                <label className="text-sm">Umumiy narx:</label>
-                                                <input
-                                                    type="number"
-                                                    value={editFormData.totalCost}
-                                                    onChange={(e) => setEditFormData({
-                                                        ...editFormData,
-                                                        totalCost: e.target.value,
-                                                        debt: e.target.value - editFormData.payedAmount
-                                                    })}
-                                                    className="w-full p-1 border rounded"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm">To'langan summa:</label>
-                                                <input
-                                                    type="number"
-                                                    value={editFormData.payedAmount}
-                                                    onChange={(e) => setEditFormData({
-                                                        ...editFormData,
-                                                        payedAmount: e.target.value,
-                                                        debt: editFormData.totalCost - e.target.value
-                                                    })}
-                                                    className="w-full p-1 border rounded"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="text-sm">Qarz:</label>
-                                                <input
-                                                    type="number"
-                                                    value={editFormData.debt}
-                                                    readOnly
-                                                    className="w-full p-1 border rounded bg-gray-100"
-                                                />
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-1">
-                                            <p>Umumiy: {rental.totalCost?.toLocaleString()} so'm</p>
-                                            <p>To'langan: {rental.payedAmount?.toLocaleString()} so'm</p>
-                                            <p>Qarz: {rental.debt?.toLocaleString()} so'm</p>
-                                        </div>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {editingId === rental._id ? (
-                                        <Select 
-                                            value={editFormData.status} 
-                                            onValueChange={(value) => setEditFormData({...editFormData, status: value})}
-                                        >
-                                            <SelectTrigger>
-                                                <SelectValue />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="active">Faol</SelectItem>
-                                                <SelectItem value="completed">Yakunlangan</SelectItem>
-                                                <SelectItem value="canceled">Bekor qilingan</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    ) : (
-                                        <span className={`px-2 py-1 rounded-full text-xs ${
-                                            rental.status === 'active' ? 'bg-green-100 text-green-800' :
-                                            rental.status === 'completed' ? 'bg-blue-100 text-blue-800' :
-                                            'bg-red-100 text-red-800'
-                                        }`}>
-                                            {rental.status === 'active' ? 'Faol' :
-                                            rental.status === 'completed' ? 'Yakunlangan' :
-                                            'Bekor qilingan'}
+                                    <div className="flex flex-col">
+                                        <span>{rental.rentalDays} kun</span>
+                                        <span className="text-sm text-muted-foreground">
+                                            {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
                                         </span>
-                                    )}
+                                    </div>
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex flex-col">
+                                        <span>Mahsulotlar:</span>
+                                        {rental.borrowedProducts.map((item, index) => (
+                                            <div key={index} className="text-sm">
+                                                <span>{item.product.name} ({item.quantity})</span>
+                                                <span className="text-muted-foreground ml-2">
+                                                    {new Date(item.rentDate).toLocaleDateString()}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
                                 </TableCell>
                                 <TableCell className="text-right">
                                     {editingId === rental._id ? (
