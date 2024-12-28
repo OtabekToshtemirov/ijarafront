@@ -49,14 +49,30 @@ export const createRental = createAsyncThunk(
     'rentals/createRental',
     async (rentalData) => {
         try {
+            console.log('Sending rental data:', rentalData); // Debug log
             const response = await axios.post(`${BASE_URL}/rentals`, rentalData);
+            console.log('Server response:', response.data); // Debug log
             return response.data;
         } catch (error) {
-            throw new Error(
-                error.response?.data?.message || 
-                error.message || 
-                'Ijarani yaratishda xatolik yuz berdi'
-            );
+            console.error('Full error object:', error); // Debug log
+            console.error('Error response:', error.response); // Debug log
+            console.error('Error message:', error.message); // Debug log
+            
+            // Check if it's a network error
+            if (!error.response) {
+                throw new Error('Server bilan bog\'lanishda xatolik yuz berdi. Server ishga tushganligini tekshiring.');
+            }
+            
+            // Handle different types of errors
+            if (error.response?.data?.message) {
+                throw new Error(error.response.data.message);
+            } else if (error.response?.data?.error) {
+                throw new Error(error.response.data.error);
+            } else if (error.message) {
+                throw new Error(error.message);
+            } else {
+                throw new Error('Ijarani yaratishda xatolik yuz berdi');
+            }
         }
     }
 );
@@ -93,6 +109,14 @@ export const returnProducts = createAsyncThunk(
     }
 );
 
+export const returnProduct = createAsyncThunk(
+    'rentals/returnProduct',
+    async (returnData) => {
+        const response = await axios.post(`${BASE_URL}/rentals/return`, returnData);
+        return response.data;
+    }
+);
+
 export const deleteRental = createAsyncThunk(
     'rentals/deleteRental',
     async (id) => {
@@ -112,9 +136,16 @@ export const deleteRental = createAsyncThunk(
 export const fetchRentalsByCustomerId = createAsyncThunk(
     'rentals/fetchRentalsByCustomerId',
     async (customerId) => {
-        const response = await axios.get(`${BASE_URL}/rentals/customer/${customerId}`);
-        console.log('Rentals response:', response.data);
-        return response.data;
+        try {
+            const response = await axios.get(`${BASE_URL}/rentals/customer/${customerId}`);
+            return response.data;
+        } catch (error) {
+            throw new Error(
+                error.response?.data?.message || 
+                error.message || 
+                'Mijozning ijaralarini yuklashda xatolik'
+            );
+        }
     }
 );
 
@@ -274,6 +305,22 @@ const rentalsSlice = createSlice({
                 state.returnError = action.error.message;
             })
 
+            // Return product
+            .addCase(returnProduct.pending, (state) => {
+                state.returnStatus = 'loading';
+            })
+            .addCase(returnProduct.fulfilled, (state, action) => {
+                state.returnStatus = 'succeeded';
+                const index = state.rentals.findIndex(rental => rental._id === action.payload._id);
+                if (index !== -1) {
+                    state.rentals[index] = action.payload;
+                }
+            })
+            .addCase(returnProduct.rejected, (state, action) => {
+                state.returnStatus = 'failed';
+                state.returnError = action.error.message;
+            })
+
             // Delete rental
             .addCase(deleteRental.pending, (state) => {
                 state.status = 'loading';
@@ -308,17 +355,14 @@ const rentalsSlice = createSlice({
             // Fetch rentals by customer
             .addCase(fetchRentalsByCustomerId.pending, (state) => {
                 state.status = 'loading';
-                state.error = null;
             })
             .addCase(fetchRentalsByCustomerId.fulfilled, (state, action) => {
                 state.status = 'succeeded';
-                state.rentals = action.payload || [];
-                state.error = null;
+                state.rentals = action.payload;
             })
             .addCase(fetchRentalsByCustomerId.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.error.message;
-                state.rentals = [];
             })
 
             // Fetch rentals by product

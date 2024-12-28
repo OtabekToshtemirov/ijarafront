@@ -1,4 +1,4 @@
-import { Home, Inbox, Search, BadgeDollarSign, PackageSearch, Car } from "lucide-react"
+import { Home, Inbox, Search, BadgeDollarSign, PackageSearch, Car, RotateCcw } from "lucide-react"
 import Link from "next/link"
 import {
     Sidebar,
@@ -18,6 +18,11 @@ const items = [
         title: "Ijara",
         url: "/ijara",
         icon: Home,
+    },
+    {
+        title: "Qaytarish",
+        url: "/ijara/returns",
+        icon: RotateCcw,
     },
     {
         title: "Mijozlar",

@@ -49,18 +49,21 @@ export default function CustomerDetailsPage() {
 
     useEffect(() => {
         const loadData = async () => {
-            if (status === 'idle') {
-                await dispatch(fetchCustomers());
-            }
-            if (id) {
-                await Promise.all([
-                    dispatch(fetchRentalsByCustomerId(id)),
-                    dispatch(fetchPaymentsByCustomerId(id))
-                ]);
+            try {
+                if (status === 'idle') {
+                    await dispatch(fetchCustomers());
+                }
+                if (id) {
+                    await dispatch(fetchRentalsByCustomerId(id));
+                    await dispatch(fetchPaymentsByCustomerId(id));
+                }
+            } catch (error) {
+                console.error('Error loading data:', error);
+                toast.error('Ma\'lumotlarni yuklashda xatolik');
             }
         };
         loadData();
-    }, [dispatch, id, status]);
+    }, [dispatch, id]);
 
     useEffect(() => {
         // Clear return status when component unmounts
@@ -246,36 +249,94 @@ export default function CustomerDetailsPage() {
                                                                     <TableRow>
                                                                         <TableHead>Mahsulot</TableHead>
                                                                         <TableHead>Soni</TableHead>
+                                                                        <TableHead>Kunlik narx</TableHead>
                                                                         <TableHead>Boshlanish sanasi</TableHead>
-                                                                        <TableHead>Tugash sanasi</TableHead>
+                                                                        <TableHead>Qaytarilgan</TableHead>
+                                                                        <TableHead>Status</TableHead>
                                                                         <TableHead>Amallar</TableHead>
                                                                     </TableRow>
                                                                 </TableHeader>
                                                                 <TableBody>
                                                                     {rental.borrowedProducts.map((prod, index) => {
-                                                                        const returnedQuantity = rental.returnedProducts
-                                                                            .filter(rp => rp.product?._id === prod.product?._id)
+                                                                        const returnedProducts = rental.returnedProducts
+                                                                            .filter(rp => rp.product?._id === prod.product?._id);
+                                                                        const returnedQuantity = returnedProducts
                                                                             .reduce((sum, rp) => sum + rp.quantity, 0);
                                                                         const remainingQuantity = prod.quantity - returnedQuantity;
+                                                                        const totalDays = Math.ceil(
+                                                                            (new Date() - new Date(prod.startDate)) / (1000 * 60 * 60 * 24)
+                                                                        );
 
                                                                         return (
                                                                             <TableRow key={index}>
-                                                                                <TableCell className="font-medium">
-                                                                                    {prod.product?.name || 'Noma\'lum mahsulot'}
+                                                                                <TableCell>
+                                                                                    <div className="flex flex-col">
+                                                                                        <span className="font-medium">
+                                                                                            {prod.product?.name || 'Noma\'lum mahsulot'}
+                                                                                        </span>
+                                                                                        <span className="text-sm text-muted-foreground">
+                                                                                            {prod.product?.code || ''}
+                                                                                        </span>
+                                                                                    </div>
                                                                                 </TableCell>
                                                                                 <TableCell>
-                                                                                    {prod.quantity} 
-                                                                                    {remainingQuantity !== prod.quantity && (
-                                                                                        <span className="text-sm text-muted-foreground ml-2">
-                                                                                            (Qoldi: {remainingQuantity})
+                                                                                    <div className="flex flex-col">
+                                                                                        <span>{prod.quantity}</span>
+                                                                                        {remainingQuantity !== prod.quantity && (
+                                                                                            <span className="text-sm text-muted-foreground">
+                                                                                                Qoldi: {remainingQuantity}
+                                                                                            </span>
+                                                                                        )}
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    {prod.product?.dailyRate?.toLocaleString()} so'm
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    <div className="flex flex-col">
+                                                                                        <span>
+                                                                                            {new Date(prod.startDate).toLocaleDateString()}
                                                                                         </span>
+                                                                                        <span className="text-sm text-muted-foreground">
+                                                                                            {totalDays} kun
+                                                                                        </span>
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell>
+                                                                                    {returnedProducts.length > 0 ? (
+                                                                                        <div className="space-y-1">
+                                                                                            {returnedProducts.map((rp, idx) => (
+                                                                                                <div key={idx} className="text-sm">
+                                                                                                    <span className="font-medium">
+                                                                                                        {rp.quantity} dona
+                                                                                                    </span>
+                                                                                                    <span className="text-muted-foreground ml-2">
+                                                                                                        {new Date(rp.returnDate).toLocaleDateString()}
+                                                                                                    </span>
+                                                                                                </div>
+                                                                                            ))}
+                                                                                        </div>
+                                                                                    ) : (
+                                                                                        '-'
                                                                                     )}
                                                                                 </TableCell>
                                                                                 <TableCell>
-                                                                                    {prod.startDate ? new Date(prod.startDate).toLocaleDateString() : '-'}
-                                                                                </TableCell>
-                                                                                <TableCell>
-                                                                                    {prod.endDate ? new Date(prod.endDate).toLocaleDateString() : '-'}
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <div className={`h-2 w-2 rounded-full ${
+                                                                                            remainingQuantity === 0 
+                                                                                                ? 'bg-green-500' 
+                                                                                                : remainingQuantity === prod.quantity 
+                                                                                                    ? 'bg-yellow-500'
+                                                                                                    : 'bg-blue-500'
+                                                                                        }`} />
+                                                                                        <span className="text-sm">
+                                                                                            {remainingQuantity === 0 
+                                                                                                ? 'Qaytarilgan' 
+                                                                                                : remainingQuantity === prod.quantity 
+                                                                                                    ? 'Qaytarilmagan'
+                                                                                                    : 'Qisman qaytgan'}
+                                                                                        </span>
+                                                                                    </div>
                                                                                 </TableCell>
                                                                                 <TableCell>
                                                                                     {remainingQuantity > 0 && rental.status === 'active' && (
@@ -313,40 +374,48 @@ export default function CustomerDetailsPage() {
                                                         </div>
                                                     </div>
 
-                                                    {/* Returned Products */}
-                                                    {rental.returnedProducts.length > 0 && (
+                                                    {/* Rental Summary */}
+                                                    <div className="grid grid-cols-2 gap-4 pt-4">
                                                         <div>
-                                                            <h3 className="text-lg font-semibold mb-4">Qaytarilgan mahsulotlar</h3>
-                                                            <div className="rounded-lg border">
-                                                                <Table>
-                                                                    <TableHeader>
-                                                                        <TableRow>
-                                                                            <TableHead>Mahsulot</TableHead>
-                                                                            <TableHead>Soni</TableHead>
-                                                                            <TableHead>Qaytarish sanasi</TableHead>
-                                                                            <TableHead>Narxi</TableHead>
-                                                                        </TableRow>
-                                                                    </TableHeader>
-                                                                    <TableBody>
-                                                                        {rental.returnedProducts.map((prod, index) => (
-                                                                            <TableRow key={index}>
-                                                                                <TableCell className="font-medium">
-                                                                                    {prod.product?.name || 'Noma\'lum mahsulot'}
-                                                                                </TableCell>
-                                                                                <TableCell>{prod.quantity}</TableCell>
-                                                                                <TableCell>
-                                                                                    {prod.returnDate ? new Date(prod.returnDate).toLocaleDateString() : '-'}
-                                                                                </TableCell>
-                                                                                <TableCell>
-                                                                                    {prod.cost?.toLocaleString()} so'm
-                                                                                </TableCell>
-                                                                            </TableRow>
-                                                                        ))}
-                                                                    </TableBody>
-                                                                </Table>
+                                                            <h4 className="text-sm font-medium mb-2">To'lovlar</h4>
+                                                            <div className="space-y-2">
+                                                                {rental.payments?.length > 0 ? (
+                                                                    rental.payments.map((payment, idx) => (
+                                                                        <div key={idx} className="flex justify-between text-sm">
+                                                                            <span className="text-muted-foreground">
+                                                                                {new Date(payment.paymentDate).toLocaleDateString()}
+                                                                            </span>
+                                                                            <span className="font-medium">
+                                                                                {payment.amount?.toLocaleString()} so'm
+                                                                            </span>
+                                                                        </div>
+                                                                    ))
+                                                                ) : (
+                                                                    <span className="text-sm text-muted-foreground">
+                                                                        To'lovlar mavjud emas
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         </div>
-                                                    )}
+                                                        <div className="space-y-2">
+                                                            <div className="flex justify-between">
+                                                                <span className="text-sm font-medium">Umumiy summa:</span>
+                                                                <span>{rental.totalCost?.toLocaleString()} so'm</span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-sm font-medium">To'langan:</span>
+                                                                <span>
+                                                                    {rental.payments?.reduce((sum, p) => sum + p.amount, 0).toLocaleString()} so'm
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex justify-between">
+                                                                <span className="text-sm font-medium">Qarz:</span>
+                                                                <span className="text-red-500">
+                                                                    {rental.debt?.toLocaleString()} so'm
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>

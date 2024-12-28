@@ -19,7 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Minus } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Minus, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from 'next/link';
@@ -46,8 +46,11 @@ export default function AddRentalPage() {
             product: '',
             quantity: 1,
             dailyRate: 0,
-            amount: 0
-        }]
+            amount: 0,
+            startDate: new Date().toISOString().split('T')[0]
+        }],
+        totalCost: 0,
+        debt: 0
     });
 
     const [validationErrors, setValidationErrors] = useState({});
@@ -113,39 +116,57 @@ export default function AddRentalPage() {
         const errors = {};
         
         if (!rentalForm.customer) {
-            errors.customer = 'Mijozni tanlash majburiy';
-        }
-
-        if (!rentalForm.car) {
-            errors.car = 'Mashinani tanlash majburiy';
+            errors.customer = 'Iltimos, mijozni tanlang';
         }
 
         if (!rentalForm.startDate) {
-            errors.startDate = 'Boshlanish sanasini tanlash majburiy';
+            errors.startDate = 'Iltimos, boshlanish sanasini kiriting';
         }
 
         if (!rentalForm.borrowedProducts || rentalForm.borrowedProducts.length === 0) {
-            errors.borrowedProducts = 'Kamida bitta mahsulot tanlash majburiy';
+            errors.borrowedProducts = 'Kamida bitta mahsulot tanlash kerak';
         }
 
         rentalForm.borrowedProducts.forEach((product, index) => {
             if (!product.product) {
-                errors[`borrowedProducts.${index}.product`] = 'Mahsulotni tanlash majburiy';
+                errors[`borrowedProducts.${index}.product`] = 'Mahsulotni tanlang';
             }
-            if (product.quantity < 1) {
+            if (!product.quantity || product.quantity < 1) {
                 errors[`borrowedProducts.${index}.quantity`] = 'Miqdor 1 dan kam bo\'lmasligi kerak';
             }
-            if (product.dailyRate < 0) {
+            if (!product.dailyRate || product.dailyRate < 0) {
                 errors[`borrowedProducts.${index}.dailyRate`] = 'Kunlik narx 0 dan kam bo\'lmasligi kerak';
             }
+
             const selectedProduct = products.find(p => p._id === product.product);
             if (selectedProduct && product.quantity > selectedProduct.quantity) {
-                errors[`borrowedProducts.${index}.quantity`] = `Miqdor ${selectedProduct.quantity} dan oshmasligi kerak`;
+                errors[`borrowedProducts.${index}.quantity`] = 
+                    `Omborda ${selectedProduct.name} mahsulotidan ${selectedProduct.quantity} ta mavjud`;
             }
         });
 
+        if (rentalForm.prepaidAmount && rentalForm.prepaidAmount < 0) {
+            errors.prepaidAmount = 'Oldindan to\'lov 0 dan kam bo\'lmasligi kerak';
+        }
+
         setValidationErrors(errors);
-        return Object.keys(errors).length === 0;
+        
+        if (Object.keys(errors).length > 0) {
+            const errorMessages = Object.values(errors);
+            toast.error(
+                <div>
+                    <p>Quyidagi xatoliklarni to'g'rilang:</p>
+                    <ul>
+                        {errorMessages.map((error, index) => (
+                            <li key={index}>• {error}</li>
+                        ))}
+                    </ul>
+                </div>
+            );
+            return false;
+        }
+        
+        return true;
     };
 
     const handleInputChange = (e) => {
@@ -159,7 +180,6 @@ export default function AddRentalPage() {
             [name]: value
         }));
         
-        // Clear validation error when field is filled
         if (validationErrors[name]) {
             setValidationErrors(prev => {
                 const newErrors = { ...prev };
@@ -182,7 +202,6 @@ export default function AddRentalPage() {
             };
         });
 
-        // Clear validation error when field is filled
         const errorKey = `borrowedProducts.${index}.${field}`;
         if (validationErrors[errorKey]) {
             setValidationErrors(prev => {
@@ -209,6 +228,39 @@ export default function AddRentalPage() {
         }));
     };
 
+    const handleAddProduct = (product) => {
+        if (!product) return;
+
+        const existingProduct = rentalForm.borrowedProducts.find(
+            (p) => p.product === product._id
+        );
+
+        if (existingProduct) {
+            toast({
+                title: "Xatolik!",
+                description: "Bu mahsulot allaqachon qo'shilgan!",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        const amount = product.dailyRate || 0;
+        
+        setRentalForm(prev => ({
+            ...prev,
+            borrowedProducts: [
+                ...prev.borrowedProducts,
+                {
+                    product: product._id,
+                    quantity: 1,
+                    dailyRate: amount,
+                    amount: amount,
+                    startDate: new Date().toISOString().split('T')[0]
+                }
+            ]
+        }));
+    };
+
     const removeProduct = (index) => {
         if (rentalForm.borrowedProducts.length === 1) {
             toast.error('Kamida bitta mahsulot bo\'lishi kerak');
@@ -223,23 +275,57 @@ export default function AddRentalPage() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        if (!validateForm()) {
-            toast.error('Formani to\'ldiring');
+
+        if (!rentalForm.customer) {
+            toast.error("Iltimos mijozni tanlang!");
             return;
         }
 
-        // Format dates properly
-        const formattedData = {
+        if (rentalForm.borrowedProducts.length === 0) {
+            toast.error("Iltimos kamida bitta mahsulot qo'shing!");
+            return;
+        }
+
+        // Calculate total cost
+        const totalCost = rentalForm.borrowedProducts.reduce((sum, product) => {
+            return sum + (product.quantity * product.amount);
+        }, 0);
+
+        // Format the data for the API
+        const formData = {
             ...rentalForm,
-            startDate: new Date(rentalForm.startDate).toISOString(),
+            totalCost,
+            startDate: new Date().toISOString(),
+            borrowedProducts: rentalForm.borrowedProducts.map(product => ({
+                product: product.product,
+                quantity: Number(product.quantity),
+                amount: Number(product.amount),
+                dailyRate: Number(product.amount),
+                startDate: new Date().toISOString()
+            }))
         };
 
         try {
-            await dispatch(createRental(formattedData)).unwrap();
+            const response = await dispatch(createRental(formData)).unwrap();
+            
+            if (response._id) {
+                toast.success("Ijara muvaffaqiyatli qo'shildi!");
+                router.push('/ijara');
+            }
         } catch (error) {
-            toast.error(error.message || 'Ijarani yaratishda xatolik yuz berdi');
+            toast.error(error.message || "Xatolik yuz berdi!");
         }
+    };
+
+    const handleAmountChange = (index, value) => {
+        const newAmount = parseInt(value) || 0;
+        
+        setRentalForm(prev => ({
+            ...prev,
+            borrowedProducts: prev.borrowedProducts.map((item, i) => 
+                i === index ? { ...item, amount: newAmount, dailyRate: newAmount } : item
+            )
+        }));
     };
 
     return (
@@ -517,10 +603,10 @@ export default function AddRentalPage() {
                                         <div className="space-y-2 flex-1">
                                             <label>Summa</label>
                                             <Input
-                                                type="text"
-                                                value={product.amount?.toLocaleString() + " so'm"}
-                                                readOnly
-                                                className="bg-muted"
+                                                type="number"
+                                                value={product.amount}
+                                                onChange={(e) => handleAmountChange(index, e.target.value)}
+                                                className="w-24"
                                             />
                                         </div>
                                         <Button
