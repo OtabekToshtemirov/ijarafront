@@ -109,10 +109,21 @@ export default function CarsPage() {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [selectedCar, setSelectedCar] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
     const [formData, setFormData] = useState({
         carNumber: '',
         driverName: '',
         driverPhone: ''
+    });
+
+    // Filter cars based on search query
+    const filteredCars = cars.filter(car => {
+        const query = searchQuery.toLowerCase();
+        return (
+            car.carNumber.toLowerCase().includes(query) ||
+            car.driverName.toLowerCase().includes(query) ||
+            car.driverPhone.toLowerCase().includes(query)
+        );
     });
 
     useEffect(() => {
@@ -218,6 +229,16 @@ export default function CarsPage() {
                 </Dialog>
             </div>
 
+            {/* Search input */}
+            <div className="mb-4">
+                <Input
+                    placeholder="Mashina raqami, haydovchi yoki telefon raqami bo'yicha qidirish..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="max-w-md"
+                />
+            </div>
+
             {status === 'loading' ? (
                 <div className="flex justify-center items-center h-64">
                     <Loader2 className="h-8 w-8 animate-spin" />
@@ -239,30 +260,38 @@ export default function CarsPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {cars.map((car) => (
-                                <TableRow key={car._id}>
-                                    <TableCell>{car.carNumber}</TableCell>
-                                    <TableCell>{car.driverName}</TableCell>
-                                    <TableCell>{car.driverPhone}</TableCell>
-                                    <TableCell>{car.rentalCount}</TableCell>
-                                    <TableCell className="space-x-2">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => openEditDialog(car)}
-                                        >
-                                            <Pencil className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => openDeleteDialog(car)}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                            {filteredCars.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={5} className="text-center py-4">
+                                        Mashinalar topilmadi
                                     </TableCell>
                                 </TableRow>
-                            ))}
+                            ) : (
+                                filteredCars.map((car) => (
+                                    <TableRow key={car._id}>
+                                        <TableCell>{car.carNumber}</TableCell>
+                                        <TableCell>{car.driverName}</TableCell>
+                                        <TableCell>{car.driverPhone}</TableCell>
+                                        <TableCell>{car.rentalCount}</TableCell>
+                                        <TableCell className="space-x-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => openEditDialog(car)}
+                                            >
+                                                <Pencil className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => openDeleteDialog(car)}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))
+                            )}
                         </TableBody>
                     </Table>
                 </div>

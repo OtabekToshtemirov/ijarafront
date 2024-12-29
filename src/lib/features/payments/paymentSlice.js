@@ -7,7 +7,8 @@ export const fetchPayments = createAsyncThunk(
     'payments/fetchPayments', 
     async () => {
         const response = await axios.get(`${BASE_URL}/payments`);
-        return response.data;
+        // Sort payments by date in descending order (newest first)
+        return response.data.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
     }
 );
 
@@ -15,7 +16,8 @@ export const fetchPaymentsByCustomerId = createAsyncThunk(
     'payments/fetchPaymentsByCustomerId',
     async (customerId) => {
         const response = await axios.get(`${BASE_URL}/payments/customer/${customerId}`);
-        return response.data;
+        // Sort payments by date in descending order (newest first)
+        return response.data.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
     }
 );
 
@@ -38,6 +40,25 @@ export const createPayment = createAsyncThunk(
     }
 );
 
+export const deletePayment = createAsyncThunk(
+    'payments/deletePayment',
+    async (id) => {
+        try {
+            await axios.delete(`${BASE_URL}/payments/${id}`);
+            return id;
+        } catch (error) {
+            if (!error.response) {
+                throw new Error('Server bilan bog\'lanishda xatolik');
+            }
+            throw new Error(
+                error.response?.data?.message || 
+                error.message || 
+                'To\'lovni o\'chirishda xatolik'
+            );
+        }
+    }
+);
+
 const paymentSlice = createSlice({
     name: 'payments',
     initialState: {
@@ -46,6 +67,8 @@ const paymentSlice = createSlice({
         error: null,
         addStatus: 'idle',
         addError: null,
+        deleteStatus: 'idle',
+        deleteError: null,
     },
     reducers: {
         clearAddStatus: (state) => {
@@ -94,6 +117,21 @@ const paymentSlice = createSlice({
             .addCase(createPayment.rejected, (state, action) => {
                 state.addStatus = 'failed';
                 state.addError = action.error.message;
+            })
+
+            // Handle deletePayment
+            .addCase(deletePayment.pending, (state) => {
+                state.deleteStatus = 'loading';
+                state.deleteError = null;
+            })
+            .addCase(deletePayment.fulfilled, (state, action) => {
+                state.deleteStatus = 'succeeded';
+                state.payments = state.payments.filter(payment => payment._id !== action.payload);
+                state.deleteError = null;
+            })
+            .addCase(deletePayment.rejected, (state, action) => {
+                state.deleteStatus = 'failed';
+                state.deleteError = action.error.message;
             });
     },
 });
@@ -106,5 +144,7 @@ export const selectPaymentsStatus = (state) => state.payments.status;
 export const selectPaymentsError = (state) => state.payments.error;
 export const selectAddPaymentStatus = (state) => state.payments.addStatus;
 export const selectAddPaymentError = (state) => state.payments.addError;
+export const selectDeletePaymentStatus = (state) => state.payments.deleteStatus;
+export const selectDeletePaymentError = (state) => state.payments.deleteError;
 
 export default paymentSlice.reducer;

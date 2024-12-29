@@ -24,7 +24,7 @@ export default function ProductsPage() {
     const dispatch = useDispatch()
     const [searchQuery, setSearchQuery] = useState('')
     const [selectedProduct, setSelectedProduct] = useState(null)
-    const [isProductDetailOpen, setIsProductDetailOpen] = useState(false)
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false)
     const [editingProduct, setEditingProduct] = useState(null)
     const [editedValues, setEditedValues] = useState({})
     const [editingParts, setEditingParts] = useState([])
@@ -49,7 +49,12 @@ export default function ProductsPage() {
 
     const handleViewProduct = (product) => {
         setSelectedProduct(product)
-        setIsProductDetailOpen(true)
+        setIsDetailsOpen(true)
+    }
+
+    const handleCloseDetails = () => {
+        setIsDetailsOpen(false)
+        setSelectedProduct(null)
     }
 
     const handleEditProduct = (product) => {
@@ -291,8 +296,13 @@ export default function ProductsPage() {
 
             <ProductDetailsSheet 
                 product={selectedProduct} 
-                isOpen={isProductDetailOpen} 
-                onOpenChange={setIsProductDetailOpen} 
+                isOpen={isDetailsOpen}
+                onOpenChange={(open) => {
+                    setIsDetailsOpen(open);
+                    if (!open) {
+                        setSelectedProduct(null);
+                    }
+                }}
             />
         </div>
     )

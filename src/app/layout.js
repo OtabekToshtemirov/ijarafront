@@ -4,7 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeProvider } from "@/components/theme-provider";
 import { StoreProvider } from "./StoreProvider";
-import { Toaster } from 'sonner';
+import { Toaster } from "@/components/ui/toaster";
 
 const geistSans = localFont({
     src: "./fonts/GeistVF.woff",
@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
                                 <SidebarTrigger />
                                 {children}
                             </main>
-                            <Toaster richColors position="top-right" />
+                            <Toaster />
                         </SidebarProvider>
                     </ThemeProvider>
                 </StoreProvider>
