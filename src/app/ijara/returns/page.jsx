@@ -119,32 +119,60 @@ export default function Component() {
 
     const handleReturn = async (rental, product) => {
         const key = `${rental._id}-${product.product._id}`;
-        const quantity = returnQuantities[key] || 0;
-
-        if (quantity <= 0) {
-            toast.error("Qaytarish miqdorini kiriting");
+        const returnQuantity = returnQuantities[key] || 0;
+        
+        if (returnQuantity <= 0) {
+            toast.error("Qaytarish miqdorini kiriting!");
             return;
         }
 
-        const returnData = {
-            rentalId: rental._id,
-            productId: product.product._id,
-            quantity: quantity,
-            returnDate: new Date().toISOString()
-        };
+        const returnedQuantity = rental.returnedProducts
+            .filter(rp => rp.product?._id === product.product._id)
+            .reduce((sum, rp) => sum + rp.quantity, 0);
+        const remainingQuantity = product.quantity - returnedQuantity;
+
+        if (returnQuantity > remainingQuantity) {
+            toast.error("Qaytarish miqdori qolgan miqdordan ko'p bo'lishi mumkin emas!");
+            return;
+        }
+
+        const days = calculateRentalDays(
+            product.startDate || rental.startDate,
+            discountDays[rental._id] || 0
+        );
 
         try {
-            await dispatch(returnProduct(returnData)).unwrap();
-            toast.success("Mahsulot muvaffaqiyatli qaytarildi");
-            
-            // Clear the return quantity
-            setReturnQuantities(prev => {
-                const newState = { ...prev };
-                delete newState[key];
-                return newState;
+            console.log('Returning product:', {
+                rentalId: rental._id,
+                products: [{
+                    productId: product.product._id,
+                    quantity: returnQuantity,
+                    days: days
+                }]
             });
+
+            await dispatch(returnProduct({
+                rentalId: rental._id,
+                products: [{
+                    productId: product.product._id,
+                    quantity: returnQuantity,
+                    days: days
+                }]
+            })).unwrap();
+            
+            // Clear return quantity after successful return
+            setReturnQuantities(prev => ({
+                ...prev,
+                [key]: 0
+            }));
+
+            // Refresh rentals data
+            dispatch(fetchRentals());
+            
+            toast.success("Mahsulot muvaffaqiyatli qaytarildi!");
         } catch (error) {
-            toast.error(error.message || "Mahsulotni qaytarishda xatolik yuz berdi");
+            console.error('Return error:', error);
+            toast.error(error.message || "Qaytarishda xatolik yuz berdi");
         }
     };
 
@@ -319,7 +347,7 @@ export default function Component() {
                                         if (remainingQuantity <= 0) return null;
 
                                         const returnQuantity = returnQuantities[key] || 0;
-                                        const cost = calculateProductCost(prod.product, days) * returnQuantity;
+                                        const cost = calculateProductCost(prod, days) * returnQuantity;
 
                                         return (
                                             <TableRow key={prod.product._id}>
@@ -328,24 +356,34 @@ export default function Component() {
                                                     {new Date(prod.startDate || rental.startDate).toLocaleDateString()}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {prod.product.dailyRate?.toLocaleString()} so'm
+                                                    {prod.dailyRate?.toLocaleString()} so'm
                                                 </TableCell>
                                                 <TableCell>{prod.quantity}</TableCell>
                                                 <TableCell>{returnedQuantity}</TableCell>
                                                 <TableCell>
-                                                    <Input
-                                                        type="number"
-                                                        min="1"
-                                                        max={remainingQuantity}
-                                                        value={returnQuantities[key] || ""}
-                                                        onChange={(e) => handleReturnQuantityChange(
-                                                            rental._id,
-                                                            prod.product._id,
-                                                            parseInt(e.target.value) || 0,
-                                                            remainingQuantity
-                                                        )}
-                                                        className="w-20"
-                                                    />
+                                                    <div className="flex items-center gap-2">
+                                                        <Input
+                                                            type="number"
+                                                            min="0"
+                                                            max={remainingQuantity}
+                                                            value={returnQuantities[key] || ""}
+                                                            onChange={(e) => {
+                                                                const value = parseInt(e.target.value) || 0;
+                                                                setReturnQuantities(prev => ({
+                                                                    ...prev,
+                                                                    [key]: Math.min(value, remainingQuantity)
+                                                                }));
+                                                            }}
+                                                            className="w-20"
+                                                        />
+                                                        <Button 
+                                                            variant="outline"
+                                                            onClick={() => handleReturn(rental, prod)}
+                                                            disabled={!returnQuantities[key]}
+                                                        >
+                                                            Qaytarish
+                                                        </Button>
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge variant={remainingQuantity > 0 ? "secondary" : "success"}>
@@ -355,21 +393,15 @@ export default function Component() {
                                                 <TableCell>
                                                     <div>
                                                         <div className="font-medium">
-                                                            {cost.toLocaleString()} so'm
+                                                            {(calculateProductCost(prod, days) * (returnQuantities[key] || 0)).toLocaleString()} so'm
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            ({days} kun × {returnQuantity} dona)
+                                                            ({days} kun × {returnQuantities[key] || 0} dona × {prod.dailyRate?.toLocaleString()} so'm)
                                                         </div>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Button
-                                                        size="sm"
-                                                        onClick={() => handleReturn(rental, prod)}
-                                                        disabled={!returnQuantities[key]}
-                                                    >
-                                                        Qaytarish
-                                                    </Button>
+                                                    
                                                 </TableCell>
                                             </TableRow>
                                         );

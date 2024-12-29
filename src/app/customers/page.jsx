@@ -161,29 +161,30 @@ export default function Component() {
     };
 
     const getActiveRentals = () => {
-        return rentals.filter(rental => rental.status === 'active');
+        return rentals.filter(rental => rental.customer?._id === selectedCustomer?._id && rental.status === 'active');
     };
 
     const getUnreturnedProducts = () => {
         const unreturnedProducts = [];
-        rentals.forEach(rental => {
-            if (rental.status === 'active') {
-                rental.borrowedProducts.forEach(prod => {
-                    const returnedQuantity = rental.returnedProducts
-                        .filter(rp => rp.product?._id === prod.product?._id)
-                        .reduce((sum, rp) => sum + rp.quantity, 0);
-                    const remainingQuantity = prod.quantity - returnedQuantity;
-                    if (remainingQuantity > 0) {
-                        unreturnedProducts.push({
-                            ...prod,
-                            remainingQuantity,
-                            rentalNumber: rental.rentalNumber,
-                            startDate: rental.startDate
-                        });
-                    }
-                });
-            }
-        });
+        getActiveRentals()
+            .forEach(rental => {
+                if (rental.status === 'active') {
+                    rental.borrowedProducts.forEach(prod => {
+                        const returnedQuantity = rental.returnedProducts
+                            .filter(rp => rp.product?._id === prod.product?._id)
+                            .reduce((sum, rp) => sum + rp.quantity, 0);
+                        const remainingQuantity = prod.quantity - returnedQuantity;
+                        if (remainingQuantity > 0) {
+                            unreturnedProducts.push({
+                                ...prod,
+                                remainingQuantity,
+                                rentalNumber: rental.rentalNumber,
+                                startDate: rental.startDate
+                            });
+                        }
+                    });
+                }
+            });
         return unreturnedProducts;
     };
 
@@ -527,7 +528,10 @@ export default function Component() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        {rentals.filter(rental => rental.status === 'active').map((rental) => (
+                                        {rentals
+                                            .filter(rental => rental.customer?._id === selectedCustomer?._id)
+                                            .filter(rental => rental.status === 'active')
+                                            .map((rental) => (
                                             <div
                                                 key={rental._id}
                                                 className="border rounded-lg p-4"
@@ -595,7 +599,9 @@ export default function Component() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="space-y-4">
-                                        {rentals.map((rental) => (
+                                        {rentals
+                                            .filter(rental => rental.customer?._id === selectedCustomer?._id)
+                                            .map((rental) => (
                                             <div
                                                 key={rental._id}
                                                 className="border rounded-lg p-4"

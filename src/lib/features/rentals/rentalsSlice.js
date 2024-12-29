@@ -8,7 +8,6 @@ export const fetchRentals = createAsyncThunk(
     'rentals/fetchRentals',
     async () => {
         const response = await axios.get(`${BASE_URL}/rentals`);
-        console.log(response.data);
         return response.data;
     }
 );
@@ -112,8 +111,22 @@ export const returnProducts = createAsyncThunk(
 export const returnProduct = createAsyncThunk(
     'rentals/returnProduct',
     async (returnData) => {
-        const response = await axios.post(`${BASE_URL}/rentals/return`, returnData);
-        return response.data;
+        try {
+            console.log('Sending return data:', returnData); // Debug log
+            const response = await axios.post(`${BASE_URL}/rentals/return`, returnData);
+            console.log('Return response:', response.data); // Debug log
+            return response.data;
+        } catch (error) {
+            console.error('Return error:', error); // Debug log
+            if (!error.response) {
+                throw new Error('Server bilan bog\'lanishda xatolik yuz berdi');
+            }
+            throw new Error(
+                error.response?.data?.message || 
+                error.message || 
+                'Mahsulotni qaytarishda xatolik yuz berdi'
+            );
+        }
     }
 );
 
@@ -179,11 +192,14 @@ const formatRentalData = (rental) => ({
 
 const initialState = {
     rentals: [],
-    status: 'idle', // 'idle' | 'loading' | 'succeeded' | 'failed'
+    status: 'idle',
     error: null,
     currentRental: null,
     currentRentalStatus: 'idle',
     currentRentalError: null,
+    customerRentals: [],
+    customerRentalsStatus: 'idle',
+    customerRentalsError: null,
     addStatus: 'idle',
     addError: null,
     updateStatus: 'idle',
@@ -354,15 +370,17 @@ const rentalsSlice = createSlice({
 
             // Fetch rentals by customer
             .addCase(fetchRentalsByCustomerId.pending, (state) => {
-                state.status = 'loading';
+                state.customerRentalsStatus = 'loading';
+                state.customerRentalsError = null;
             })
             .addCase(fetchRentalsByCustomerId.fulfilled, (state, action) => {
-                state.status = 'succeeded';
-                state.rentals = action.payload;
+                state.customerRentalsStatus = 'succeeded';
+                state.customerRentals = action.payload;
+                state.customerRentalsError = null;
             })
             .addCase(fetchRentalsByCustomerId.rejected, (state, action) => {
-                state.status = 'failed';
-                state.error = action.error.message;
+                state.customerRentalsStatus = 'failed';
+                state.customerRentalsError = action.error.message;
             })
 
             // Fetch rentals by product
@@ -388,6 +406,9 @@ export const selectCurrentRental = (state) => state.rentals.currentRental;
 export const selectCurrentRentalStatus = (state) => state.rentals.currentRentalStatus;
 export const selectAddRentalStatus = (state) => state.rentals.addStatus;
 export const selectAddRentalError = (state) => state.rentals.addError;
+export const selectCustomerRentals = (state) => state.rentals.customerRentals;
+export const selectCustomerRentalsStatus = (state) => state.rentals.customerRentalsStatus;
+export const selectCustomerRentalsError = (state) => state.rentals.customerRentalsError;
 
 export const { clearRentalSummary, clearAddStatus, clearUpdateStatus, clearReturnStatus } = rentalsSlice.actions;
 

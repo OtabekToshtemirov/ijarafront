@@ -99,7 +99,7 @@ export default function ProductDetailsSheet({
                                 <div className="flex flex-wrap gap-2">
                                     {product.parts && product.parts.map((part, index) => (
                                         <Badge key={index} variant="secondary">
-                                            {part.product} ({part.quantity}x)
+                                            {part.product} ({part.quantity} dona)
                                         </Badge>
                                     ))}
                                 </div>
@@ -113,32 +113,62 @@ export default function ProductDetailsSheet({
                     </div>
 
                     <div className="mt-6">
-                        <h3 className="text-lg font-semibold mb-4">Ijaraga Berilgan Holatlari</h3>
+                        <h3 className="text-lg font-semibold mb-4">Ijara Tarixi</h3>
                         {isLoading ? (
-                            <p className="text-muted-foreground">Yuklanmoqda...</p>
+                            <p>Yuklanmoqda...</p>
                         ) : productRentals.length > 0 ? (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Mijoz</TableHead>
-                                        <TableHead>Boshlanish Sanasi</TableHead>
-                                        <TableHead>Tugash Sanasi</TableHead>
-                                        <TableHead>Umumiy Narx</TableHead>
+                                        <TableHead>Ijara Sanasi</TableHead>
+                                        <TableHead>Qaytarish Sanasi</TableHead>
+                                        <TableHead>Kunlik Narx</TableHead>
+                                        <TableHead>Miqdori</TableHead>
+                                        <TableHead>Umumiy Summa</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {productRentals.map((rental) => (
-                                        <TableRow key={rental._id}>
-                                            <TableCell>{rental.customer?.name || 'Noma\'lum mijoz'}</TableCell>
-                                            <TableCell>{new Date(rental.startDate).toLocaleDateString()}</TableCell>
-                                            <TableCell>{new Date(rental.endDate).toLocaleDateString()}</TableCell>
-                                            <TableCell>{rental.totalCost} so'm</TableCell>
-                                        </TableRow>
-                                    ))}
+                                    {productRentals.map((rental) => {
+                                        // Find this product in borrowed products
+                                        const borrowedProduct = rental.borrowedProducts.find(
+                                            bp => bp.product._id === product._id
+                                        );
+                                        
+                                        // Find returned product if exists
+                                        const returnedProduct = rental.returnedProducts.find(
+                                            rp => rp.product._id === product._id
+                                        );
+
+                                        if (!borrowedProduct) return null;
+
+                                        return (
+                                            <TableRow key={rental._id}>
+                                                <TableCell>{rental.customer?.name || 'Noma\'lum'}</TableCell>
+                                                <TableCell>
+                                                    {new Date(borrowedProduct.startDate).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {returnedProduct ? 
+                                                        new Date(returnedProduct.returnDate).toLocaleDateString() :
+                                                        'Qaytarilmagan'
+                                                    }
+                                                </TableCell>
+                                                <TableCell>{borrowedProduct.dailyRate} so'm</TableCell>
+                                                <TableCell>{borrowedProduct.quantity} dona</TableCell>
+                                                <TableCell>
+                                                    {returnedProduct ? 
+                                                        `${returnedProduct.cost} so'm` :
+                                                        'Hisob-kitob qilinmagan'
+                                                    }
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
                                 </TableBody>
                             </Table>
                         ) : (
-                            <p className="text-muted-foreground">Bu mahsulot hozircha ijaraga berilmagan</p>
+                            <p>Bu mahsulot hali ijaraga berilmagan</p>
                         )}
                     </div>
                 </div>

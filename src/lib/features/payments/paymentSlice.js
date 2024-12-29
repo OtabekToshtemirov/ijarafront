@@ -1,42 +1,40 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-export const fetchPayments = createAsyncThunk('payments/fetchPayments', async () => {
-    const response = await fetch('http://localhost:5000/api/payments');
-    if (!response.ok) {
-        throw new Error('Could not fetch payments');
+const BASE_URL = 'http://localhost:5000/api';
+
+export const fetchPayments = createAsyncThunk(
+    'payments/fetchPayments', 
+    async () => {
+        const response = await axios.get(`${BASE_URL}/payments`);
+        return response.data;
     }
-    const data = await response.json();
-    return data;
-});
+);
 
 export const fetchPaymentsByCustomerId = createAsyncThunk(
     'payments/fetchPaymentsByCustomerId',
     async (customerId) => {
-        const response = await fetch(`http://localhost:5000/api/payments/customer/${customerId}`);
-        if (!response.ok) {
-            throw new Error('Could not fetch payments');
-        }
-        const data = await response.json();
-        return data;
+        const response = await axios.get(`${BASE_URL}/payments/customer/${customerId}`);
+        return response.data;
     }
 );
 
 export const createPayment = createAsyncThunk(
     'payments/createPayment',
-    async (payment) => {
-        const response = await fetch('http://localhost:5000/api/payments', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(payment),
-        });
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.message);
+    async (paymentData) => {
+        try {
+            const response = await axios.post(`${BASE_URL}/payments`, paymentData);
+            return response.data;
+        } catch (error) {
+            if (!error.response) {
+                throw new Error('Server bilan bog\'lanishda xatolik');
+            }
+            throw new Error(
+                error.response?.data?.message || 
+                error.message || 
+                'To\'lovni qo\'shishda xatolik'
+            );
         }
-        const data = await response.json();
-        return data;
     }
 );
 
@@ -57,6 +55,7 @@ const paymentSlice = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // Handle fetchPayments
             .addCase(fetchPayments.pending, (state) => {
                 state.status = 'loading';
             })
@@ -68,6 +67,8 @@ const paymentSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.error.message;
             })
+            
+            // Handle fetchPaymentsByCustomerId
             .addCase(fetchPaymentsByCustomerId.pending, (state) => {
                 state.status = 'loading';
             })
@@ -79,12 +80,16 @@ const paymentSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.error.message;
             })
+            
+            // Handle createPayment
             .addCase(createPayment.pending, (state) => {
                 state.addStatus = 'loading';
+                state.addError = null;
             })
             .addCase(createPayment.fulfilled, (state, action) => {
                 state.addStatus = 'succeeded';
                 state.payments.push(action.payload);
+                state.addError = null;
             })
             .addCase(createPayment.rejected, (state, action) => {
                 state.addStatus = 'failed';
@@ -93,13 +98,13 @@ const paymentSlice = createSlice({
     },
 });
 
+export const { clearAddStatus } = paymentSlice.actions;
+
 // Selectors
 export const selectPayments = (state) => state.payments.payments;
 export const selectPaymentsStatus = (state) => state.payments.status;
 export const selectPaymentsError = (state) => state.payments.error;
 export const selectAddPaymentStatus = (state) => state.payments.addStatus;
 export const selectAddPaymentError = (state) => state.payments.addError;
-
-export const { clearAddStatus } = paymentSlice.actions;
 
 export default paymentSlice.reducer;

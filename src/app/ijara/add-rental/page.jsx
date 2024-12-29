@@ -243,8 +243,6 @@ export default function AddRentalPage() {
             });
             return;
         }
-
-        const amount = product.dailyRate || 0;
         
         setRentalForm(prev => ({
             ...prev,
@@ -253,9 +251,8 @@ export default function AddRentalPage() {
                 {
                     product: product._id,
                     quantity: 1,
-                    dailyRate: amount,
-                    amount: amount,
-                    startDate: new Date().toISOString().split('T')[0]
+                    dailyRate: product.dailyRate || 0,
+                    startDate: new Date().toISOString()
                 }
             ]
         }));
@@ -273,37 +270,43 @@ export default function AddRentalPage() {
         }));
     };
 
+    const handleDailyRateChange = (index, value) => {
+        const newRate = parseInt(value) || 0;
+        
+        setRentalForm(prev => ({
+            ...prev,
+            borrowedProducts: prev.borrowedProducts.map((item, i) => 
+                i === index ? { ...item, dailyRate: newRate } : item
+            )
+        }));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!rentalForm.customer) {
-            toast.error("Iltimos mijozni tanlang!");
-            return;
-        }
-
-        if (rentalForm.borrowedProducts.length === 0) {
-            toast.error("Iltimos kamida bitta mahsulot qo'shing!");
+        if (!validateForm()) {
             return;
         }
 
         // Calculate total cost
         const totalCost = rentalForm.borrowedProducts.reduce((sum, product) => {
-            return sum + (product.quantity * product.amount);
+            return sum + (Number(product.quantity) * Number(product.dailyRate || 0));
         }, 0);
 
         // Format the data for the API
         const formData = {
-            ...rentalForm,
-            totalCost,
-            startDate: new Date().toISOString(),
+            customer: rentalForm.customer,
+            ...(rentalForm.car && { car: rentalForm.car }),
             borrowedProducts: rentalForm.borrowedProducts.map(product => ({
                 product: product.product,
                 quantity: Number(product.quantity),
-                amount: Number(product.amount),
-                dailyRate: Number(product.amount),
-                startDate: new Date().toISOString()
-            }))
+                dailyRate: Number(product.dailyRate || 0)
+            })),
+            totalCost: totalCost,
+            debt: totalCost
         };
+
+        console.log('Submitting rental data:', formData); // Debug log
 
         try {
             const response = await dispatch(createRental(formData)).unwrap();
@@ -313,6 +316,7 @@ export default function AddRentalPage() {
                 router.push('/ijara');
             }
         } catch (error) {
+            console.error('Error creating rental:', error); // Debug log
             toast.error(error.message || "Xatolik yuz berdi!");
         }
     };
@@ -323,7 +327,7 @@ export default function AddRentalPage() {
         setRentalForm(prev => ({
             ...prev,
             borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                i === index ? { ...item, amount: newAmount, dailyRate: newAmount } : item
+                i === index ? { ...item, amount: newAmount } : item
             )
         }));
     };
@@ -483,9 +487,9 @@ export default function AddRentalPage() {
                                                             disabled={!p.isAvailable || p.quantity < 1}
                                                         >
                                                             <div className="flex justify-between items-center w-full">
-                                                                <span>{p.name}</span>
-                                                                <span className="text-sm text-muted-foreground">
-                                                                    {p.quantity} dona
+                                                                <span>{p.name}  </span>
+                                                                <span className="text-sm text-muted-foreground pl-2">
+                                                                    {p.quantity} ta
                                                                 </span>
                                                             </div>
                                                         </SelectItem>
@@ -577,26 +581,11 @@ export default function AddRentalPage() {
                                         <label>Kunlik narx</label>
                                         <Input
                                             type="number"
-                                            value={product.dailyRate}
-                                            onChange={(e) => {
-                                                const dailyRate = Number(e.target.value);
-                                                setRentalForm(prev => ({
-                                                    ...prev,
-                                                    borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                                                        i === index ? {
-                                                            ...item,
-                                                            dailyRate,
-                                                            amount: item.quantity * dailyRate
-                                                        } : item
-                                                    )
-                                                }));
-                                            }}
+                                            value={product.dailyRate || ""}
+                                            onChange={(e) => handleDailyRateChange(index, e.target.value)}
                                             min="0"
-                                            className={validationErrors[`borrowedProducts.${index}.dailyRate`] ? 'border-red-500' : ''}
+                                            className="w-24"
                                         />
-                                        {validationErrors[`borrowedProducts.${index}.dailyRate`] && (
-                                            <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.dailyRate`]}</p>
-                                        )}
                                     </div>
 
                                     <div className="flex items-center justify-between space-x-4">

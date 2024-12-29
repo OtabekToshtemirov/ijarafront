@@ -2,22 +2,21 @@
 
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { useForm, Controller } from "react-hook-form"
+import { useForm } from "react-hook-form"
 import { format, isSameMonth } from "date-fns"
-import { CalendarIcon, Loader2, Pencil, Check, X } from 'lucide-react'
+import { CalendarIcon, Loader2 } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
 import { Calendar } from "@/components/ui/calendar"
 import { useToast } from "@/hooks/use-toast"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
+  FormDescription,
   FormMessage,
 } from "@/components/ui/form"
 import {
@@ -29,7 +28,14 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { addPayment, fetchPayments, editPayment } from "@/lib/features/payments/paymentSlice"
+import { 
+  createPayment, 
+  fetchPayments, 
+  selectPayments,
+  selectPaymentsStatus,
+  selectAddPaymentStatus,
+  selectAddPaymentError
+} from "@/lib/features/payments/paymentSlice"
 import { fetchCustomers } from "@/lib/features/customers/customerSlice"
 
 export default function PaymentManagement() {
@@ -37,16 +43,21 @@ export default function PaymentManagement() {
   const { toast } = useToast()
   const [showForm, setShowForm] = useState(false)
   const [editingPayment, setEditingPayment] = useState(null)
+  const [filteredCustomers, setFilteredCustomers] = useState(null)
+  
   const customers = useSelector((state) => state.customers.customers)
-  const payments = useSelector((state) => state.payments.payments)
-  const paymentStatus = useSelector((state) => state.payments.status)
+  const payments = useSelector(selectPayments)
+  const paymentStatus = useSelector(selectPaymentsStatus)
+  const addStatus = useSelector(selectAddPaymentStatus)
+  const addError = useSelector(selectAddPaymentError)
+
   const form = useForm({
     defaultValues: {
       customer: "",
       amount: "",
       paymentDate: new Date(),
-      paymentMethod: "cash",
-      memo: "",
+      paymentType: "cash",
+      description: "",
     },
   })
 
@@ -55,22 +66,41 @@ export default function PaymentManagement() {
     dispatch(fetchPayments())
   }, [dispatch])
 
+  useEffect(() => {
+    if (addStatus === 'failed' && addError) {
+      toast({ 
+        title: "Error adding payment", 
+        description: addError,
+        variant: "destructive" 
+      })
+    }
+  }, [addStatus, addError, toast])
+
   const onSubmit = async (data) => {
     try {
       if (editingPayment) {
-        await dispatch(editPayment({ _id: editingPayment._id, updatedPayment: data })).unwrap()
-        toast({ title: "Payment updated successfully!" })
-        setEditingPayment(null)
+        // Handle edit case
       } else {
-        await dispatch(addPayment(data)).unwrap()
-        // refresh payments
-        dispatch(fetchPayments())
+        await dispatch(createPayment({
+          customer: data.customer,
+          amount: parseFloat(data.amount),
+          paymentDate: data.paymentDate,
+          paymentType: data.paymentType,
+          description: data.description
+        })).unwrap()
+        
+        // Refresh payments only after successful creation
+        await dispatch(fetchPayments())
         toast({ title: "Payment added successfully!" })
+        form.reset()
+        setShowForm(false)
       }
-      form.reset()
-      setShowForm(false)
     } catch (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" })
+      toast({ 
+        title: "Error", 
+        description: error.message || "Failed to add payment", 
+        variant: "destructive" 
+      })
     }
   }
 
@@ -80,8 +110,8 @@ export default function PaymentManagement() {
       customer: payment.customer,
       amount: payment.amount,
       paymentDate: new Date(payment.paymentDate),
-      paymentMethod: payment.paymentMethod,
-      memo: payment.memo,
+      paymentType: payment.paymentType,
+      description: payment.description,
     })
     setShowForm(true)
   }
@@ -120,11 +150,33 @@ export default function PaymentManagement() {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {customers.map((customer) => (
+                                <div className="p-2">
+                                  <Input
+                                    type="text"
+                                    placeholder="Search customer..."
+                                    className="mb-2"
+                                    onChange={(e) => {
+                                      const searchTerm = e.target.value.toLowerCase();
+                                      const filtered = customers.filter((customer) =>
+                                        customer.name.toLowerCase().includes(searchTerm) ||
+                                        customer.phone.toLowerCase().includes(searchTerm)
+                                      );
+                                      setFilteredCustomers(filtered);
+                                    }}
+                                  />
+                                </div>
+                                <div className="max-h-[200px] overflow-y-auto">
+                                  {(filteredCustomers || customers).map((customer) => (
                                     <SelectItem key={customer._id} value={customer._id}>
-                                      {customer.name}
+                                      <div className="flex flex-col">
+                                        <span>{customer.name}</span>
+                                        <span className="text-sm text-muted-foreground">
+                                          {customer.phone}
+                                        </span>
+                                      </div>
                                     </SelectItem>
-                                ))}
+                                  ))}
+                                </div>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -178,14 +230,14 @@ export default function PaymentManagement() {
                   />
                   <FormField
                       control={form.control}
-                      name="paymentMethod"
+                      name="paymentType"
                       render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Payment Method</FormLabel>
+                            <FormLabel>Payment Type</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Select payment method" />
+                                  <SelectValue placeholder="Select payment type" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
@@ -199,12 +251,12 @@ export default function PaymentManagement() {
                   />
                   <FormField
                       control={form.control}
-                      name="memo"
+                      name="description"
                       render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Memo (Optional)</FormLabel>
+                            <FormLabel>Description (Optional)</FormLabel>
                             <FormControl>
-                              <Textarea placeholder="Additional information" {...field} />
+                              <Input placeholder="Additional information" {...field} />
                             </FormControl>
                             <FormDescription>Add additional notes about this payment.</FormDescription>
                             <FormMessage />
@@ -237,8 +289,8 @@ export default function PaymentManagement() {
                     <TableHead>Customer</TableHead>
                     <TableHead>Amount</TableHead>
                     <TableHead>Date</TableHead>
-                    <TableHead>Method</TableHead>
-                    <TableHead>Memo</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Description</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -248,11 +300,11 @@ export default function PaymentManagement() {
                         <TableCell>{customers.find((customer) => customer._id === payment.customer)?.name || "Unknown"}</TableCell>
                         <TableCell>${payment.amount.toLocaleString()}</TableCell>
                         <TableCell>{format(new Date(payment.paymentDate), "PPP")}</TableCell>
-                        <TableCell>{payment.paymentMethod}</TableCell>
-                        <TableCell>{payment.memo || "-"}</TableCell>
+                        <TableCell>{payment.paymentType}</TableCell>
+                        <TableCell>{payment.description || "-"}</TableCell>
                         <TableCell>
                           <Button onClick={() => handleEdit(payment)} size="sm">
-                            <Pencil className="h-4 w-4" />
+                            <CalendarIcon className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
