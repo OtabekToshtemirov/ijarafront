@@ -39,7 +39,7 @@ export default function AddRentalPage() {
     const [rentalForm, setRentalForm] = useState({
         customer: '',
         car: '',
-        startDate: new Date().toISOString().split('T')[0],
+        workStartDate: new Date().toISOString().split('T')[0],
         prepaidAmount: 0,
         status: 'active',
         borrowedProducts: [{
@@ -119,8 +119,8 @@ export default function AddRentalPage() {
             errors.customer = 'Iltimos, mijozni tanlang';
         }
 
-        if (!rentalForm.startDate) {
-            errors.startDate = 'Iltimos, boshlanish sanasini kiriting';
+        if (!rentalForm.workStartDate) {
+            errors.workStartDate = 'Iltimos, ish boshlash sanasini kiriting';
         }
 
         if (!rentalForm.borrowedProducts || rentalForm.borrowedProducts.length === 0) {
@@ -169,8 +169,7 @@ export default function AddRentalPage() {
         return true;
     };
 
-    const handleInputChange = (e) => {
-        const { name, value } = e.target;
+    const handleInputChange = (name, value) => {
         setRentalForm(prev => ({ ...prev, [name]: value }));
     };
 
@@ -300,8 +299,10 @@ export default function AddRentalPage() {
             borrowedProducts: rentalForm.borrowedProducts.map(product => ({
                 product: product.product,
                 quantity: Number(product.quantity),
-                dailyRate: Number(product.dailyRate || 0)
+                dailyRate: Number(product.dailyRate || 0),
+                startDate: product.startDate
             })),
+            workStartDate: rentalForm.workStartDate,
             totalCost: totalCost,
             debt: totalCost
         };
@@ -393,18 +394,19 @@ export default function AddRentalPage() {
                                 )}
                             </div>
 
-                            <div className="space-y-2">
-                                <label>Ish boshlash sanasi</label>
-                                <Input
-                                    type="date"
-                                    name="startDate"
-                                    value={rentalForm.startDate}
-                                    onChange={handleInputChange}
-                                    className={validationErrors.startDate ? 'border-red-500' : ''}
-                                />
-                                {validationErrors.startDate && (
-                                    <p className="text-sm text-red-500">{validationErrors.startDate}</p>
-                                )}
+                            <div className="grid gap-4 py-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                    <label htmlFor="workStartDate" className="text-right">
+                                        Ish boshlanish sanasi
+                                    </label>
+                                    <Input
+                                        id="workStartDate"
+                                        type="date"
+                                        value={rentalForm.workStartDate}
+                                        className="col-span-3"
+                                        onChange={(e) => handleInputChange('workStartDate', e.target.value)}
+                                    />
+                                </div>
                             </div>
 
                             <div className="space-y-2">
@@ -413,7 +415,7 @@ export default function AddRentalPage() {
                                     type="number"
                                     name="prepaidAmount"
                                     value={rentalForm.prepaidAmount}
-                                    onChange={handleInputChange}
+                                    onChange={(e) => handleInputChange('prepaidAmount', e.target.value)}
                                     min="0"
                                     placeholder="Oldindan to'lov summasi"
                                 />

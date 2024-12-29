@@ -181,7 +181,7 @@ export default function RentalsPage() {
                                     <div className="flex flex-col">
                                         <span>{rental.rentalNumber || '-'}</span>
                                         <span className="text-sm text-muted-foreground">
-                                            {new Date(rental.startDate).toLocaleDateString()}
+                                            {new Date(rental.createdAt).toLocaleDateString()}
                                         </span>
                                     </div>
                                 </TableCell>
@@ -209,11 +209,7 @@ export default function RentalsPage() {
                                                 To'langan: {rental.totalPayments?.toLocaleString()} so'm
                                             </span>
                                         )}
-                                        {rental.remainingAmount > 0 && (
-                                            <span className="text-sm text-orange-600">
-                                                Qoldi: {rental.remainingAmount?.toLocaleString()} so'm
-                                            </span>
-                                        )}
+                                        
                                     </div>
                                 </TableCell>
                                 <TableCell>
