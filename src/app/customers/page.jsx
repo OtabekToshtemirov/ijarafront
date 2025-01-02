@@ -370,6 +370,7 @@ export default function Component() {
                 </div>
             </div>
 
+
             <div className="border rounded-lg">
                 <Table>
                     <TableHeader>
@@ -377,7 +378,7 @@ export default function Component() {
                             <TableHead>Ism</TableHead>
                             <TableHead>Telefon</TableHead>
                             <TableHead>Status</TableHead>
-                            <TableHead>Balans</TableHead>
+                            <TableHead>Moliyaviy holat</TableHead>
                             <TableHead>Manzil</TableHead>
                             <TableHead className="text-right">Amallar</TableHead>
                         </TableRow>
@@ -402,9 +403,7 @@ export default function Component() {
                                         <TableCell>
                                             <Select
                                                 value={editingCustomer.status}
-                                                onValueChange={(value) =>
-                                                    setEditingCustomer({ ...editingCustomer, status: value })
-                                                }
+                                                onValueChange={(value) => setEditingCustomer({ ...editingCustomer, status: value })}
                                             >
                                                 <SelectTrigger>
                                                     <SelectValue />
@@ -443,12 +442,23 @@ export default function Component() {
                                         <TableCell>{customer.name}</TableCell>
                                         <TableCell>{customer.phone}</TableCell>
                                         <TableCell>
-                                            <Badge className={getStatusColor(customer.status)}>
+                                            <Badge variant={getStatusColor(customer.status)}>
                                                 {customer.status === 'oddiy' ? 'Oddiy' :
                                                  customer.status === 'VIP' ? 'VIP' : 'Yomon'}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>{customer.balance?.toLocaleString()} so'm</TableCell>
+                                        <TableCell>
+                                            <div className="space-y-1">
+                                                <Badge variant={customer.balance >= 0 ? "success" : "destructive"}>
+                                                    Balans: {customer.balance?.toLocaleString()} so'm
+                                                </Badge>
+                                                <div className="text-xs text-muted-foreground">
+                                                    To'lovlar: {customer.totalPayments?.toLocaleString()} so'm
+                                                    <br />
+                                                    Qaytarishlar: {customer.totalReturnAmount?.toLocaleString()} so'm
+                                                </div>
+                                            </div>
+                                        </TableCell>
                                         <TableCell>{customer.address}</TableCell>
                                         <TableCell className="text-right space-x-2">
                                             <Button onClick={() => handleViewCustomer(customer)} size="sm" variant="outline">
@@ -468,6 +478,7 @@ export default function Component() {
                     </TableBody>
                 </Table>
             </div>
+
 
             {/* View Customer Dialog */}
             <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
@@ -510,24 +521,40 @@ export default function Component() {
                                 <CardHeader>
                                     <CardTitle>Moliyaviy ma'lumotlar</CardTitle>
                                 </CardHeader>
-                                <CardContent className="grid grid-cols-3 gap-4">
-                                    <div>
-                                        <Label>Balans</Label>
-                                        <p className="text-lg font-medium">
-                                            {selectedCustomer.balance?.toLocaleString()} so'm
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <Label>Jami to'lovlar</Label>
-                                        <p className="text-lg font-medium text-green-600">
-                                            {getTotalPayments().toLocaleString()} so'm
-                                        </p>
-                                    </div>
-                                    <div>
-                                        <Label>Faol ijaralar</Label>
-                                        <p className="text-lg font-medium">
-                                            {getActiveRentals().length} ta
-                                        </p>
+                                <CardContent>
+                                    <div className="grid gap-6">
+                                        <div className="flex items-center justify-center">
+                                            <div className="text-center">
+                                                <Badge 
+                                                    className="text-lg px-6 py-2"
+                                                    variant={selectedCustomer.balance >= 0 ? "success" : "destructive"}
+                                                >
+                                                    Balans: {selectedCustomer.balance?.toLocaleString()} so'm
+                                                </Badge>
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <Card>
+                                                <CardHeader>
+                                                    <CardTitle className="text-green-600">To'lovlar</CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="text-2xl font-bold text-green-600">
+                                                        {getTotalPayments().toLocaleString()} so'm
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                            <Card>
+                                                <CardHeader>
+                                                    <CardTitle className="text-red-600">Qaytarishlar</CardTitle>
+                                                </CardHeader>
+                                                <CardContent>
+                                                    <div className="text-2xl font-bold text-red-600">
+                                                        {selectedCustomer.totalReturnAmount?.toLocaleString()} so'm
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

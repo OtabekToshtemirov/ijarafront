@@ -95,8 +95,8 @@ export default function Component() {
         return Math.max(0, totalDays - discountDays);
     };
 
-    const calculateProductCost = (product, days) => {
-        return (product.savedDailyRate || 0) * days;
+    const calculateProductCost = (product, days, quantity) => {
+        return (product.dailyRate || 0) * days * quantity;
     };
 
     const handleReturnQuantityChange = (rentalId, productId, quantity, maxQuantity) => {
@@ -345,7 +345,7 @@ export default function Component() {
                                         if (remainingQuantity <= 0) return null;
 
                                         const returnQuantity = returnQuantities[key] || 0;
-                                        const cost = calculateProductCost(prod, days) * returnQuantity;
+                                        const cost = calculateProductCost(prod, days, returnQuantity);
 
                                         return (
                                             <TableRow key={prod.product._id}>
@@ -391,10 +391,17 @@ export default function Component() {
                                                 <TableCell>
                                                     <div>
                                                         <div className="font-medium">
-                                                            {(calculateProductCost(prod, days) * (returnQuantities[key] || 0)).toLocaleString()} so'm
+                                                            {calculateProductCost(
+                                                                prod, 
+                                                                calculateRentalDays(
+                                                                    prod.startDate || rental.startDate,
+                                                                    discountDays[rental._id] || 0
+                                                                ),
+                                                                returnQuantities[key] || 0
+                                                            ).toLocaleString()} so'm
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            ({days} kun × {returnQuantities[key] || 0} dona × {prod.dailyRate?.toLocaleString()} so'm)
+                                                            ({calculateRentalDays(prod.startDate || rental.startDate, discountDays[rental._id] || 0)} kun × {returnQuantities[key] || 0} dona × {prod.dailyRate?.toLocaleString()} so'm)
                                                         </div>
                                                     </div>
                                                 </TableCell>
