@@ -130,6 +130,25 @@ export default function CustomerDetailsPage() {
         return Math.ceil((now - start) / (1000 * 60 * 60 * 24));
     };
 
+    // Filter active rentals
+    const activeRentals = rentals.filter(rental => rental.status === 'active');
+    
+    // Get unreturned products across all rentals
+    const getUnreturnedProducts = () => {
+        return rentals.flatMap(rental => {
+            return rental.borrowedProducts.filter(product => {
+                const returnedQuantity = rental.returnedProducts
+                    ?.filter(rp => rp.product?._id === product.product?._id)
+                    ?.reduce((sum, rp) => sum + rp.quantity, 0) || 0;
+                return returnedQuantity < product.quantity;
+            }).map(product => ({
+                ...product,
+                rental,
+                remainingQuantity: getRemainingQuantity(rental, product)
+            }));
+        });
+    };
+
     if (status === 'loading' || rentalsStatus === 'loading') {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -182,112 +201,138 @@ export default function CustomerDetailsPage() {
                     </CardContent>
                 </Card>
 
-                {/* Rentals */}
+                {/* Active Rentals */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Ijaralar tarixi</CardTitle>
+                        <CardTitle>Faol ijaralar</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {rentalsStatus === 'loading' ? (
-                            <div className="flex justify-center py-4">
-                                <Loader2 className="h-6 w-6 animate-spin" />
-                            </div>
-                        ) : rentals.length === 0 ? (
+                        {activeRentals.length === 0 ? (
                             <div className="text-center py-4 text-muted-foreground">
-                                Ijaralar mavjud emas
+                                Faol ijaralar mavjud emas
                             </div>
                         ) : (
-                            <div className="space-y-4">
-                                {rentals.map((rental) => (
-                                    <div 
-                                        key={rental._id}
-                                        className="border rounded-lg p-4 space-y-4"
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <div className="flex items-center gap-2">
-                                                    <p className="font-medium">{rental.rentalNumber}</p>
-                                                    <Badge variant={rental.status === 'active' ? 'default' : 'secondary'}>
-                                                        {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
-                                                    </Badge>
-                                                </div>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {new Date(rental.startDate).toLocaleDateString()} - {rental.rentalDays} kun
-                                                </p>
-                                            </div>
-                                            <div className="text-right">
-                                                <p className="font-medium">
-                                                    {rental.totalCost?.toLocaleString()} so'm
-                                                </p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    To'langan: {rental.totalPayments?.toLocaleString()} so'm
-                                                </p>
-                                                {rental.debt > 0 && (
-                                                    <p className="text-sm text-red-500">
-                                                        Qarz: {rental.debt?.toLocaleString()} so'm
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Sana</TableHead>
+                                        <TableHead>Mahsulotlar</TableHead>
+                                        <TableHead>Umumiy narx</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {activeRentals.map((rental) => (
+                                        <TableRow key={rental._id}>
+                                            <TableCell>{new Date(rental.startDate).toLocaleDateString()}</TableCell>
+                                            <TableCell>
+                                                {rental.borrowedProducts.map((product, index) => (
+                                                    <div key={index}>
+                                                        {product.product?.name} ({product.quantity} dona)
+                                                    </div>
+                                                ))}
+                                            </TableCell>
+                                            <TableCell>{rental.totalCost?.toLocaleString()} so'm</TableCell>
+                                            <TableCell>
+                                                <Badge variant="secondary">
+                                                    {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
 
-                                        <div>
-                                            <p className="text-sm font-medium mb-2">Mahsulotlar:</p>
-                                            <div className="grid gap-2">
-                                                {rental.borrowedProducts.map((product, idx) => {
-                                                    const remainingQuantity = getRemainingQuantity(rental, product);
-                                                    return (
-                                                        <div key={idx} className="flex justify-between items-center">
-                                                            <div>
-                                                                <p className="font-medium">{product.product?.name}</p>
-                                                                <p className="text-sm text-muted-foreground">
-                                                                    {product.quantity} dona x {product.dailyRate?.toLocaleString()} so'm
-                                                                </p>
-                                                            </div>
-                                                            {remainingQuantity > 0 && rental.status === 'active' ? (
-                                                                <div className="flex items-center gap-2">
-                                                                    <Badge variant="destructive">
-                                                                        Qaytarilmagan: {remainingQuantity} dona
-                                                                    </Badge>
-                                                                    <Input
-                                                                        type="number"
-                                                                        min="1"
-                                                                        max={remainingQuantity}
-                                                                        className="w-20"
-                                                                        value={returnProduct?.productId === product.product?._id ? returnProduct.quantity : ''}
-                                                                        onChange={(e) => setReturnProduct({
-                                                                            productId: product.product?._id,
-                                                                            quantity: parseInt(e.target.value)
-                                                                        })}
-                                                                    />
-                                                                    <Button
-                                                                        size="sm"
-                                                                        onClick={() => handleReturnProduct(rental, product)}
-                                                                        disabled={returnStatus === 'loading'}
-                                                                    >
-                                                                        {returnStatus === 'loading' ? (
-                                                                            <Loader2 className="h-4 w-4 animate-spin" />
-                                                                        ) : (
-                                                                            'Qaytarish'
-                                                                        )}
-                                                                    </Button>
-                                                                </div>
-                                                            ) : (
-                                                                <Badge variant="outline">Qaytarilgan</Badge>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        </div>
-
-                                        {rental.car && (
-                                            <div className="text-sm text-muted-foreground">
-                                                Mashina: {rental.car.carNumber}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
+                {/* All Rentals History */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Barcha ijaralar tarixi</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {rentals.length === 0 ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                                Ijaralar tarixi mavjud emas
                             </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Sana</TableHead>
+                                        <TableHead>Mahsulotlar</TableHead>
+                                        <TableHead>Umumiy narx</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {rentals.map((rental) => (
+                                        <TableRow key={rental._id}>
+                                            <TableCell>{new Date(rental.startDate).toLocaleDateString()}</TableCell>
+                                            <TableCell>
+                                                {rental.borrowedProducts.map((product, index) => (
+                                                    <div key={index}>
+                                                        {product.product?.name} ({product.quantity} dona)
+                                                    </div>
+                                                ))}
+                                            </TableCell>
+                                            <TableCell>{rental.totalCost?.toLocaleString()} so'm</TableCell>
+                                            <TableCell>
+                                                <Badge variant={rental.status === 'active' ? 'secondary' : 'outline'}>
+                                                    {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Unreturned Products */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Qaytarilmagan mahsulotlar</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {getUnreturnedProducts().length === 0 ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                                Qaytarilmagan mahsulotlar mavjud emas
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Mahsulot</TableHead>
+                                        <TableHead>Ijara sanasi</TableHead>
+                                        <TableHead>Qolgan miqdor</TableHead>
+                                        <TableHead>Amallar</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {getUnreturnedProducts().map((product, index) => (
+                                        <TableRow key={index}>
+                                            <TableCell>{product.product?.name}</TableCell>
+                                            <TableCell>{new Date(product.rental.startDate).toLocaleDateString()}</TableCell>
+                                            <TableCell>{product.remainingQuantity} dona</TableCell>
+                                            <TableCell>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        setReturnProduct(product);
+                                                        setExpandedRental(product.rental._id);
+                                                    }}
+                                                >
+                                                    Qaytarish
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         )}
                     </CardContent>
                 </Card>

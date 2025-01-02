@@ -266,7 +266,8 @@ export default function RentalsPage() {
                             <TableHead>Kunlik Narx</TableHead>
                             <TableHead> Faol Kunlar</TableHead>
                             <TableHead>Mulklar</TableHead>
-                            <TableHead className="text-right">Amallar</TableHead>
+                          
+                            <TableHead >Amallar</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -320,47 +321,7 @@ export default function RentalsPage() {
                                             <div key={index} className="text-sm flex items-center justify-between">
                                                 <div>
                                                     <span>{item.product.name} </span>
-                                                    {editingProduct?.rentalId === rental._id && 
-                                                     editingProduct?.productId === item.product._id ? (
-                                                        <div className="flex items-center gap-2 mt-1">
-                                                            <input
-                                                                type="number"
-                                                                value={editingProduct.quantity}
-                                                                onChange={(e) => setEditingProduct({
-                                                                    ...editingProduct,
-                                                                    quantity: parseInt(e.target.value) || 0
-                                                                })}
-                                                                className="w-20"
-                                                                min="1"
-                                                            />
-                                                            <Button 
-                                                                size="sm"
-                                                                variant="outline"
-                                                                onClick={() => handleProductQuantityChange(rental, item, editingProduct.quantity)}
-                                                            >
-                                                                ✓
-                                                            </Button>
-                                                            <Button 
-                                                                size="sm"
-                                                                variant="ghost"
-                                                                onClick={() => setEditingProduct(null)}
-                                                            >
-                                                                ✕
-                                                            </Button>
-                                                        </div>
-                                                    ) : (
-                                                        <>
-                                                            <span>({item.quantity} dona)</span>
-                                                            <Button 
-                                                                size="sm" 
-                                                                variant="ghost"
-                                                                className="ml-2"
-                                                                onClick={() => handleProductEdit(rental, item)}
-                                                            >
-                                                                <Edit className="h-3 w-3" />
-                                                            </Button>
-                                                        </>
-                                                    )}
+                                                    <span className="text-muted-foreground">({item.quantity}) dona</span> 
                                                 </div>
                                                 <span className="text-muted-foreground ml-2">
                                                     {new Date(item.rentDate).toLocaleDateString()}

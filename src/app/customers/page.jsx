@@ -578,16 +578,14 @@ export default function Component() {
                                                     <div>
                                                         <p className="font-medium">{rental.rentalNumber}</p>
                                                         <p className="text-sm text-muted-foreground">
-                                                            {new Date(rental.startDate).toLocaleDateString()}
+                                                            {new Date(rental.createdAt).toLocaleDateString()}
                                                         </p>
                                                     </div>
                                                     <div className="text-right">
                                                         <p className="font-medium">
                                                             {rental.totalCost?.toLocaleString()} so'm
                                                         </p>
-                                                        <p className="text-sm text-red-500">
-                                                            Qarz: {rental.debt?.toLocaleString()} so'm
-                                                        </p>
+                                                       
                                                     </div>
                                                 </div>
                                                 <div>
@@ -761,6 +759,9 @@ export default function Component() {
                                                 </div>
                                                 <p className="font-medium">
                                                     {payment.amount?.toLocaleString()} so'm
+                                                </p>
+                                                <p className="font-medium">
+                                                    {payment.paymentType?.toLocaleString() === 'cash' ? 'Naqd' : 'Plastik'}
                                                 </p>
                                             </div>
                                         ))}
