@@ -28,6 +28,12 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
     const rentals = useSelector((state) => state.rentals.rentals);
     const status = useSelector((state) => state.rentals.status);
 
+    const formatDate = (dateString) => {
+        if (!dateString) return 'N/A';
+        const date = new Date(dateString);
+        return !isNaN(date.getTime()) ? format(date, "dd.MM.yyyy") : 'N/A';
+    };
+
     useEffect(() => {
         if (isOpen && product?._id) {
             dispatch(fetchRentalsByProductId(product._id));
@@ -183,7 +189,7 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                                     {rentals.map((rental) => (
                                         <TableRow key={rental._id}>
                                             <TableCell>
-                                                {format(new Date(rental.startDate), "dd.MM.yyyy")}
+                                            {formatDate(rental.startDate)}
                                             </TableCell>
                                             <TableCell>{rental.customer?.name}</TableCell>
                                             <TableCell>{rental.rentalNumber}</TableCell>

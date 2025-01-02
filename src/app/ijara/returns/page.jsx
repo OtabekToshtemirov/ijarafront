@@ -136,27 +136,22 @@ export default function Component() {
             return;
         }
 
-        const days = calculateRentalDays(
-            product.startDate || rental.startDate,
-            discountDays[rental._id] || 0
-        );
-
         try {
             console.log('Returning product:', {
                 rentalId: rental._id,
                 products: [{
-                    productId: product.product._id,
+                    product: product.product._id,
                     quantity: returnQuantity,
-                    days: days
+                    returnDate: new Date()
                 }]
             });
 
             await dispatch(returnProduct({
                 rentalId: rental._id,
                 products: [{
-                    productId: product.product._id,
+                    product: product.product._id,
                     quantity: returnQuantity,
-                    days: days
+                    returnDate: new Date()
                 }]
             })).unwrap();
             
@@ -167,7 +162,7 @@ export default function Component() {
             }));
 
             // Refresh rentals data
-            dispatch(fetchRentals());
+            await dispatch(fetchRentals());
             
             toast.success("Mahsulot muvaffaqiyatli qaytarildi!");
         } catch (error) {
@@ -175,6 +170,7 @@ export default function Component() {
             toast.error(error.message || "Qaytarishda xatolik yuz berdi");
         }
     };
+    
 
     const calculateCustomerBalance = (customerRentals) => {
         return customerRentals.reduce((balance, rental) => {
@@ -308,12 +304,14 @@ export default function Component() {
                                             type="number"
                                             min="0"
                                             value={discountDays[rental._id] || 0}
-                                            onChange={(e) => handleDiscountDaysChange(rental._id, parseInt(e.target.value) || 0)}
+                                            onChange={(e) => handleDiscountDaysChange(rental._id, e.target.value)}
                                             className="w-20"
                                         />
                                     </div>
                                     <Badge>
-                                        {calculateRentalDays(rental.startDate, discountDays[rental._id] || 0)} kun
+                                        {rental.startDate && (
+                                            `${calculateRentalDays(rental.startDate, discountDays[rental._id] || 0)} kun`
+                                        )}
                                     </Badge>
                                 </div>
                             </div>

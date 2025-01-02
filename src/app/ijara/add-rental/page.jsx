@@ -7,9 +7,9 @@ import {
     createRental, 
     clearAddStatus 
 } from '@/lib/features/rentals/rentalsSlice';
-import { fetchCustomers } from '@/lib/features/customers/customerSlice';
+import { fetchCustomers, createCustomer } from '@/lib/features/customers/customerSlice';
 import { fetchProducts } from '@/lib/features/products/productSlice';
-import { fetchCars } from '@/lib/features/cars/carsSlice';
+import { fetchCars, createCar } from '@/lib/features/cars/carsSlice';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -19,26 +19,50 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Plus, Trash2, Minus, Loader2 } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { ArrowLeft, Plus, Trash2, Minus, Loader2, UserPlus, Car, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from 'next/link';
 
 export default function AddRentalPage() {
     const dispatch = useDispatch();
     const router = useRouter();
     
-    const customers = useSelector(state => state.customers.customers);
-    const products = useSelector(state => state.products.products);
+    // Get customers, cars and products from Redux store
+    const customers = useSelector((state) => state.customers.customers) || [];
     const cars = useSelector((state) => state.cars.cars) || [];
+    const customersStatus = useSelector((state) => state.customers.status);
     const carsStatus = useSelector((state) => state.cars.status);
-    const carsError = useSelector((state) => state.cars.error);
+    const { products, status: productsStatus, error: productsError } = useSelector((state) => state.products);
     const addStatus = useSelector((state) => state.rentals.addStatus);
     const addError = useSelector((state) => state.rentals.error);
+
+    const [customerModalOpen, setCustomerModalOpen] = useState(false);
+    const [carModalOpen, setCarModalOpen] = useState(false);
+    const [newCustomer, setNewCustomer] = useState({
+        name: '',
+        phone: '',
+        address: ''
+    });
+    const [newCar, setNewCar] = useState({
+        carNumber: '',
+        driverName: '',
+        driverPhone: ''
+    });
 
     const [rentalForm, setRentalForm] = useState({
         customer: '',
         car: '',
+        startDate: new Date().toISOString().split('T')[0],
         workStartDate: new Date().toISOString().split('T')[0],
         prepaidAmount: 0,
         status: 'active',
@@ -46,36 +70,114 @@ export default function AddRentalPage() {
             product: '',
             quantity: 1,
             dailyRate: 0,
-            amount: 0,
-            startDate: new Date().toISOString().split('T')[0]
+            startDate: new Date().toISOString().split('T')[0],
+            rentDate: new Date().toISOString().split('T')[0]
         }],
         totalCost: 0,
         debt: 0
     });
 
     const [validationErrors, setValidationErrors] = useState({});
-
     const [productSearch, setProductSearch] = useState('');
+    const [customerSearch, setCustomerSearch] = useState('');
+    const [carSearch, setCarSearch] = useState('');
 
-    const filteredProducts = products.filter(product => 
-        product.name.toLowerCase().includes(productSearch.toLowerCase()) ||
+    // Filter customers based on search
+    const filteredCustomers = customers?.filter(customer => 
+        customer.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
+        customer.phone?.toLowerCase().includes(customerSearch.toLowerCase())
+    ) || [];
+
+    // Filter cars based on search
+    const filteredCars = cars?.filter(car =>
+        car.carNumber?.toLowerCase().includes(carSearch.toLowerCase()) ||
+        car.driverName?.toLowerCase().includes(carSearch.toLowerCase())
+    ) || [];
+
+    // Filter products based on search
+    const filteredProducts = products?.filter(product => 
+        !productSearch || 
+        product.name?.toLowerCase().includes(productSearch.toLowerCase()) ||
         product.code?.toLowerCase().includes(productSearch.toLowerCase())
-    );
+    ) || [];
+
+    // Calculate total amount
+    useEffect(() => {
+        const total = rentalForm.borrowedProducts.reduce((sum, item) => {
+            return sum + (item.quantity * item.dailyRate);
+        }, 0);
+        setRentalForm(prev => ({
+            ...prev,
+            totalCost: total
+        }));
+    }, [rentalForm.borrowedProducts]);
+
+    // Handle product selection
+    const handleProductSelect = (product) => {
+        if (!rentalForm.borrowedProducts.find(p => p.product === product._id)) {
+            setRentalForm(prev => ({
+                ...prev,
+                borrowedProducts: [
+                    ...prev.borrowedProducts,
+                    {
+                        product: product._id,
+                        quantity: 1,
+                        dailyRate: product.dailyRate || product.price || 0,
+                        startDate: rentalForm.startDate,
+                        rentDate: new Date().toISOString().split('T')[0]
+                    }
+                ]
+            }));
+        }
+    };
+
+    // Handle quantity change
+    const handleQuantityChange = (productId, quantity) => {
+        setRentalForm(prev => ({
+            ...prev,
+            borrowedProducts: prev.borrowedProducts.map(item => 
+                item.product === productId 
+                    ? { ...item, quantity: parseInt(quantity) || 1 }
+                    : item
+            )
+        }));
+    };
+
+    // Handle daily rate change
+    const handleDailyRateChange = (productId, rate) => {
+        setRentalForm(prev => ({
+            ...prev,
+            borrowedProducts: prev.borrowedProducts.map(item => 
+                item.product === productId 
+                    ? { ...item, dailyRate: parseFloat(rate) || 0 }
+                    : item
+            )
+        }));
+    };
+
+    // Handle product removal
+    const handleRemoveProduct = (productId) => {
+        setRentalForm(prev => ({
+            ...prev,
+            borrowedProducts: prev.borrowedProducts.filter(item => item.product !== productId)
+        }));
+    };
 
     useEffect(() => {
-        dispatch(fetchCustomers());
-        dispatch(fetchProducts());
-
-        return () => {
-            dispatch(clearAddStatus());
-        };
-    }, [dispatch]);
-
-    useEffect(() => {
+        // Fetch customers, cars and products on component mount
+        if (customersStatus === 'idle') {
+            dispatch(fetchCustomers());
+        }
         if (carsStatus === 'idle') {
             dispatch(fetchCars());
         }
-    }, [carsStatus, dispatch]);
+        if (productsStatus === 'idle') {
+            dispatch(fetchProducts());
+        }
+        return () => {
+            dispatch(clearAddStatus());
+        };
+    }, [dispatch, customersStatus, carsStatus, productsStatus]);
 
     useEffect(() => {
         if (addStatus === 'succeeded') {
@@ -86,31 +188,10 @@ export default function AddRentalPage() {
         }
     }, [addStatus, addError, router]);
 
-    if (carsStatus === 'loading') {
-        return (
-            <div className="container mx-auto py-10">
-                <div className="flex items-center justify-center">
-                    <div className="text-center">
-                        <h2 className="text-lg font-medium">Yuklanmoqda...</h2>
-                        <p className="text-sm text-muted-foreground">Ma'lumotlar yuklanmoqda, iltimos kuting</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
-    if (carsStatus === 'failed') {
-        return (
-            <div className="container mx-auto py-10">
-                <div className="flex items-center justify-center">
-                    <div className="text-center">
-                        <h2 className="text-lg font-medium text-red-500">Xatolik yuz berdi</h2>
-                        <p className="text-sm text-muted-foreground">{carsError}</p>
-                    </div>
-                </div>
-            </div>
-        );
-    }
+    useEffect(() => {
+        console.log('Products:', products);
+        console.log('Filtered Products:', filteredProducts);
+    }, [products, filteredProducts]);
 
     const validateForm = () => {
         const errors = {};
@@ -137,162 +218,20 @@ export default function AddRentalPage() {
             if (!product.dailyRate || product.dailyRate < 0) {
                 errors[`borrowedProducts.${index}.dailyRate`] = 'Kunlik narx 0 dan kam bo\'lmasligi kerak';
             }
-
-            const selectedProduct = products.find(p => p._id === product.product);
-            if (selectedProduct && product.quantity > selectedProduct.quantity) {
-                errors[`borrowedProducts.${index}.quantity`] = 
-                    `Omborda ${selectedProduct.name} mahsulotidan ${selectedProduct.quantity} ta mavjud`;
-            }
         });
-
-        if (rentalForm.prepaidAmount && rentalForm.prepaidAmount < 0) {
-            errors.prepaidAmount = 'Oldindan to\'lov 0 dan kam bo\'lmasligi kerak';
-        }
 
         setValidationErrors(errors);
-        
-        if (Object.keys(errors).length > 0) {
-            const errorMessages = Object.values(errors);
-            toast.error(
-                <div>
-                    <p>Quyidagi xatoliklarni to'g'rilang:</p>
-                    <ul>
-                        {errorMessages.map((error, index) => (
-                            <li key={index}>• {error}</li>
-                        ))}
-                    </ul>
-                </div>
-            );
-            return false;
-        }
-        
-        return true;
-    };
-
-    const handleInputChange = (name, value) => {
-        setRentalForm(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleSelectChange = (name, value) => {
-        setRentalForm(prev => ({
-            ...prev,
-            [name]: value
-        }));
-        
-        if (validationErrors[name]) {
-            setValidationErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[name];
-                return newErrors;
-            });
-        }
-    };
-
-    const handleProductChange = (index, field, value) => {
-        setRentalForm(prev => {
-            const newProducts = [...prev.borrowedProducts];
-            newProducts[index] = {
-                ...newProducts[index],
-                [field]: value
-            };
-            return {
-                ...prev,
-                borrowedProducts: newProducts
-            };
-        });
-
-        const errorKey = `borrowedProducts.${index}.${field}`;
-        if (validationErrors[errorKey]) {
-            setValidationErrors(prev => {
-                const newErrors = { ...prev };
-                delete newErrors[errorKey];
-                return newErrors;
-            });
-        }
-    };
-
-    const addProduct = (product, quantity, dailyRate) => {
-        const amount = Number(quantity) * Number(dailyRate);
-        setRentalForm(prev => ({
-            ...prev,
-            borrowedProducts: [
-                ...prev.borrowedProducts,
-                {
-                    product,
-                    quantity: Number(quantity),
-                    dailyRate: Number(dailyRate),
-                    amount
-                }
-            ]
-        }));
-    };
-
-    const handleAddProduct = (product) => {
-        if (!product) return;
-
-        const existingProduct = rentalForm.borrowedProducts.find(
-            (p) => p.product === product._id
-        );
-
-        if (existingProduct) {
-            toast({
-                title: "Xatolik!",
-                description: "Bu mahsulot allaqachon qo'shilgan!",
-                variant: "destructive",
-            });
-            return;
-        }
-        
-        setRentalForm(prev => ({
-            ...prev,
-            borrowedProducts: [
-                ...prev.borrowedProducts,
-                {
-                    product: product._id,
-                    quantity: 1,
-                    dailyRate: product.dailyRate || 0,
-                    startDate: new Date().toISOString()
-                }
-            ]
-        }));
-    };
-
-    const removeProduct = (index) => {
-        if (rentalForm.borrowedProducts.length === 1) {
-            toast.error('Kamida bitta mahsulot bo\'lishi kerak');
-            return;
-        }
-        
-        setRentalForm(prev => ({
-            ...prev,
-            borrowedProducts: prev.borrowedProducts.filter((_, i) => i !== index)
-        }));
-    };
-
-    const handleDailyRateChange = (index, value) => {
-        const newRate = parseInt(value) || 0;
-        
-        setRentalForm(prev => ({
-            ...prev,
-            borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                i === index ? { ...item, dailyRate: newRate } : item
-            )
-        }));
+        return Object.keys(errors).length === 0;
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (!validateForm()) return;
 
-        if (!validateForm()) {
-            return;
-        }
-
-        // Calculate total cost
         const totalCost = rentalForm.borrowedProducts.reduce((sum, product) => {
             return sum + (Number(product.quantity) * Number(product.dailyRate || 0));
         }, 0);
 
-        // Format the data for the API
         const formData = {
             customer: rentalForm.customer,
             ...(rentalForm.car && { car: rentalForm.car }),
@@ -304,39 +243,186 @@ export default function AddRentalPage() {
             })),
             workStartDate: rentalForm.workStartDate,
             totalCost: totalCost,
-            debt: totalCost
+            debt: totalCost,
+            prepaidAmount: Number(rentalForm.prepaidAmount || 0),
         };
 
-        console.log('Submitting rental data:', formData); // Debug log
-
         try {
-            const response = await dispatch(createRental(formData)).unwrap();
-            
-            if (response._id) {
-                toast.success("Ijara muvaffaqiyatli qo'shildi!");
-                router.push('/ijara');
-            }
+            await dispatch(createRental(formData)).unwrap();
         } catch (error) {
-            console.error('Error creating rental:', error); // Debug log
-            toast.error(error.message || "Xatolik yuz berdi!");
+            toast.error(error.message || 'Xatolik yuz berdi');
         }
     };
 
-    const handleAmountChange = (index, value) => {
-        const newAmount = parseInt(value) || 0;
-        
-        setRentalForm(prev => ({
-            ...prev,
-            borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                i === index ? { ...item, amount: newAmount } : item
-            )
-        }));
+    const handleAddCustomer = async (e) => {
+        e.preventDefault();
+        try {
+            if (!newCustomer.name || !newCustomer.phone) {
+                toast.error("Iltimos, barcha maydonlarni to'ldiring");
+                return;
+            }
+
+            const result = await dispatch(createCustomer(newCustomer)).unwrap();
+            if (result) {
+                toast.success("Mijoz muvaffaqiyatli qo'shildi");
+                // Set the newly created customer as the selected customer
+                setRentalForm(prev => ({
+                    ...prev,
+                    customer: result._id
+                }));
+                // Clear form and close modal
+                setNewCustomer({ name: '', phone: '', address: '' });
+                setCustomerModalOpen(false);
+                // Refresh the customers list
+                dispatch(fetchCustomers());
+            }
+        } catch (error) {
+            console.error('Error adding customer:', error);
+            toast.error(error.message || "Xatolik yuz berdi");
+        }
+    };
+
+    const handleAddCar = async (e) => {
+        e.preventDefault();
+        try {
+            if (!newCar.carNumber || !newCar.driverName || !newCar.driverPhone) {
+                toast.error("Iltimos, barcha maydonlarni to'ldiring");
+                return;
+            }
+
+            const result = await dispatch(createCar(newCar)).unwrap();
+            if (result) {
+                toast.success("Mashina muvaffaqiyatli qo'shildi");
+                // Set the newly created car as the selected car
+                setRentalForm(prev => ({
+                    ...prev,
+                    car: result._id
+                }));
+                // Clear form and close modal
+                setNewCar({ carNumber: '', driverName: '', driverPhone: '' });
+                setCarModalOpen(false);
+                // Refresh the cars list
+                dispatch(fetchCars());
+            }
+        } catch (error) {
+            console.error('Error adding car:', error);
+            toast.error(error.message || "Xatolik yuz berdi");
+        }
     };
 
     return (
         <div className="container mx-auto py-10">
+            {/* Customer Modal */}
+            <Dialog open={customerModalOpen} onOpenChange={setCustomerModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Yangi mijoz qo'shish</DialogTitle>
+                        <DialogDescription>
+                            Yangi mijoz ma'lumotlarini kiriting
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleAddCustomer}>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="customerName" className="text-right">
+                                    Ism
+                                </Label>
+                                <Input
+                                    id="customerName"
+                                    value={newCustomer.name}
+                                    onChange={(e) => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
+                                    className="col-span-3"
+                                    required
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="customerPhone" className="text-right">
+                                    Telefon
+                                </Label>
+                                <Input
+                                    id="customerPhone"
+                                    value={newCustomer.phone}
+                                    onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                                    className="col-span-3"
+                                    required
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="customerAddress" className="text-right">
+                                    Manzil
+                                </Label>
+                                <Input
+                                    id="customerAddress"
+                                    value={newCustomer.address}
+                                    onChange={(e) => setNewCustomer(prev => ({ ...prev, address: e.target.value }))}
+                                    className="col-span-3"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="submit">Saqlash</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
+            {/* Car Modal */}
+            <Dialog open={carModalOpen} onOpenChange={setCarModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Yangi mashina qo'shish</DialogTitle>
+                        <DialogDescription>
+                            Yangi mashina ma'lumotlarini kiriting
+                        </DialogDescription>
+                    </DialogHeader>
+                    <form onSubmit={handleAddCar}>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="carNumber" className="text-right">
+                                    Mashina raqami
+                                </Label>
+                                <Input
+                                    id="carNumber"
+                                    value={newCar.carNumber}
+                                    onChange={(e) => setNewCar(prev => ({ ...prev, carNumber: e.target.value }))}
+                                    className="col-span-3"
+                                    required
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="driverName" className="text-right">
+                                    Haydovchi
+                                </Label>
+                                <Input
+                                    id="driverName"
+                                    value={newCar.driverName}
+                                    onChange={(e) => setNewCar(prev => ({ ...prev, driverName: e.target.value }))}
+                                    className="col-span-3"
+                                    required
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="driverPhone" className="text-right">
+                                    Telefon
+                                </Label>
+                                <Input
+                                    id="driverPhone"
+                                    value={newCar.driverPhone}
+                                    onChange={(e) => setNewCar(prev => ({ ...prev, driverPhone: e.target.value }))}
+                                    className="col-span-3"
+                                    required
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button type="submit">Saqlash</Button>
+                        </DialogFooter>
+                    </form>
+                </DialogContent>
+            </Dialog>
+
             <div className="mb-6">
-                <Link href="/ijara" className="flex items-center text-sm text-muted-foreground hover:text-primary">
+                <Link href="/ijara" className="flex w-20 items-center text-sm text-muted-foreground hover:text-primary">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Orqaga
                 </Link>
@@ -350,20 +436,50 @@ export default function AddRentalPage() {
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div className="space-y-2">
-                                <label>Mijoz</label>
+                                <div className="flex justify-between items-center">
+                                    <label>Mijoz</label>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="flex items-center text-sm text-muted-foreground hover:text-primary"
+                                        onClick={() => setCustomerModalOpen(true)}
+                                    >
+                                        <UserPlus className="h-4 w-4 mr-1" />
+                                        Yangi mijoz
+                                    </Button>
+                                </div>
                                 <Select
-                                    onValueChange={(value) => handleSelectChange('customer', value)}
                                     value={rentalForm.customer}
+                                    onValueChange={(value) => {
+                                        setRentalForm(prev => ({
+                                            ...prev,
+                                            customer: value
+                                        }));
+                                    }}
                                 >
                                     <SelectTrigger className={validationErrors.customer ? 'border-red-500' : ''}>
                                         <SelectValue placeholder="Mijozni tanlang" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {customers.map(customer => (
-                                            <SelectItem key={customer._id} value={customer._id}>
-                                                {customer.name}
-                                            </SelectItem>
-                                        ))}
+                                        <div className="px-3 pb-2">
+                                            <Input
+                                                type="text"
+                                                placeholder="Mijozni qidirish..."
+                                                value={customerSearch}
+                                                onChange={(e) => setCustomerSearch(e.target.value)}
+                                            />
+                                        </div>
+                                        {filteredCustomers.length > 0 ? (
+                                            filteredCustomers.map((customer) => (
+                                                <SelectItem key={customer._id} value={customer._id}>
+                                                    {customer.name} - {customer.phone}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <div className="px-3 py-2 text-sm text-muted-foreground">
+                                                Mijoz topilmadi
+                                            </div>
+                                        )}
                                     </SelectContent>
                                 </Select>
                                 {validationErrors.customer && (
@@ -372,9 +488,25 @@ export default function AddRentalPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label>Mashina</label>
+                                <div className="flex justify-between items-center">
+                                    <label>Mashina</label>
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        className="flex items-center text-sm text-muted-foreground hover:text-primary"
+                                        onClick={() => setCarModalOpen(true)}
+                                    >
+                                        <Car className="h-4 w-4 mr-1" />
+                                        Yangi mashina
+                                    </Button>
+                                </div>
                                 <Select
-                                    onValueChange={(value) => handleSelectChange('car', value)}
+                                    onValueChange={(value) => {
+                                        setRentalForm(prev => ({
+                                            ...prev,
+                                            car: value
+                                        }));
+                                    }}
                                     value={rentalForm.car}
                                     disabled={!cars || cars.length === 0}
                                 >
@@ -382,11 +514,25 @@ export default function AddRentalPage() {
                                         <SelectValue placeholder="Mashinani tanlang" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {Array.isArray(cars) && cars.map(car => (
-                                            <SelectItem key={car._id} value={car._id}>
-                                                {`${car.carNumber} - ${car.driverName}`}
-                                            </SelectItem>
-                                        ))}
+                                        <div className="px-3 pb-2">
+                                            <Input
+                                                type="text"
+                                                placeholder="Mashinani qidirish..."
+                                                value={carSearch}
+                                                onChange={(e) => setCarSearch(e.target.value)}
+                                            />
+                                        </div>
+                                        {filteredCars.length > 0 ? (
+                                            filteredCars.map(car => (
+                                                <SelectItem key={car._id} value={car._id}>
+                                                    {`${car.carNumber} - ${car.driverName}`}
+                                                </SelectItem>
+                                            ))
+                                        ) : (
+                                            <div className="px-3 py-2 text-sm text-muted-foreground">
+                                                Mashina topilmadi
+                                            </div>
+                                        )}
                                     </SelectContent>
                                 </Select>
                                 {validationErrors.car && (
@@ -394,7 +540,7 @@ export default function AddRentalPage() {
                                 )}
                             </div>
 
-                            <div className="grid gap-4 py-4">
+                            <div className="grid gap-4 py-3">
                                 <div className="grid grid-cols-4 items-center gap-4">
                                     <label htmlFor="workStartDate" className="text-right">
                                         Ish boshlanish sanasi
@@ -404,7 +550,12 @@ export default function AddRentalPage() {
                                         type="date"
                                         value={rentalForm.workStartDate}
                                         className="col-span-3"
-                                        onChange={(e) => handleInputChange('workStartDate', e.target.value)}
+                                        onChange={(e) => {
+                                            setRentalForm(prev => ({
+                                                ...prev,
+                                                workStartDate: e.target.value
+                                            }));
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -415,7 +566,12 @@ export default function AddRentalPage() {
                                     type="number"
                                     name="prepaidAmount"
                                     value={rentalForm.prepaidAmount}
-                                    onChange={(e) => handleInputChange('prepaidAmount', e.target.value)}
+                                    onChange={(e) => {
+                                        setRentalForm(prev => ({
+                                            ...prev,
+                                            prepaidAmount: e.target.value
+                                        }));
+                                    }}
                                     min="0"
                                     placeholder="Oldindan to'lov summasi"
                                 />
@@ -434,7 +590,8 @@ export default function AddRentalPage() {
                                                 product: '',
                                                 quantity: 1,
                                                 dailyRate: 0,
-                                                amount: 0
+                                                startDate: new Date().toISOString().split('T')[0],
+                                                rentDate: new Date().toISOString().split('T')[0]
                                             }
                                         ]
                                     }));
@@ -444,201 +601,177 @@ export default function AddRentalPage() {
                                 </Button>
                             </div>
 
-                            {rentalForm.borrowedProducts.map((product, index) => (
-                                <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
-                                    <div className="space-y-2">
-                                        <label>Mahsulot</label>
-                                        <Select
-                                            value={product.product}
-                                            onValueChange={(value) => {
-                                                const selectedProduct = products.find(p => p._id === value);
-                                                if (selectedProduct) {
-                                                    setRentalForm(prev => ({
-                                                        ...prev,
-                                                        borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                                                            i === index ? {
-                                                                ...item,
-                                                                product: value,
-                                                                productName: selectedProduct.name,
-                                                                dailyRate: selectedProduct.dailyRate,
-                                                                amount: item.quantity * selectedProduct.dailyRate
-                                                            } : item
-                                                        )
-                                                    }));
-                                                }
-                                            }}
-                                        >
-                                            <SelectTrigger className={validationErrors[`borrowedProducts.${index}.product`] ? 'border-red-500' : ''}>
-                                                <SelectValue placeholder="Mahsulotni tanlang" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <div className="p-2">
-                                                    <Input
-                                                        type="text"
-                                                        placeholder="Mahsulot qidirish..."
-                                                        value={productSearch}
-                                                        onChange={(e) => setProductSearch(e.target.value)}
-                                                        className="mb-2"
-                                                    />
-                                                </div>
-                                                <div className="max-h-[200px] overflow-y-auto">
-                                                    {filteredProducts.map((p) => (
-                                                        <SelectItem 
-                                                            key={p._id} 
-                                                            value={p._id}
-                                                            disabled={!p.isAvailable || p.quantity < 1}
-                                                        >
-                                                            <div className="flex justify-between items-center w-full">
-                                                                <span>{p.name}  </span>
-                                                                <span className="text-sm text-muted-foreground pl-2">
-                                                                    {p.quantity} ta
-                                                                </span>
-                                                            </div>
-                                                        </SelectItem>
-                                                    ))}
-                                                    {filteredProducts.length === 0 && (
-                                                        <div className="p-2 text-center text-muted-foreground">
-                                                            Mahsulot topilmadi
+                            {/* Products Section */}
+                            <div className="space-y-4 mt-4">
+                               
+
+                                {/* Selected Products */}
+                                <div className="space-y-2">
+                                    {rentalForm.borrowedProducts.map((product, index) => (
+                                        <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
+                                            <div className="space-y-2">
+                                                <label>Mahsulot</label>
+                                                <Select
+                                                    value={product.product}
+                                                    onValueChange={(value) => {
+                                                        const selectedProduct = products.find(p => p._id === value);
+                                                        setRentalForm(prev => ({
+                                                            ...prev,
+                                                            borrowedProducts: prev.borrowedProducts.map((item, i) => 
+                                                                i === index ? { 
+                                                                    ...item, 
+                                                                    product: value,
+                                                                    dailyRate: selectedProduct?.dailyRate || selectedProduct?.price || 0
+                                                                } : item
+                                                            )
+                                                        }));
+                                                    }}
+                                                >
+                                                    <SelectTrigger className={validationErrors[`borrowedProducts.${index}.product`] ? 'border-red-500' : ''}>
+                                                        <SelectValue placeholder="Mahsulotni tanlang">
+                                                            {product.product ? products.find(p => p._id === product.product)?.name : "Mahsulotni tanlang"}
+                                                        </SelectValue>
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <div className="px-3 pb-2">
+                                                            <Input
+                                                                type="text"
+                                                                placeholder="Mahsulotni qidirish..."
+                                                                value={productSearch}
+                                                                onChange={(e) => setProductSearch(e.target.value)}
+                                                            />
                                                         </div>
-                                                    )}
-                                                </div>
-                                            </SelectContent>
-                                        </Select>
-                                        {validationErrors[`borrowedProducts.${index}.product`] && (
-                                            <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.product`]}</p>
-                                        )}
-                                    </div>
+                                                        {filteredProducts.length > 0 ? (
+                                                            filteredProducts.map((product) => (
+                                                                <SelectItem key={product._id} value={product._id}>
+                                                                    {product.name} - {product.quantity}
+                                                                </SelectItem>
+                                                            ))
+                                                        ) : (
+                                                            <div className="px-3 py-2 text-sm text-muted-foreground">
+                                                                Mahsulot topilmadi
+                                                            </div>
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                {validationErrors[`borrowedProducts.${index}.product`] && (
+                                                    <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.product`]}</p>
+                                                )}
+                                            </div>
 
-                                    <div className="space-y-2">
-                                        <label>Miqdori</label>
-                                        <div className="flex items-center space-x-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="icon"
-                                                onClick={() => {
-                                                    const quantity = Math.max(1, product.quantity - 1);
-                                                    setRentalForm(prev => ({
-                                                        ...prev,
-                                                        borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                                                            i === index ? {
-                                                                ...item,
-                                                                quantity,
-                                                                amount: quantity * item.dailyRate
-                                                            } : item
-                                                        )
-                                                    }));
-                                                }}
-                                            >
-                                                <Minus className="h-4 w-4" />
-                                            </Button>
-                                            <Input
-                                                type="number"
-                                                value={product.quantity}
-                                                onChange={(e) => {
-                                                    const quantity = Math.max(1, parseInt(e.target.value) || 0);
-                                                    setRentalForm(prev => ({
-                                                        ...prev,
-                                                        borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                                                            i === index ? {
-                                                                ...item,
-                                                                quantity,
-                                                                amount: quantity * item.dailyRate
-                                                            } : item
-                                                        )
-                                                    }));
-                                                }}
-                                                min="1"
-                                                className={validationErrors[`borrowedProducts.${index}.quantity`] ? 'border-red-500' : ''}
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="icon"
-                                                onClick={() => {
-                                                    const selectedProduct = products.find(p => p._id === product.product);
-                                                    const maxQuantity = selectedProduct ? selectedProduct.quantity : 999;
-                                                    const quantity = Math.min(maxQuantity, product.quantity + 1);
-                                                    setRentalForm(prev => ({
-                                                        ...prev,
-                                                        borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                                                            i === index ? {
-                                                                ...item,
-                                                                quantity,
-                                                                amount: quantity * item.dailyRate
-                                                            } : item
-                                                        )
-                                                    }));
-                                                }}
-                                            >
-                                                <Plus className="h-4 w-4" />
-                                            </Button>
+                                            <div className="space-y-2">
+                                                <label>Miqdor</label>
+                                                <Input
+                                                    type="number"
+                                                    name="quantity"
+                                                    value={product.quantity}
+                                                    onChange={(e) => {
+                                                        setRentalForm(prev => ({
+                                                            ...prev,
+                                                            borrowedProducts: prev.borrowedProducts.map((item, i) => 
+                                                                i === index ? { ...item, quantity: parseInt(e.target.value) || 1 } : item
+                                                            )
+                                                        }));
+                                                    }}
+                                                    min="1"
+                                                    placeholder="Miqdor"
+                                                />
+                                                {validationErrors[`borrowedProducts.${index}.quantity`] && (
+                                                    <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.quantity`]}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-2">
+                                                <label>Kunlik narx</label>
+                                                <Input
+                                                    type="number"
+                                                    name="dailyRate"
+                                                    value={product.dailyRate}
+                                                    onChange={(e) => {
+                                                        setRentalForm(prev => ({
+                                                            ...prev,
+                                                            borrowedProducts: prev.borrowedProducts.map((item, i) => 
+                                                                i === index ? { ...item, dailyRate: parseFloat(e.target.value) || 0 } : item
+                                                            )
+                                                        }));
+                                                    }}
+                                                    min="0"
+                                                    placeholder="Kunlik narx"
+                                                />
+                                                {validationErrors[`borrowedProducts.${index}.dailyRate`] && (
+                                                    <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.dailyRate`]}</p>
+                                                )}
+                                            </div>
+
+                                            <div className="flex items-center space-x-2">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => {
+                                                        setRentalForm(prev => ({
+                                                            ...prev,
+                                                            borrowedProducts: prev.borrowedProducts.filter((_, i) => i !== index)
+                                                        }));
+                                                    }}
+                                                    disabled={rentalForm.borrowedProducts.length === 1}
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                                {index === rentalForm.borrowedProducts.length - 1 && (
+                                                    <Button
+                                                        type="button"
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setRentalForm(prev => ({
+                                                                ...prev,
+                                                                borrowedProducts: [
+                                                                    ...prev.borrowedProducts,
+                                                                    {
+                                                                        product: '',
+                                                                        quantity: 1,
+                                                                        dailyRate: 0,
+                                                                        startDate: prev.startDate,
+                                                                        rentDate: new Date().toISOString().split('T')[0]
+                                                                    }
+                                                                ]
+                                                            }));
+                                                        }}
+                                                    >
+                                                        <Plus className="h-4 w-4" />
+                                                    </Button>
+                                                )}
+                                            </div>
                                         </div>
-                                        {validationErrors[`borrowedProducts.${index}.quantity`] && (
-                                            <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.quantity`]}</p>
-                                        )}
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label>Kunlik narx</label>
-                                        <Input
-                                            type="number"
-                                            value={product.dailyRate || ""}
-                                            onChange={(e) => handleDailyRateChange(index, e.target.value)}
-                                            min="0"
-                                            className="w-24"
-                                        />
-                                    </div>
-
-                                    <div className="flex items-center justify-between space-x-4">
-                                        <div className="space-y-2 flex-1">
-                                            <label>Summa</label>
-                                            <Input
-                                                type="number"
-                                                value={product.amount}
-                                                onChange={(e) => handleAmountChange(index, e.target.value)}
-                                                className="w-24"
-                                            />
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            className="self-end"
-                                            onClick={() => {
-                                                setRentalForm(prev => ({
-                                                    ...prev,
-                                                    borrowedProducts: prev.borrowedProducts.filter((_, i) => i !== index)
-                                                }));
-                                            }}
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                    ))}
                                 </div>
-                            ))}
 
-                            {rentalForm.borrowedProducts.length > 0 && (
-                                <div className="flex justify-end pt-2 border-t">
-                                    <span className="font-medium">
-                                        Jami: {rentalForm.borrowedProducts.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString()} so'm
-                                    </span>
+                              
                                 </div>
-                            )}
-                        </div>
+                            </div>
 
-                        <div className="flex justify-end">
-                            <Button type="submit" disabled={addStatus === 'loading'}>
-                                {addStatus === 'loading' ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Saqlanmoqda...
-                                    </>
-                                ) : (
-                                    'Saqlash'
-                                )}
-                            </Button>
-                        </div>
+                            {/* Total Amount */}
+                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-lg font-semibold">Umumiy summa:</h3>
+                                    <p className="text-xl font-bold">{rentalForm.totalCost.toLocaleString()} so'm</p>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <Button type="submit" disabled={addStatus === 'loading'}>
+                                    {addStatus === 'loading' ? (
+                                        <>
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            Saqlanmoqda...
+                                        </>
+                                    ) : (
+                                        'Saqlash'
+                                    )}
+                                </Button>
+                            </div>
+                       
                     </form>
                 </CardContent>
             </Card>

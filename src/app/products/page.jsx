@@ -246,7 +246,7 @@ export default function ProductsPage() {
                                 </TableCell>
                                 <TableCell>
                                     <Badge 
-                                        variant={product.availability ? 'outline' : 'destructive'}
+                                        variant={product.quantity > 0 ? 'success' : 'destructive'}
                                     >
                                         {product.quantity>0 ? 'Mavjud' : 'Mavjud Emas'}
                                     </Badge>

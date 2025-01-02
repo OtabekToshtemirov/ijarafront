@@ -7,8 +7,13 @@ const BASE_URL = 'http://localhost:5000/api';
 export const fetchRentals = createAsyncThunk(
     'rentals/fetchRentals',
     async () => {
-        const response = await axios.get(`${BASE_URL}/rentals`);
-        return response.data;
+        try {
+            const response = await axios.get(`${BASE_URL}/rentals`);
+            return response.data;
+        } catch (error) {
+            console.error('Error fetching rentals:', error);
+            throw error;
+        }
     }
 );
 
@@ -112,12 +117,13 @@ export const returnProduct = createAsyncThunk(
     'rentals/returnProduct',
     async (returnData) => {
         try {
-            console.log('Sending return data:', returnData); // Debug log
-            const response = await axios.post(`${BASE_URL}/rentals/return`, returnData);
-            console.log('Return response:', response.data); // Debug log
+            console.log('Sending return data:', returnData);
+            const { rentalId, products } = returnData;
+            const response = await axios.post(`${BASE_URL}/rentals/${rentalId}/return`, { products });
+            console.log('Return response:', response.data);
             return response.data;
         } catch (error) {
-            console.error('Return error:', error); // Debug log
+            console.error('Return error:', error);
             if (!error.response) {
                 throw new Error('Server bilan bog\'lanishda xatolik yuz berdi');
             }
@@ -239,13 +245,12 @@ const rentalsSlice = createSlice({
             })
             .addCase(fetchRentals.fulfilled, (state, action) => {
                 state.status = 'succeeded';
-                state.rentals = action.payload || [];
+                state.rentals = action.payload;
                 state.error = null;
             })
             .addCase(fetchRentals.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.error.message;
-                state.rentals = [];
             })
 
             // Fetch rental by id

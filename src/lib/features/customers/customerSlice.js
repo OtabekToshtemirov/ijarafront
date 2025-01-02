@@ -1,137 +1,113 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import axios from 'axios';
 
-// Initial state
-const initialState = {
-    customers: [],
-    status: 'idle',
-    error: null,
-};
+const BASE_URL = 'http://localhost:5000/api/customers';
 
 // Async thunk for fetching customers
 export const fetchCustomers = createAsyncThunk(
     'customers/fetchCustomers',
-    async (_, { rejectWithValue }) => {
-        try {
-            const response = await fetch('http://localhost:5000/api/customers');
-            if (!response.ok) throw new Error('Failed to fetch customers');
-            return await response.json();
-        } catch (error) {
-            return rejectWithValue(error.message);
-        }
+    async () => {
+        const response = await axios.get(BASE_URL);
+        return response.data;
     }
 );
 
-// Async thunk for adding a customer
-export const addCustomerAsync = createAsyncThunk(
-    'customers/addCustomer',
-    async (customer, { rejectWithValue }) => {
-        try {
-            const response = await fetch('http://localhost:5000/api/customers', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(customer),
-            });
-            if (!response.ok) throw new Error('Failed to add customer');
-            return await response.json();
-        } catch (error) {
-            return rejectWithValue(error.message);
-        }
-    }
-);
-
-// Async thunk for updating a customer
-export const updateCustomerAsync = createAsyncThunk(
-    'customers/updateCustomer',
-    async (customer, { rejectWithValue }) => {
-        try {
-            const response = await fetch(`http://localhost:5000/api/customers/${customer._id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(customer),
-            });
-            if (!response.ok) throw new Error('Failed to update customer');
-            return await response.json();
-        } catch (error) {
-            return rejectWithValue(error.message);
-        }
+// Async thunk for creating a customer
+export const createCustomer = createAsyncThunk(
+    'customers/createCustomer',
+    async (customerData) => {
+        const response = await axios.post(BASE_URL, customerData);
+        return response.data;
     }
 );
 
 // Async thunk for deleting a customer
 export const deleteCustomerAsync = createAsyncThunk(
     'customers/deleteCustomer',
-    async (customerId, { rejectWithValue }) => {
-        try {
-            const response = await fetch(`http://localhost:5000/api/customers/${customerId}`, {
-                method: 'DELETE',
-            });
-            if (!response.ok) throw new Error('Failed to delete customer');
-            return customerId;
-        } catch (error) {
-            return rejectWithValue(error.message);
-        }
+    async (customerId) => {
+        await axios.delete(`${BASE_URL}/${customerId}`);
+        return customerId;
     }
 );
 
-// Customer slice
 const customerSlice = createSlice({
     name: 'customers',
-    initialState,
-    reducers: {},
+    initialState: {
+        customers: [],
+        status: 'idle',
+        error: null,
+        addStatus: 'idle',
+        addError: null,
+        updateStatus: 'idle',
+        updateError: null,
+        deleteStatus: 'idle',
+        deleteError: null
+    },
+    reducers: {
+        clearAddStatus: (state) => {
+            state.addStatus = 'idle';
+            state.addError = null;
+        },
+        clearUpdateStatus: (state) => {
+            state.updateStatus = 'idle';
+            state.updateError = null;
+        },
+        clearDeleteStatus: (state) => {
+            state.deleteStatus = 'idle';
+            state.deleteError = null;
+        }
+    },
     extraReducers: (builder) => {
         builder
-            // Fetch Customers
+            // Fetch customers cases
             .addCase(fetchCustomers.pending, (state) => {
                 state.status = 'loading';
+                state.error = null;
             })
             .addCase(fetchCustomers.fulfilled, (state, action) => {
                 state.status = 'succeeded';
                 state.customers = action.payload;
+                state.error = null;
             })
             .addCase(fetchCustomers.rejected, (state, action) => {
                 state.status = 'failed';
-                state.error = action.payload;
+                state.error = action.error.message;
             })
-            // Add Customer
-            .addCase(addCustomerAsync.pending, (state) => {
-                state.status = 'loading';
+
+            // Create customer cases
+            .addCase(createCustomer.pending, (state) => {
+                state.addStatus = 'loading';
+                state.addError = null;
             })
-            .addCase(addCustomerAsync.fulfilled, (state, action) => {
-                state.status = 'succeeded';
+            .addCase(createCustomer.fulfilled, (state, action) => {
+                state.addStatus = 'succeeded';
                 state.customers.push(action.payload);
+                state.addError = null;
             })
-            .addCase(addCustomerAsync.rejected, (state, action) => {
-                state.status = 'failed';
-                state.error = action.payload;
+            .addCase(createCustomer.rejected, (state, action) => {
+                state.addStatus = 'failed';
+                state.addError = action.error.message;
             })
-            // Update Customer
-            .addCase(updateCustomerAsync.pending, (state) => {
-                state.status = 'loading';
-            })
-            .addCase(updateCustomerAsync.fulfilled, (state, action) => {
-                state.status = 'succeeded';
-                const index = state.customers.findIndex(customer => customer._id === action.payload._id);
-                if (index !== -1) {
-                    state.customers[index] = action.payload;
-                }
-            })
-            .addCase(updateCustomerAsync.rejected, (state, action) => {
-                state.status = 'failed';
-                state.error = action.payload;
-            })
-            // Delete Customer
+
+            // Delete customer cases
             .addCase(deleteCustomerAsync.pending, (state) => {
-                state.status = 'loading';
+                state.deleteStatus = 'loading';
+                state.deleteError = null;
             })
             .addCase(deleteCustomerAsync.fulfilled, (state, action) => {
-                state.status = 'succeeded';
-                state.customers = state.customers.filter(customer => customer._id !== action.payload);
+                state.deleteStatus = 'succeeded';
+                state.customers = state.customers.filter(
+                    customer => customer._id !== action.payload
+                );
+                state.deleteError = null;
             })
             .addCase(deleteCustomerAsync.rejected, (state, action) => {
-                state.status = 'failed';
-                state.error = action.payload;
+                state.deleteStatus = 'failed';
+                state.deleteError = action.error.message;
             });
-    },
+    }
 });
+
+export const { clearAddStatus, clearUpdateStatus, clearDeleteStatus } = customerSlice.actions;
 
 export default customerSlice.reducer;

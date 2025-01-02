@@ -72,17 +72,17 @@ export default function Component() {
     const [returnQuantity, setReturnQuantity] = useState(1);
     const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
 
-    const customers = useSelector((state) => state.customers.customers);
+    // Get customers from Redux store with proper initialization
+    const customers = useSelector((state) => state.customers.customers) || [];
     const rentals = useSelector((state) => state.rentals.rentals);
     const payments = useSelector((state) => state.payments.payments);
     const status = useSelector((state) => state.customers.status);
     const error = useSelector((state) => state.customers.error);
 
     useEffect(() => {
-        if (status === 'idle') {
-            dispatch(fetchCustomers());
-        }
-    }, [dispatch, status]);
+        // Always fetch customers on component mount
+        dispatch(fetchCustomers());
+    }, [dispatch]);
 
     useEffect(() => {
         if (selectedCustomer) {
@@ -91,17 +91,18 @@ export default function Component() {
         }
     }, [dispatch, selectedCustomer]);
 
-    const filteredCustomers = customers.filter((customer) => {
+    const filteredCustomers = customers?.filter((customer) => {
         const searchLower = searchQuery.toLowerCase();
         const matchesSearch = !searchQuery || 
-            customer.name.toLowerCase().includes(searchLower) ||
-            customer.phone.toLowerCase().includes(searchLower) ||
-            (customer.address || '').toLowerCase().includes(searchLower);
+            (customer.name && customer.name.toLowerCase().includes(searchLower)) ||
+            (customer.phone && customer.phone.toLowerCase().includes(searchLower)) ||
+            (customer.address && customer.address.toLowerCase().includes(searchLower));
+        
         const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
         const matchesBalance = !showNegativeBalance || customer.balance < 0;
         
         return matchesSearch && matchesStatus && matchesBalance;
-    });
+    }) || [];
 
     const handleAddCustomer = () => {
         if (!newCustomer.name || !newCustomer.phone) {
@@ -226,12 +227,22 @@ export default function Component() {
         setReturnDialogOpen(true);
     };
 
+    // Show loading state
     if (status === 'loading') {
-        return <div>Loading...</div>;
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+            </div>
+        );
     }
 
+    // Show error state
     if (status === 'failed') {
-        return <div>Error: {error}</div>;
+        return (
+            <div className="flex justify-center items-center min-h-screen">
+                <div className="text-red-500">Xatolik yuz berdi: {error}</div>
+            </div>
+        );
     }
 
     return (
