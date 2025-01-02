@@ -417,6 +417,7 @@ export default function PaymentManagement() {
                     <TableHead>Sana</TableHead>
                     <TableHead>Turi</TableHead>
                     <TableHead>Izoh</TableHead>
+                    <TableHead>Oldindan to'lov</TableHead>
                     <TableHead>Amallar</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -448,8 +449,9 @@ export default function PaymentManagement() {
                         <TableCell>{customers.find((customer) => customer._id === payment.customer)?.name || "Noma'lum"}</TableCell>
                         <TableCell>{payment.amount.toLocaleString()} so'm</TableCell>
                         <TableCell>{format(new Date(payment.paymentDate), "PPP")}</TableCell>
-                        <TableCell>{payment.paymentMethod === "cash" ? "Naqd" : "Karta"}</TableCell>
+                        <TableCell>{payment.paymentType === "cash" ? "Naqd" : "Karta"}</TableCell>
                         <TableCell>{payment.memo || "-"}</TableCell>
+                        <TableCell>{payment.isPrepaid ? "Ha" : "Yo'q"}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
                             <Button 

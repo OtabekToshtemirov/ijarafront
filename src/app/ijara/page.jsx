@@ -168,9 +168,9 @@ export default function RentalsPage() {
                             <TableHead>Raqam</TableHead>
                             <TableHead>Mijoz</TableHead>
                             <TableHead>Mashina</TableHead>
-                            <TableHead>Narxlar</TableHead>
-                            <TableHead>Kunlar</TableHead>
-                            <TableHead>Mahsulotlar</TableHead>
+                            <TableHead>Kunlik Narx</TableHead>
+                            <TableHead> Faol Kunlar</TableHead>
+                            <TableHead>Mulklar</TableHead>
                             <TableHead className="text-right">Amallar</TableHead>
                         </TableRow>
                     </TableHeader>

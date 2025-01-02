@@ -96,9 +96,10 @@ export default function AddRentalPage() {
 
     // Filter products based on search
     const filteredProducts = products?.filter(product => 
-        !productSearch || 
+        product.quantity > 0 && // Only show products with available quantity
+        (!productSearch || 
         product.name?.toLowerCase().includes(productSearch.toLowerCase()) ||
-        product.code?.toLowerCase().includes(productSearch.toLowerCase())
+        product.code?.toLowerCase().includes(productSearch.toLowerCase()))
     ) || [];
 
     // Calculate total amount
@@ -580,7 +581,7 @@ export default function AddRentalPage() {
 
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-medium">Mahsulotlar</h3>
+                                <h3 className="text-lg font-medium">Mulklar</h3>
                                 <Button type="button" variant="outline" size="sm" onClick={() => {
                                     setRentalForm(prev => ({
                                         ...prev,
@@ -597,7 +598,7 @@ export default function AddRentalPage() {
                                     }));
                                 }}>
                                     <Plus className="h-4 w-4 mr-2" />
-                                    Mahsulot qo'shish
+                                    Mulklar qo'shish
                                 </Button>
                             </div>
 
@@ -610,7 +611,7 @@ export default function AddRentalPage() {
                                     {rentalForm.borrowedProducts.map((product, index) => (
                                         <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
                                             <div className="space-y-2">
-                                                <label>Mahsulot</label>
+                                                <label>Mulklar</label>
                                                 <Select
                                                     value={product.product}
                                                     onValueChange={(value) => {
@@ -628,7 +629,7 @@ export default function AddRentalPage() {
                                                     }}
                                                 >
                                                     <SelectTrigger className={validationErrors[`borrowedProducts.${index}.product`] ? 'border-red-500' : ''}>
-                                                        <SelectValue placeholder="Mahsulotni tanlang">
+                                                        <SelectValue placeholder="Mulkni tanlang">
                                                             {product.product ? products.find(p => p._id === product.product)?.name : "Mahsulotni tanlang"}
                                                         </SelectValue>
                                                     </SelectTrigger>
@@ -636,7 +637,7 @@ export default function AddRentalPage() {
                                                         <div className="px-3 pb-2">
                                                             <Input
                                                                 type="text"
-                                                                placeholder="Mahsulotni qidirish..."
+                                                                placeholder="Mulkni qidirish..."
                                                                 value={productSearch}
                                                                 onChange={(e) => setProductSearch(e.target.value)}
                                                             />
@@ -644,7 +645,7 @@ export default function AddRentalPage() {
                                                         {filteredProducts.length > 0 ? (
                                                             filteredProducts.map((product) => (
                                                                 <SelectItem key={product._id} value={product._id}>
-                                                                    {product.name} - {product.quantity}
+                                                                    {product.name} - {product.quantity} dona
                                                                 </SelectItem>
                                                             ))
                                                         ) : (
@@ -661,21 +662,60 @@ export default function AddRentalPage() {
 
                                             <div className="space-y-2">
                                                 <label>Miqdor</label>
-                                                <Input
-                                                    type="number"
-                                                    name="quantity"
-                                                    value={product.quantity}
-                                                    onChange={(e) => {
-                                                        setRentalForm(prev => ({
-                                                            ...prev,
-                                                            borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                                                                i === index ? { ...item, quantity: parseInt(e.target.value) || 1 } : item
-                                                            )
-                                                        }));
-                                                    }}
-                                                    min="1"
-                                                    placeholder="Miqdor"
-                                                />
+                                                <div className="flex items-center space-x-2">
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setRentalForm(prev => ({
+                                                                ...prev,
+                                                                borrowedProducts: prev.borrowedProducts.map((item, i) => 
+                                                                    i === index ? { 
+                                                                        ...item, 
+                                                                        quantity: Math.max(1, (item.quantity || 1) - 1) 
+                                                                    } : item
+                                                                )
+                                                            }));
+                                                        }}
+                                                    >
+                                                        <Minus className="h-4 w-4" />
+                                                    </Button>
+                                                    <Input
+                                                        type="number"
+                                                        name="quantity"
+                                                        value={product.quantity}
+                                                        onChange={(e) => {
+                                                            setRentalForm(prev => ({
+                                                                ...prev,
+                                                                borrowedProducts: prev.borrowedProducts.map((item, i) => 
+                                                                    i === index ? { ...item, quantity: parseInt(e.target.value) || 1 } : item
+                                                                )
+                                                            }));
+                                                        }}
+                                                        min="1"
+                                                        placeholder="Miqdor"
+                                                        className="w-20 text-center"
+                                                    />
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            setRentalForm(prev => ({
+                                                                ...prev,
+                                                                borrowedProducts: prev.borrowedProducts.map((item, i) => 
+                                                                    i === index ? { 
+                                                                        ...item, 
+                                                                        quantity: (item.quantity || 1) + 1 
+                                                                    } : item
+                                                                )
+                                                            }));
+                                                        }}
+                                                    >
+                                                        <Plus className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                                 {validationErrors[`borrowedProducts.${index}.quantity`] && (
                                                     <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.quantity`]}</p>
                                                 )}
@@ -718,30 +758,7 @@ export default function AddRentalPage() {
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
-                                                {index === rentalForm.borrowedProducts.length - 1 && (
-                                                    <Button
-                                                        type="button"
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={() => {
-                                                            setRentalForm(prev => ({
-                                                                ...prev,
-                                                                borrowedProducts: [
-                                                                    ...prev.borrowedProducts,
-                                                                    {
-                                                                        product: '',
-                                                                        quantity: 1,
-                                                                        dailyRate: 0,
-                                                                        startDate: prev.startDate,
-                                                                        rentDate: new Date().toISOString().split('T')[0]
-                                                                    }
-                                                                ]
-                                                            }));
-                                                        }}
-                                                    >
-                                                        <Plus className="h-4 w-4" />
-                                                    </Button>
-                                                )}
+                                                
                                             </div>
                                         </div>
                                     ))}
