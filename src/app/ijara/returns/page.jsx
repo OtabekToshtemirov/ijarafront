@@ -268,7 +268,7 @@ export default function Component() {
                             <p className="text-muted-foreground">{selectedCustomer.customer.phone}</p>
                             <div className="flex items-center gap-4">
                                 <Badge variant={calculateCustomerBalance(selectedCustomer.rentals) > 0 ? "destructive" : "success"}>
-                                    Balans: {calculateCustomerBalance(selectedCustomer.rentals).toLocaleString()} so'm
+                                    Balans: {selectedCustomer.customer.balance?.toLocaleString()} so'm
                                 </Badge>
                                 <Badge variant="outline">
                                     Faol ijaralar: {selectedCustomer.totalRentals}

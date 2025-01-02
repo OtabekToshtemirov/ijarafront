@@ -19,6 +19,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { Input } from "@/components/ui/input";
 import {
     fetchRentals,
     fetchActiveRentals,
@@ -27,18 +28,24 @@ import {
     fetchRentalsByCustomerId,
     fetchRentalsByProductId,
     fetchRentalsByCarId,
-    updateRental
+    updateRental,
+    returnProduct
 } from '@/lib/features/rentals/rentalsSlice';
 import { toast } from 'sonner';
-import { Loader2, Plus } from 'lucide-react';
+import { Loader2, Plus, Edit, Eye } from 'lucide-react';
 import moment from 'moment';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from "@/components/ui/label";
 
 export default function RentalsPage() {
     const dispatch = useDispatch();
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [editingId, setEditingId] = useState(null);
+    const [editingProduct, setEditingProduct] = useState(null);
     const [editFormData, setEditFormData] = useState({});
+    const [viewDialogOpen, setViewDialogOpen] = useState(false);
+    const [selectedRental, setSelectedRental] = useState(null);
 
     const rentals = useSelector((state) => state.rentals.rentals);
 
@@ -121,6 +128,94 @@ export default function RentalsPage() {
         setEditFormData({});
     };
 
+    const handleStatusChange = async (rental, newStatus) => {
+        try {
+            const updateData = {
+                ...rental,
+                status: newStatus,
+                returnDate: newStatus === 'completed' || newStatus === 'canceled' ? new Date().toISOString() : null
+            };
+
+            // If canceling or completing, return all products
+            if (newStatus === 'canceled' || newStatus === 'completed') {
+                const returnData = {
+                    rentalId: rental._id,
+                    products: rental.borrowedProducts.map(item => ({
+                        product: item.product._id,
+                        quantity: item.quantity,
+                        returnDate: new Date().toISOString()
+                    }))
+                };
+                
+                await dispatch(returnProduct(returnData)).unwrap();
+                toast.success("Mahsulotlar muvaffaqiyatli qaytarildi");
+            }
+
+            await dispatch(updateRental({ id: rental._id, data: updateData })).unwrap();
+            toast.success(`Ijara holati ${newStatus === 'active' ? 'Faol' : 
+                                       newStatus === 'completed' ? 'Yakunlangan' : 
+                                       'Bekor qilindi'} ga o'zgartirildi`);
+            
+            dispatch(fetchRentals());
+        } catch (error) {
+            toast.error(error.message || "Xatolik yuz berdi");
+        }
+    };
+
+    const handleProductEdit = (rental, product) => {
+        setEditingProduct({
+            rentalId: rental._id,
+            productId: product.product._id,
+            quantity: product.quantity,
+            originalQuantity: product.quantity
+        });
+    };
+
+    const handleProductQuantityChange = async (rental, product, newQuantity) => {
+        try {
+            const difference = newQuantity - product.quantity; // Positive if increasing, negative if decreasing
+            
+            // Update the rental's borrowed products
+            const updatedBorrowedProducts = rental.borrowedProducts.map(item => 
+                item.product._id === product.product._id
+                    ? { ...item, quantity: newQuantity }
+                    : item
+            );
+
+            // If reducing quantity, treat it as a partial return
+            if (difference < 0) {
+                const returnData = {
+                    rentalId: rental._id,
+                    products: [{
+                        product: product.product._id,
+                        quantity: Math.abs(difference),
+                        returnDate: new Date().toISOString()
+                    }]
+                };
+                await dispatch(returnProduct(returnData)).unwrap();
+            }
+
+            // Update the rental
+            const updateData = {
+                ...rental,
+                borrowedProducts: updatedBorrowedProducts
+            };
+
+            await dispatch(updateRental({ id: rental._id, data: updateData })).unwrap();
+            toast.success("Mahsulot miqdori muvaffaqiyatli o'zgartirildi");
+            
+            setEditingProduct(null);
+            dispatch(fetchRentals());
+        } catch (error) {
+            toast.error(error.message || "Xatolik yuz berdi");
+        }
+    };
+
+    const handleViewRental = (rental) => {
+        setSelectedRental(rental);
+        setViewDialogOpen(true);
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -148,7 +243,7 @@ export default function RentalsPage() {
                             <SelectItem value="all">Barchasi</SelectItem>
                             <SelectItem value="active">Faol</SelectItem>
                             <SelectItem value="completed">Yakunlangan</SelectItem>
-                            <SelectItem value="canceled">Bekor qilingan</SelectItem>
+                            <SelectItem value="canceled">Bekor qilindi</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -197,8 +292,7 @@ export default function RentalsPage() {
                                     <div className="flex flex-col">
                                         <span>{rental.car?.carNumber || '-'}</span>
                                         <span className="text-sm text-muted-foreground">
-                                            {rental.car?.driverName || '-'}
-                                        </span>
+                                            {rental.car?.driverName || '-'}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell>
@@ -209,7 +303,6 @@ export default function RentalsPage() {
                                                 To'langan: {rental.totalPayments?.toLocaleString()} so'm
                                             </span>
                                         )}
-                                        
                                     </div>
                                 </TableCell>
                                 <TableCell>
@@ -222,10 +315,53 @@ export default function RentalsPage() {
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span>Mahsulotlar:</span>
+                                        <span>Mulklar:</span>
                                         {rental.borrowedProducts.map((item, index) => (
-                                            <div key={index} className="text-sm">
-                                                <span>{item.product.name} ({item.quantity})</span>
+                                            <div key={index} className="text-sm flex items-center justify-between">
+                                                <div>
+                                                    <span>{item.product.name} </span>
+                                                    {editingProduct?.rentalId === rental._id && 
+                                                     editingProduct?.productId === item.product._id ? (
+                                                        <div className="flex items-center gap-2 mt-1">
+                                                            <input
+                                                                type="number"
+                                                                value={editingProduct.quantity}
+                                                                onChange={(e) => setEditingProduct({
+                                                                    ...editingProduct,
+                                                                    quantity: parseInt(e.target.value) || 0
+                                                                })}
+                                                                className="w-20"
+                                                                min="1"
+                                                            />
+                                                            <Button 
+                                                                size="sm"
+                                                                variant="outline"
+                                                                onClick={() => handleProductQuantityChange(rental, item, editingProduct.quantity)}
+                                                            >
+                                                                ✓
+                                                            </Button>
+                                                            <Button 
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => setEditingProduct(null)}
+                                                            >
+                                                                ✕
+                                                            </Button>
+                                                        </div>
+                                                    ) : (
+                                                        <>
+                                                            <span>({item.quantity} dona)</span>
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="ghost"
+                                                                className="ml-2"
+                                                                onClick={() => handleProductEdit(rental, item)}
+                                                            >
+                                                                <Edit className="h-3 w-3" />
+                                                            </Button>
+                                                        </>
+                                                    )}
+                                                </div>
                                                 <span className="text-muted-foreground ml-2">
                                                     {new Date(item.rentDate).toLocaleDateString()}
                                                 </span>
@@ -236,13 +372,22 @@ export default function RentalsPage() {
                                 <TableCell className="text-right">
                                     {editingId === rental._id ? (
                                         <div className="space-x-2">
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleSave(rental._id)}
+                                            <Select 
+                                                value={editFormData.status}
+                                                onValueChange={(value) => {
+                                                    handleStatusChange(rental, value);
+                                                    handleCancel();
+                                                }}
                                             >
-                                                Saqlash
-                                            </Button>
+                                                <SelectTrigger className="w-[140px]">
+                                                    <SelectValue placeholder="Status" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="active">Faol</SelectItem>
+                                                    <SelectItem value="completed">Yakunlangan</SelectItem>
+                                                    <SelectItem value="canceled">Bekor qilingan</SelectItem>
+                                                </SelectContent>
+                                            </Select>
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
@@ -252,13 +397,22 @@ export default function RentalsPage() {
                                             </Button>
                                         </div>
                                     ) : (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handleEdit(rental)}
-                                        >
-                                            Tahrirlash
-                                        </Button>
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleViewRental(rental)}
+                                            >
+                                                <Eye className="h-4 w-4" />
+                                            </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleEdit(rental)}
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     )}
                                 </TableCell>
                             </TableRow>
@@ -266,6 +420,85 @@ export default function RentalsPage() {
                     </TableBody>
                 </Table>
             </div>
+
+            {/* View Rental Dialog */}
+            <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
+                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle>Ijara ma'lumotlari</DialogTitle>
+                    </DialogHeader>
+                    {selectedRental && (
+                        <div className="grid gap-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <Label>Raqam</Label>
+                                    <p className="text-lg">{selectedRental.rentalNumber}</p>
+                                    <p className="text-sm text-muted-foreground">
+                                        {new Date(selectedRental.createdAt).toLocaleDateString()}
+                                    </p>
+                                </div>
+                                <div>
+                                    <Label>Status</Label>
+                                    <p className="text-lg">
+                                        {selectedRental.status === 'active' ? 'Faol' :
+                                         selectedRental.status === 'completed' ? 'Yakunlangan' :
+                                         'Bekor qilingan'}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label>Mijoz</Label>
+                                <p className="text-lg">{selectedRental.customer?.name}</p>
+                                <p className="text-sm text-muted-foreground">{selectedRental.customer?.phone}</p>
+                            </div>
+
+                            <div>
+                                <Label>Mashina</Label>
+                                <p className="text-lg">{selectedRental.car?.carNumber || '-'}</p>
+                                <p className="text-sm text-muted-foreground">{selectedRental.car?.driverName || '-'}</p>
+                            </div>
+
+                            <div>
+                                <Label>Moliyaviy ma'lumotlar</Label>
+                                <div className="grid grid-cols-2 gap-4 mt-2">
+                                    <div>
+                                        <p className="text-lg font-medium">{selectedRental.totalCost?.toLocaleString()} so'm</p>
+                                        <p className="text-sm text-muted-foreground">Umumiy summa</p>
+                                    </div>
+                                    {selectedRental.payments?.length > 0 && (
+                                        <div>
+                                            <p className="text-lg font-medium text-green-600">
+                                                {selectedRental.totalPayments?.toLocaleString()} so'm
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">To'langan</p>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div>
+                                <Label>Mulklar</Label>
+                                <div className="space-y-2 mt-2">
+                                    {selectedRental.borrowedProducts.map((item, index) => (
+                                        <div key={index} className="flex justify-between items-center">
+                                            <div>
+                                                <p className="font-medium">{item.product.name}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {item.quantity} dona × {item.dailyRate?.toLocaleString()} so'm
+                                                </p>
+                                            </div>
+                                            <p className="text-sm text-muted-foreground">
+                                                {new Date(item.rentDate).toLocaleDateString()}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }
