@@ -31,18 +31,23 @@ export default function Component() {
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [returnQuantities, setReturnQuantities] = useState({});
     const [discountDays, setDiscountDays] = useState({});
+    const [localRentals, setLocalRentals] = useState([]);
 
     const rentals = useSelector((state) => state.rentals.rentals);
     const status = useSelector((state) => state.rentals.status);
 
     useEffect(() => {
-        if (status === 'idle') {
-            dispatch(fetchRentals());
+        dispatch(fetchRentals());
+    }, [dispatch]);
+
+    useEffect(() => {
+        if (rentals) {
+            setLocalRentals(rentals);
         }
-    }, [dispatch, status]);
+    }, [rentals]);
 
     // Get active rentals with unreturned products
-    const activeRentals = rentals.filter(rental => {
+    const activeRentals = localRentals.filter(rental => {
         if (rental.status !== 'active') return false;
         
         // Check if there are any unreturned products
@@ -119,58 +124,49 @@ export default function Component() {
 
     const handleReturn = async (rental, product) => {
         const key = `${rental._id}-${product.product._id}`;
-        const returnQuantity = returnQuantities[key] || 0;
-        
-        if (returnQuantity <= 0) {
-            toast.error("Qaytarish miqdorini kiriting!");
-            return;
-        }
+        const quantity = returnQuantities[key];
 
-        const returnedQuantity = rental.returnedProducts
-            .filter(rp => rp.product?._id === product.product._id)
-            .reduce((sum, rp) => sum + rp.quantity, 0);
-        const remainingQuantity = product.quantity - returnedQuantity;
-
-        if (returnQuantity > remainingQuantity) {
-            toast.error("Qaytarish miqdori qolgan miqdordan ko'p bo'lishi mumkin emas!");
-            return;
-        }
+        if (!quantity) return;
 
         try {
-            console.log('Returning product:', {
-                rentalId: rental._id,
-                products: [{
-                    product: product.product._id,
-                    quantity: returnQuantity,
-                    returnDate: new Date()
-                }]
-            });
-
             await dispatch(returnProduct({
                 rentalId: rental._id,
                 products: [{
                     product: product.product._id,
-                    quantity: returnQuantity,
+                    quantity: quantity,
                     returnDate: new Date()
                 }]
             })).unwrap();
-            
-            // Clear return quantity after successful return
+
+            // Update local state
+            setLocalRentals(prev => prev.map(r => {
+                if (r._id === rental._id) {
+                    const updatedProducts = r.borrowedProducts.map(p => {
+                        if (p.product._id === product.product._id) {
+                            const newQuantity = p.quantity - quantity;
+                            return newQuantity > 0 ? { ...p, quantity: newQuantity } : null;
+                        }
+                        return p;
+                    }).filter(Boolean);
+
+                    return updatedProducts.length > 0 
+                        ? { ...r, borrowedProducts: updatedProducts }
+                        : null;
+                }
+                return r;
+            }).filter(Boolean));
+
+            // Clear return quantity
             setReturnQuantities(prev => ({
                 ...prev,
-                [key]: 0
+                [key]: ''
             }));
 
-            // Refresh rentals data
-            await dispatch(fetchRentals());
-            
-            toast.success("Mahsulot muvaffaqiyatli qaytarildi!");
+            toast.success("Mahsulot muvaffaqiyatli qaytarildi");
         } catch (error) {
-            console.error('Return error:', error);
-            toast.error(error.message || "Qaytarishda xatolik yuz berdi");
+            toast.error(error.message || "Xatolik yuz berdi");
         }
     };
-    
 
     const calculateCustomerBalance = (customerRentals) => {
         return customerRentals.reduce((balance, rental) => {

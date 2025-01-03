@@ -32,6 +32,9 @@ import { ArrowLeft, Plus, Trash2, Minus, Loader2, UserPlus, Car, X } from 'lucid
 import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from 'next/link';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+import { Textarea } from "@/components/ui/textarea";
 
 export default function AddRentalPage() {
     const dispatch = useDispatch();
@@ -74,7 +77,8 @@ export default function AddRentalPage() {
             rentDate: new Date().toISOString().split('T')[0]
         }],
         totalCost: 0,
-        debt: 0
+        debt: 0,
+        description: ''
     });
 
     const [validationErrors, setValidationErrors] = useState({});
@@ -246,10 +250,14 @@ export default function AddRentalPage() {
             totalCost: totalCost,
             debt: totalCost,
             prepaidAmount: Number(rentalForm.prepaidAmount || 0),
+            description: rentalForm.description
         };
 
         try {
-            await dispatch(createRental(formData)).unwrap();
+            const response = await dispatch(createRental(formData)).unwrap();
+            generatePDF(response, customers.find(customer => customer._id === rentalForm.customer));
+            toast.success('Ijara muvaffaqiyatli yaratildi');
+            router.push('/ijara');
         } catch (error) {
             toast.error(error.message || 'Xatolik yuz berdi');
         }
@@ -309,6 +317,101 @@ export default function AddRentalPage() {
             console.error('Error adding car:', error);
             toast.error(error.message || "Xatolik yuz berdi");
         }
+    };
+
+    const generatePDF = (rental, customer) => {
+        // 80mm = 226.772 points in PDF
+        const width = 226.772;
+        const height = 400; // Uzunlikni kontentga qarab avtomatik sozlanadi
+        
+        const doc = new jsPDF({
+            unit: 'pt',
+            format: [width, height],
+            orientation: 'portrait'
+        });
+
+        // Sahifa kengligi
+        const pageWidth = doc.internal.pageSize.width;
+        const margin = 20;
+        const contentWidth = pageWidth - (margin * 2);
+        
+        // Shrift o'lchamlarini kichikroq qilish
+        doc.setFontSize(12);
+        doc.text("IJARA SHARTNOMASI", pageWidth / 2, margin, { align: "center" });
+        
+        let yPos = margin + 20;
+        
+        // Asosiy ma'lumotlar
+        doc.setFontSize(8);
+        doc.text(`№ ${rental.rentalNumber}`, margin, yPos);
+        doc.text(`Sana: ${new Date().toLocaleDateString()}`, margin, yPos + 10);
+        
+        yPos += 30;
+        
+        // Mijoz ma'lumotlari
+        doc.text("MIJOZ MA'LUMOTLARI:", margin, yPos);
+        yPos += 12;
+        doc.text(`Ism: ${customer.name}`, margin, yPos);
+        yPos += 10;
+        doc.text(`Tel: ${customer.phone}`, margin, yPos);
+        yPos += 10;
+        doc.text(`Manzil: ${customer.address}`, margin, yPos);
+        
+        yPos += 20;
+        
+        // Ijara ma'lumotlari
+        doc.text("IJARA MA'LUMOTLARI:", margin, yPos);
+        yPos += 12;
+        doc.text(`Boshlanish: ${new Date(rentalForm.workStartDate).toLocaleDateString()}`, margin, yPos);
+        yPos += 10;
+        doc.text(`Oldindan to'lov: ${rentalForm.prepaidAmount?.toLocaleString()} so'm`, margin, yPos);
+        yPos += 10;
+        doc.text(`Umumiy narx: ${rentalForm.totalCost?.toLocaleString()} so'm`, margin, yPos);
+        
+        yPos += 20;
+        
+        // Mahsulotlar jadvali
+        const tableData = rentalForm.borrowedProducts.map(product => [
+            products.find(p => p._id === product.product).name,
+            product.quantity.toString(),
+            `${product.dailyRate?.toLocaleString()}`,
+            `${(product.quantity * product.dailyRate)?.toLocaleString()}`
+        ]);
+        
+        doc.autoTable({
+            startY: yPos,
+            head: [['Mahsulot', 'Soni', 'Narx', 'Jami']],
+            body: tableData,
+            theme: 'plain',
+            styles: { 
+                fontSize: 8,
+                cellPadding: 3,
+                overflow: 'linebreak',
+                cellWidth: 'wrap'
+            },
+            columnStyles: {
+                0: { cellWidth: 80 },
+                1: { cellWidth: 30 },
+                2: { cellWidth: 40 },
+                3: { cellWidth: 40 }
+            },
+            margin: { left: margin, right: margin },
+            tableWidth: contentWidth
+        });
+        
+        // Izoh qo'shish
+        if (rentalForm.description) {
+            yPos = doc.previousAutoTable.finalY + 10;
+            doc.text("Izoh:", margin, yPos);
+            doc.text(rentalForm.description, margin, yPos + 10, {
+                maxWidth: contentWidth,
+                lineHeightFactor: 1.2
+            });
+        }
+
+        // Chop etish
+        doc.autoPrint();
+        doc.output('dataurlnewwindow');
     };
 
     return (
@@ -771,12 +874,24 @@ export default function AddRentalPage() {
                             {/* Total Amount */}
                             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-semibold">Umumiy summa:</h3>
+                                    <h3 className="text-lg font-medium">Umumiy summa:</h3>
                                     <p className="text-xl font-bold">{rentalForm.totalCost.toLocaleString()} so'm</p>
                                 </div>
                             </div>
 
-                            <div className="flex justify-end">
+                            {/* Description */}
+                            <div className="mt-4">
+                                <Label htmlFor="description">Izoh</Label>
+                                <Textarea
+                                    id="description"
+                                    value={rentalForm.description || ''}
+                                    onChange={(e) => setRentalForm(prev => ({ ...prev, description: e.target.value }))}
+                                    placeholder="Ijaraga izoh qo'shish..."
+                                    className="mt-1"
+                                />
+                            </div>
+
+                            <div className="flex justify-end mt-4">
                                 <Button type="submit" disabled={addStatus === 'loading'}>
                                     {addStatus === 'loading' ? (
                                         <>

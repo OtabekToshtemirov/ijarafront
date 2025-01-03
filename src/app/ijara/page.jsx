@@ -1,6 +1,6 @@
     'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -32,10 +32,11 @@ import {
     returnProduct
 } from '@/lib/features/rentals/rentalsSlice';
 import { toast } from 'sonner';
-import { Loader2, Plus, Edit, Eye } from 'lucide-react';
+import { Loader2, Plus, Edit, Eye, Printer } from 'lucide-react';
 import moment from 'moment';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from "@/components/ui/label";
+import { useReactToPrint } from 'react-to-print';
 
 export default function RentalsPage() {
     const dispatch = useDispatch();
@@ -47,29 +48,32 @@ export default function RentalsPage() {
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [selectedRental, setSelectedRental] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
+    const [selectedPrintRental, setSelectedPrintRental] = useState(null);
+    const componentRef = useRef(null);
 
     const rentals = useSelector((state) => state.rentals.rentals);
 
-    // Filter rentals based on search query
-    const filteredRentals = rentals.filter(rental => {
-        const search = searchQuery.toLowerCase();
-        if (!search) return true;
-        
-        // Search in customer details
-        const customerMatch = (rental.customer?.name || '').toLowerCase().includes(search) ||
-                            (rental.customer?.phone || '').toLowerCase().includes(search);
-        
-        // Search in car details
-        const carMatch = (rental.car?.carNumber || '').toLowerCase().includes(search) ||
-                        (rental.car?.driverName || '').toLowerCase().includes(search);
-        
-        // Search in products
-        const productMatch = rental.borrowedProducts.some(item => 
-            (item.product.name || '').toLowerCase().includes(search)
-        );
+    // Get filtered and searched rentals
+    const filteredRentals = useMemo(() => {
+        return rentals.filter(rental => {
+            // First apply status filter
+            if (filter !== 'all' && rental.status !== filter) {
+                return false;
+            }
 
-        return customerMatch || carMatch || productMatch;
-    });
+            // Then apply search filter if there's a search query
+            if (searchQuery) {
+                const customer = rental.customer?.name?.toLowerCase() || '';
+                const rentalNumber = rental.rentalNumber?.toLowerCase() || '';
+                const searchLower = searchQuery.toLowerCase();
+                
+                return customer.includes(searchLower) || 
+                       rentalNumber.includes(searchLower);
+            }
+
+            return true;
+        });
+    }, [rentals, filter, searchQuery]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -85,28 +89,8 @@ export default function RentalsPage() {
         loadData();
     }, [dispatch]);
 
-    const handleFilterChange = async (value) => {
+    const handleFilterChange = (value) => {
         setFilter(value);
-        setLoading(true);
-        try {
-            switch (value) {
-                case 'active':
-                    await dispatch(fetchActiveRentals());
-                    break;
-                case 'completed':
-                    await dispatch(fetchCompleteRentals());
-                    break;
-                case 'canceled':
-                    await dispatch(fetchCanceledRentals());
-                    break;
-                default:
-                    await dispatch(fetchRentals());
-            }
-        } catch (error) {
-            toast.error('Ijaralarni yuklashda xatolik yuz berdi');
-        } finally {
-            setLoading(false);
-        }
     };
 
     const handleEdit = (rental) => {
@@ -238,6 +222,85 @@ export default function RentalsPage() {
         setViewDialogOpen(true);
     };
 
+    const handlePrint = useReactToPrint({
+        contentRef: componentRef,
+        onAfterPrint: () => setSelectedPrintRental(null),
+    });
+
+    const PrintComponent = ({ rental }) => {
+        if (!rental) return null;
+        
+        return (
+            <div style={{ width: '80mm', padding: '5mm', fontFamily: 'Arial' }}>
+                <style type="text/css" media="print">{`
+                    @page { 
+                        size: 80mm auto;
+                        margin: 0;
+                    }
+                    @media print {
+                        body {
+                            width: 80mm;
+                        }
+                        table { 
+                            page-break-inside: avoid;
+                        }
+                    }
+                `}</style>
+                
+                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+                    <h2 style={{ margin: 0, fontSize: '14px' }}>Ijara Ma'lumotlari</h2>
+                </div>
+                
+                <div style={{ fontSize: '12px', marginBottom: '10px' }}>
+                    <div>№ {rental.rentalNumber}</div>
+                    <div>Sana: {new Date(rental.createdAt).toLocaleDateString()}</div>
+                </div>
+
+                <div style={{ fontSize: '12px', marginBottom: '10px' }}>
+                    <h3 style={{ margin: '5px 0', fontSize: '12px' }}>MIJOZ MA'LUMOTLARI:</h3>
+                    <div>Ism: {rental.customer.name}</div>
+                    <div>Tel: {rental.customer.phone}</div>
+                    <div>Manzil: {rental.customer.address}</div>
+                </div>
+
+                <div style={{ fontSize: '12px', marginBottom: '10px' }}>
+                    <h3 style={{ margin: '5px 0', fontSize: '12px' }}>IJARA MA'LUMOTLARI:</h3>
+                    <div>Boshlanish: {new Date(rental.workStartDate).toLocaleDateString()}</div>
+                    <div>Oldindan to'lov: {(rental.totalCost - rental.debt).toLocaleString()} so'm</div>
+                    <div>Umumiy narx: {rental.totalCost.toLocaleString()} so'm</div>
+                </div>
+
+                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse', marginTop: '10px' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '1px solid black' }}>
+                            <th style={{ textAlign: 'left', padding: '2px' }}>Mahsulot</th>
+                            <th style={{ textAlign: 'center', padding: '2px' }}>Soni</th>
+                            <th style={{ textAlign: 'right', padding: '2px' }}>Narx</th>
+                            <th style={{ textAlign: 'right', padding: '2px' }}>Jami</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {rental.borrowedProducts.map((product, index) => (
+                            <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
+                                <td style={{ padding: '2px' }}>{product.product.name}</td>
+                                <td style={{ textAlign: 'center', padding: '2px' }}>{product.quantity}</td>
+                                <td style={{ textAlign: 'right', padding: '2px' }}>{product.dailyRate.toLocaleString()}</td>
+                                <td style={{ textAlign: 'right', padding: '2px' }}>{(product.quantity * product.dailyRate).toLocaleString()}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+
+                {rental.description && (
+                    <div style={{ fontSize: '12px', marginTop: '10px' }}>
+                        <h3 style={{ margin: '5px 0', fontSize: '12px' }}>Izoh:</h3>
+                        <div>{rental.description}</div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -288,18 +351,15 @@ export default function RentalsPage() {
                 />
             </div>
 
-            <div className="border rounded-lg">
+            <div className="rounded-md border">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Raqam</TableHead>
+                            <TableHead>Raqami</TableHead>
                             <TableHead>Mijoz</TableHead>
-                            <TableHead>Mashina</TableHead>
-                            <TableHead>Kunlik Narx</TableHead>
-                            <TableHead> Faol Kunlar</TableHead>
-                            <TableHead>Mulklar</TableHead>
-                          
-                            <TableHead >Amallar</TableHead>
+                            <TableHead>Sana</TableHead>
+                            <TableHead>Holati</TableHead>
+                            <TableHead>Amallar</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -405,6 +465,16 @@ export default function RentalsPage() {
                                             >
                                                 <Edit className="h-4 w-4" />
                                             </Button>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => {
+                                                    setSelectedPrintRental(rental);
+                                                    setTimeout(handlePrint, 100);
+                                                }}
+                                            >
+                                                <Printer className="h-4 w-4" />
+                                            </Button>
                                         </div>
                                     )}
                                 </TableCell>
@@ -488,10 +558,22 @@ export default function RentalsPage() {
                                     ))}
                                 </div>
                             </div>
+
+                            <div>
+                                <Label>Izoh</Label>
+                                <p className="text-lg">{selectedRental.description == '' ? 'Izoh mavjud emas' : selectedRental.description}</p>
+                            </div>
                         </div>
                     )}
                 </DialogContent>
             </Dialog>
+
+            {/* Yashirin print komponenti */}
+            <div style={{ display: "none" }}>
+                <div ref={componentRef}>
+                    {selectedPrintRental && <PrintComponent rental={selectedPrintRental} />}
+                </div>
+            </div>
         </div>
     );
 }
