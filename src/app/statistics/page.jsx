@@ -88,19 +88,16 @@ export default function StatisticsPage() {
     const CarCard = ({ car, index }) => (
         <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow mb-2">
             <div className="flex items-center space-x-4">
-                <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-full">
+                <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-600">
                     {index + 1}
                 </div>
-                <div>
-                    <p className="font-semibold">{car.driverName}</p>
-                    <div className="flex flex-col">
-                        <p className="text-sm text-gray-500">Car: {car.carNumber}</p>
-                        <p className="text-sm text-gray-500">Phone: {car.driverPhone}</p>
-                    </div>
+                <div className="flex flex-col">
+                    <p className="text-gray-600">Car: {car.carNumber}</p>
+                    <p className="text-gray-600">Phone: {car.driverPhone}</p>
                 </div>
             </div>
             <div className="text-right">
-                <p className="font-semibold">{car.rentalCount} rentals</p>
+                <p className="font-semibold text-black">{car.rentalCount}{car.driverPhone} rentals</p>
             </div>
         </div>
     );

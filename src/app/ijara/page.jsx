@@ -46,8 +46,30 @@ export default function RentalsPage() {
     const [editFormData, setEditFormData] = useState({});
     const [viewDialogOpen, setViewDialogOpen] = useState(false);
     const [selectedRental, setSelectedRental] = useState(null);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const rentals = useSelector((state) => state.rentals.rentals);
+
+    // Filter rentals based on search query
+    const filteredRentals = rentals.filter(rental => {
+        const search = searchQuery.toLowerCase();
+        if (!search) return true;
+        
+        // Search in customer details
+        const customerMatch = (rental.customer?.name || '').toLowerCase().includes(search) ||
+                            (rental.customer?.phone || '').toLowerCase().includes(search);
+        
+        // Search in car details
+        const carMatch = (rental.car?.carNumber || '').toLowerCase().includes(search) ||
+                        (rental.car?.driverName || '').toLowerCase().includes(search);
+        
+        // Search in products
+        const productMatch = rental.borrowedProducts.some(item => 
+            (item.product.name || '').toLowerCase().includes(search)
+        );
+
+        return customerMatch || carMatch || productMatch;
+    });
 
     useEffect(() => {
         const loadData = async () => {
@@ -256,6 +278,16 @@ export default function RentalsPage() {
                 </div>
             </div>
 
+            {/* Search Input */}
+            <div className="mb-6">
+                <Input
+                    className="max-w-md"
+                    placeholder="Mijoz, mashina yoki mahsulot bo'yicha qidirish"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                />
+            </div>
+
             <div className="border rounded-lg">
                 <Table>
                     <TableHeader>
@@ -271,7 +303,7 @@ export default function RentalsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {rentals.map((rental) => (
+                        {filteredRentals.map((rental) => (
                             <TableRow key={rental._id}>
                                 <TableCell>
                                     <div className="flex flex-col">

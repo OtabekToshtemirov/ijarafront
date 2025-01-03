@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams, useRouter } from "next/navigation";
-import { Loader2, ChevronDown, ChevronUp, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft } from "lucide-react";
 import {
     Table,
     TableBody,
@@ -14,17 +14,12 @@ import {
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { fetchCustomers } from "@/lib/features/customers/customerSlice";
 import { 
     fetchRentalsByCustomerId, 
-    addReturnedProduct, 
+    addReturnedProduct,
     clearReturnStatus,
-    selectReturnRentalStatus,
-    selectCustomerRentals,
-    selectCustomerRentalsStatus,
-    selectCustomerRentalsError
 } from "@/lib/features/rentals/rentalsSlice";
 import { 
     fetchPaymentsByCustomerId,
@@ -39,101 +34,38 @@ export default function CustomerDetailsPage() {
     const { id } = useParams();
     
     const customer = useSelector((state) => state.customers.customers.find(c => c._id === id));
-    const rentals = useSelector(selectCustomerRentals) || [];
-    const rentalsStatus = useSelector(selectCustomerRentalsStatus);
-    const rentalsError = useSelector(selectCustomerRentalsError);
+    const rentals = useSelector((state) => state.rentals.rentals) || [];
     const payments = useSelector(selectPayments) || [];
     const status = useSelector((state) => state.customers.status);
     const paymentsStatus = useSelector(selectPaymentsStatus);
-    const returnStatus = useSelector(selectReturnRentalStatus);
 
-    const [expandedRental, setExpandedRental] = useState(null);
     const [returnProduct, setReturnProduct] = useState(null);
+    const [returnQuantity, setReturnQuantity] = useState(1);
 
     useEffect(() => {
-        const loadData = async () => {
-            try {
-                if (status === 'idle') {
-                    await dispatch(fetchCustomers());
-                }
-                if (id) {
-                    await dispatch(fetchRentalsByCustomerId(id));
-                    await dispatch(fetchPaymentsByCustomerId(id));
-                }
-            } catch (error) {
-                console.error('Error loading data:', error);
-                toast.error('Ma\'lumotlarni yuklashda xatolik');
-            }
-        };
-        loadData();
-    }, [dispatch, id, status]);
-
-    useEffect(() => {
-        // Clear return status when component unmounts
-        return () => {
-            dispatch(clearReturnStatus());
-        };
+        dispatch(fetchCustomers());
     }, [dispatch]);
 
     useEffect(() => {
-        if (rentalsError) {
-            toast.error(rentalsError);
+        if (id) {
+            dispatch(fetchRentalsByCustomerId(id));
+            dispatch(fetchPaymentsByCustomerId(id));
         }
-    }, [rentalsError, toast]);
+    }, [dispatch, id]);
 
-    const handleExpandRental = (rentalId) => {
-        setExpandedRental(expandedRental === rentalId ? null : rentalId);
-    };
+    // Calculate total payments
+    const totalPayments = payments.reduce((sum, payment) => sum + payment.amount, 0);
 
-    const handleReturnProduct = async (rental, borrowedProduct) => {
-        try {
-            if (!returnProduct?.quantity || returnProduct.quantity > borrowedProduct.quantity) {
-                toast.error("Qaytarish miqdori noto'g'ri");
-                return;
-            }
+    // Calculate total returns cost
+    const totalReturnsCost = rentals.reduce((sum, rental) => {
+        return sum + (rental.returnedProducts || []).reduce((returnSum, returnedProduct) => 
+            returnSum + (returnedProduct.cost || 0), 0);
+    }, 0);
 
-            const result = await dispatch(addReturnedProduct({
-                rentalId: rental._id,
-                product: borrowedProduct.product._id,
-                quantity: returnProduct.quantity,
-                returnDate: new Date()
-            }));
-
-            if (result.meta.requestStatus === 'fulfilled') {
-                toast.success(`Mahsulot muvaffaqiyatli qaytarildi. Narxi: ${result.payload.returnedCost.toLocaleString()} so'm`);
-                setReturnProduct(null);
-                // Refresh rentals after successful return
-                dispatch(fetchRentalsByCustomerId(id));
-            }
-        } catch (error) {
-            toast.error('Xatolik yuz berdi');
-        }
-    };
-
-    // Calculate total payments for a rental
-    const getTotalPayments = (rental) => {
-        return rental.payments?.reduce((sum, payment) => sum + payment.amount, 0) || 0;
-    };
-
-    // Calculate remaining quantity for a borrowed product
-    const getRemainingQuantity = (rental, product) => {
-        const returnedQuantity = rental.returnedProducts
-            ?.filter(rp => rp.product?._id === product.product?._id)
-            ?.reduce((sum, rp) => sum + rp.quantity, 0) || 0;
-        return product.quantity - returnedQuantity;
-    };
-
-    // Calculate rental duration in days
-    const getRentalDuration = (startDate) => {
-        const start = new Date(startDate);
-        const now = new Date();
-        return Math.ceil((now - start) / (1000 * 60 * 60 * 24));
-    };
-
-    // Filter active rentals
+    // Get active rentals
     const activeRentals = rentals.filter(rental => rental.status === 'active');
-    
-    // Get unreturned products across all rentals
+
+    // Get unreturned products
     const getUnreturnedProducts = () => {
         return rentals.flatMap(rental => {
             return rental.borrowedProducts.filter(product => {
@@ -149,7 +81,46 @@ export default function CustomerDetailsPage() {
         });
     };
 
-    if (status === 'loading' || rentalsStatus === 'loading') {
+    // Calculate remaining quantity
+    const getRemainingQuantity = (rental, product) => {
+        const returnedQuantity = rental.returnedProducts
+            ?.filter(rp => rp.product?._id === product.product?._id)
+            ?.reduce((sum, rp) => sum + rp.quantity, 0) || 0;
+        return product.quantity - returnedQuantity;
+    };
+
+    // Handle product return
+    const handleReturn = async (rental, product) => {
+        if (!returnQuantity || returnQuantity <= 0) {
+            toast.error("Qaytarish miqdorini kiriting!");
+            return;
+        }
+
+        const remainingQuantity = getRemainingQuantity(rental, product);
+        if (returnQuantity > remainingQuantity) {
+            toast.error("Qaytarish miqdori qolgan miqdordan ko'p bo'lishi mumkin emas!");
+            return;
+        }
+
+        try {
+            await dispatch(addReturnedProduct({
+                rentalId: rental._id,
+                productId: product.product._id,
+                quantity: returnQuantity
+            })).unwrap();
+
+            toast.success("Mahsulot muvaffaqiyatli qaytarildi");
+            setReturnProduct(null);
+            setReturnQuantity(1);
+            
+            // Refresh data
+            dispatch(fetchRentalsByCustomerId(id));
+        } catch (error) {
+            toast.error("Xatolik yuz berdi");
+        }
+    };
+
+    if (status === 'loading' || paymentsStatus === 'loading') {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -173,6 +144,7 @@ export default function CustomerDetailsPage() {
                     Orqaga
                 </Button>
             </div>
+
             <div className="grid gap-6">
                 {/* Customer Information */}
                 <Card>
@@ -180,22 +152,31 @@ export default function CustomerDetailsPage() {
                         <CardTitle>Mijoz ma'lumotlari</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="grid md:grid-cols-3 gap-6">
                             <div>
-                                <p className="text-sm font-medium">Ism:</p>
-                                <p className="text-lg">{customer.name}</p>
+                                <h3 className="font-medium mb-2">Asosiy ma'lumotlar</h3>
+                                <div className="space-y-1">
+                                    <p>Ism: {customer.name}</p>
+                                    <p>Telefon: {customer.phone}</p>
+                                    <p>Manzil: {customer.address}</p>
+                                    <Badge>{customer.status === 'VIP' ? 'VIP' : 'Oddiy'}</Badge>
+                                </div>
                             </div>
                             <div>
-                                <p className="text-sm font-medium">Telefon:</p>
-                                <p className="text-lg">{customer.phone}</p>
+                                <h3 className="font-medium mb-2">Moliyaviy ma'lumotlar</h3>
+                                <div className="space-y-1">
+                                    <p>Balans: {customer.balance?.toLocaleString()} so'm</p>
+                                    <p>Jami to'lovlar: {totalPayments.toLocaleString()} so'm</p>
+                                    <p>Qaytarishlar: {totalReturnsCost.toLocaleString()} so'm</p>
+                                </div>
                             </div>
                             <div>
-                                <p className="text-sm font-medium">Manzil:</p>
-                                <p className="text-lg">{customer.address}</p>
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium">Balans:</p>
-                                <p className="text-lg">{customer.balance?.toLocaleString()} so'm</p>
+                                <h3 className="font-medium mb-2">Statistika</h3>
+                                <div className="space-y-1">
+                                    <p>Faol ijaralar: {activeRentals.length} ta</p>
+                                    <p>Jami ijaralar: {rentals.length} ta</p>
+                                    <p>Qaytarilmagan maxsulotlar: {getUnreturnedProducts().length} ta</p>
+                                </div>
                             </div>
                         </div>
                     </CardContent>
@@ -218,13 +199,13 @@ export default function CustomerDetailsPage() {
                                         <TableHead>Sana</TableHead>
                                         <TableHead>Mahsulotlar</TableHead>
                                         <TableHead>Umumiy narx</TableHead>
-                                        <TableHead>Status</TableHead>
+                                        <TableHead>Qarz</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {activeRentals.map((rental) => (
                                         <TableRow key={rental._id}>
-                                            <TableCell>{new Date(rental.startDate).toLocaleDateString()}</TableCell>
+                                            <TableCell>{new Date(rental.workStartDate || rental.createdAt).toLocaleDateString()}</TableCell>
                                             <TableCell>
                                                 {rental.borrowedProducts.map((product, index) => (
                                                     <div key={index}>
@@ -234,54 +215,11 @@ export default function CustomerDetailsPage() {
                                             </TableCell>
                                             <TableCell>{rental.totalCost?.toLocaleString()} so'm</TableCell>
                                             <TableCell>
-                                                <Badge variant="secondary">
-                                                    {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
-                                                </Badge>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        )}
-                    </CardContent>
-                </Card>
-
-                {/* All Rentals History */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Barcha ijaralar tarixi</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        {rentals.length === 0 ? (
-                            <div className="text-center py-4 text-muted-foreground">
-                                Ijaralar tarixi mavjud emas
-                            </div>
-                        ) : (
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        <TableHead>Sana</TableHead>
-                                        <TableHead>Mahsulotlar</TableHead>
-                                        <TableHead>Umumiy narx</TableHead>
-                                        <TableHead>Status</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {rentals.map((rental) => (
-                                        <TableRow key={rental._id}>
-                                            <TableCell>{new Date(rental.startDate).toLocaleDateString()}</TableCell>
-                                            <TableCell>
-                                                {rental.borrowedProducts.map((product, index) => (
-                                                    <div key={index}>
-                                                        {product.product?.name} ({product.quantity} dona)
-                                                    </div>
-                                                ))}
-                                            </TableCell>
-                                            <TableCell>{rental.totalCost?.toLocaleString()} so'm</TableCell>
-                                            <TableCell>
-                                                <Badge variant={rental.status === 'active' ? 'secondary' : 'outline'}>
-                                                    {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
-                                                </Badge>
+                                                {rental.debt > 0 ? (
+                                                    <span className="text-red-500">{rental.debt?.toLocaleString()} so'm</span>
+                                                ) : (
+                                                    <Badge variant="success">To'langan</Badge>
+                                                )}
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -315,19 +253,33 @@ export default function CustomerDetailsPage() {
                                     {getUnreturnedProducts().map((product, index) => (
                                         <TableRow key={index}>
                                             <TableCell>{product.product?.name}</TableCell>
-                                            <TableCell>{new Date(product.rental.startDate).toLocaleDateString()}</TableCell>
+                                            <TableCell>
+                                                {new Date(product.rental.workStartDate || product.rental.createdAt).toLocaleDateString()}
+                                            </TableCell>
                                             <TableCell>{product.remainingQuantity} dona</TableCell>
                                             <TableCell>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => {
-                                                        setReturnProduct(product);
-                                                        setExpandedRental(product.rental._id);
-                                                    }}
-                                                >
-                                                    Qaytarish
-                                                </Button>
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max={product.remainingQuantity}
+                                                        value={returnProduct?.productId === product.product?._id ? returnQuantity : ''}
+                                                        onChange={(e) => {
+                                                            setReturnProduct({
+                                                                productId: product.product?._id,
+                                                                quantity: parseInt(e.target.value)
+                                                            });
+                                                            setReturnQuantity(parseInt(e.target.value));
+                                                        }}
+                                                        className="w-20 px-2 py-1 border rounded"
+                                                    />
+                                                    <Button
+                                                        size="sm"
+                                                        onClick={() => handleReturn(product.rental, product)}
+                                                    >
+                                                        Qaytarish
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}
@@ -337,28 +289,70 @@ export default function CustomerDetailsPage() {
                     </CardContent>
                 </Card>
 
-                {/* Payments */}
+                {/* All Rentals History */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>To'lovlar tarixi</CardTitle>
+                        <CardTitle>Barcha ijaralar tarixi</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {paymentsStatus === 'loading' ? (
-                            <div className="flex justify-center py-4">
-                                <Loader2 className="h-6 w-6 animate-spin" />
+                        {rentals.length === 0 ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                                Ijaralar tarixi mavjud emas
                             </div>
-                        ) : payments.length === 0 ? (
-                            <p className="text-center text-muted-foreground py-4">
-                                To'lovlar mavjud emas
-                            </p>
                         ) : (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Sana</TableHead>
-                                        <TableHead>Miqdor</TableHead>
+                                        <TableHead>Mahsulotlar</TableHead>
+                                        <TableHead>Umumiy narx</TableHead>
+                                        <TableHead>Status</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {rentals.map((rental) => (
+                                        <TableRow key={rental._id}>
+                                            <TableCell>
+                                                {new Date(rental.workStartDate || rental.createdAt).toLocaleDateString()}
+                                            </TableCell>
+                                            <TableCell>
+                                                {rental.borrowedProducts.map((product, index) => (
+                                                    <div key={index}>
+                                                        {product.product?.name} ({product.quantity} dona)
+                                                    </div>
+                                                ))}
+                                            </TableCell>
+                                            <TableCell>{rental.totalCost?.toLocaleString()} so'm</TableCell>
+                                            <TableCell>
+                                                <Badge variant={rental.status === 'active' ? 'default' : 'secondary'}>
+                                                    {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
+                                                </Badge>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+
+                {/* Payments History */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>To'lovlar tarixi</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {payments.length === 0 ? (
+                            <div className="text-center py-4 text-muted-foreground">
+                                To'lovlar tarixi mavjud emas
+                            </div>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Sana</TableHead>
+                                        <TableHead>Summa</TableHead>
                                         <TableHead>To'lov turi</TableHead>
-                                        <TableHead>Izoh</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -367,18 +361,9 @@ export default function CustomerDetailsPage() {
                                             <TableCell>
                                                 {new Date(payment.paymentDate).toLocaleDateString()}
                                             </TableCell>
+                                            <TableCell>{payment.amount?.toLocaleString()} so'm</TableCell>
                                             <TableCell>
-                                                {payment.amount?.toLocaleString()} so'm
-                                            </TableCell>
-                                            <TableCell>
-                                                <Badge>
-                                                    {payment.paymentType === 'cash' ? 'Naqd' :
-                                                     payment.paymentType === 'card' ? 'Karta' :
-                                                     'O\'tkazma'}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                {payment.description || '-'}
+                                                {payment.paymentType === 'cash' ? 'Naqd' : 'Plastik'}
                                             </TableCell>
                                         </TableRow>
                                     ))}
