@@ -267,7 +267,7 @@ export default function RentalsPage() {
                     <h3 style={{ margin: '5px 0', fontSize: '12px' }}>IJARA MA'LUMOTLARI:</h3>
                     <div>Boshlanish: {new Date(rental.workStartDate).toLocaleDateString()}</div>
                     <div>Oldindan to'lov: {(rental.totalCost - rental.debt).toLocaleString()} so'm</div>
-                    <div>Umumiy narx: {rental.totalCost.toLocaleString()} so'm</div>
+                    <div>Umumiy kunlik narx: {rental.totalCost.toLocaleString()} so'm</div>
                 </div>
 
                 <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse', marginTop: '10px' }}>
@@ -276,7 +276,6 @@ export default function RentalsPage() {
                             <th style={{ textAlign: 'left', padding: '2px' }}>Mahsulot</th>
                             <th style={{ textAlign: 'center', padding: '2px' }}>Soni</th>
                             <th style={{ textAlign: 'right', padding: '2px' }}>Narx</th>
-                            <th style={{ textAlign: 'right', padding: '2px' }}>Jami</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -285,18 +284,10 @@ export default function RentalsPage() {
                                 <td style={{ padding: '2px' }}>{product.product.name}</td>
                                 <td style={{ textAlign: 'center', padding: '2px' }}>{product.quantity}</td>
                                 <td style={{ textAlign: 'right', padding: '2px' }}>{product.dailyRate.toLocaleString()}</td>
-                                <td style={{ textAlign: 'right', padding: '2px' }}>{(product.quantity * product.dailyRate).toLocaleString()}</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
-
-                {rental.description && (
-                    <div style={{ fontSize: '12px', marginTop: '10px' }}>
-                        <h3 style={{ margin: '5px 0', fontSize: '12px' }}>Izoh:</h3>
-                        <div>{rental.description}</div>
-                    </div>
-                )}
             </div>
         );
     };
