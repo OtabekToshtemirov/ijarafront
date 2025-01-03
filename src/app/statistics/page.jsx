@@ -55,12 +55,12 @@ export default function StatisticsPage() {
                         <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
                 ) : error ? (
-                    <p className="text-red-500">Error loading data</p>
+                    <p className="text-red-500">Ma'lumotlarni yuklashda xatolik</p>
                 ) : (
                     <div className="text-2xl font-bold">
                         {data?.stats?.totalAmount
                             ? formatCurrency(data.stats.totalAmount)
-                            : 'No data'}
+                            : "Ma'lumot yo'q"}
                     </div>
                 )}
             </CardContent>
@@ -68,7 +68,7 @@ export default function StatisticsPage() {
     );
 
     const CustomerCard = ({ customer, index }) => (
-        <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow mb-2">
+        <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg shadow mb-2">
             <div className="flex items-center space-x-4">
                 <div className="w-8 h-8 flex items-center justify-center bg-primary/10 rounded-full">
                     {index + 1}
@@ -80,54 +80,54 @@ export default function StatisticsPage() {
             </div>
             <div className="text-right">
                 <p className="font-semibold">{formatCurrency(customer.totalAmount)}</p>
-                <p className="text-sm text-gray-500">{customer.paymentCount} payments</p>
+                <p className="text-sm text-gray-500">{customer.paymentCount} ta to'lov</p>
             </div>
         </div>
     );
 
     const CarCard = ({ car, index }) => (
-        <div className="flex items-center justify-between p-4 bg-white rounded-lg shadow mb-2">
+        <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg shadow mb-2">
             <div className="flex items-center space-x-4">
-                <div className="w-10 h-10 flex items-center justify-center bg-gray-100 rounded-full text-gray-600">
+                <div className="w-10 h-10 flex items-center justify-center bg-gray-500 rounded-full text-primary">
                     {index + 1}
                 </div>
                 <div className="flex flex-col">
-                    <p className="text-gray-600">Car: {car.carNumber}</p>
-                    <p className="text-gray-600">Phone: {car.driverPhone}</p>
+                    <p className="text-primary">Haydovchi: {car.driverName}</p>
+                    <p className="text-primary">Mashina: {car.carNumber}</p>
                 </div>
             </div>
             <div className="text-right">
-                <p className="font-semibold text-black">{car.rentalCount}{car.driverPhone} rentals</p>
+                <p className="font-semibold text-primary">{car.rentalCount} ta ijara</p>
             </div>
         </div>
     );
 
     return (
         <div className="container mx-auto p-6 space-y-6">
-            <h1 className="text-3xl font-bold mb-8">Statistics Dashboard</h1>
+            <h1 className="text-3xl font-bold mb-8">Statistika</h1>
 
             {/* Revenue Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
-                    title="Daily Revenue"
+                    title="Kunlik daromad"
                     data={dailyRevenue.data}
                     loading={dailyRevenue.loading}
                     error={dailyRevenue.error}
                 />
                 <StatCard
-                    title="Weekly Revenue"
+                    title="Haftalik daromad"
                     data={weeklyRevenue.data}
                     loading={weeklyRevenue.loading}
                     error={weeklyRevenue.error}
                 />
                 <StatCard
-                    title="Monthly Revenue"
+                    title="Oylik daromad"
                     data={monthlyRevenue.data}
                     loading={monthlyRevenue.loading}
                     error={monthlyRevenue.error}
                 />
                 <StatCard
-                    title="Yearly Revenue"
+                    title="Yillik daromad"
                     data={yearlyRevenue.data}
                     loading={yearlyRevenue.loading}
                     error={yearlyRevenue.error}
@@ -138,7 +138,7 @@ export default function StatisticsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Top 5 Customers</CardTitle>
+                        <CardTitle>Top 5 mijozlar</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {topCustomers.loading ? (
@@ -146,7 +146,7 @@ export default function StatisticsPage() {
                                 <Loader2 className="h-6 w-6 animate-spin" />
                             </div>
                         ) : topCustomers.error ? (
-                            <p className="text-red-500">Error loading customers</p>
+                            <p className="text-red-500">Mijozlarni yuklashda xatolik</p>
                         ) : (
                             <div className="space-y-2">
                                 {topCustomers.data?.map((customer, index) => (
@@ -163,7 +163,7 @@ export default function StatisticsPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Most Rented Cars</CardTitle>
+                        <CardTitle>Ko'p ijaraga berilgan mashinalar</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {mostRentedCars.loading ? (
@@ -171,7 +171,7 @@ export default function StatisticsPage() {
                                 <Loader2 className="h-6 w-6 animate-spin" />
                             </div>
                         ) : mostRentedCars.error ? (
-                            <p className="text-red-500">Error loading cars</p>
+                            <p className="text-red-500">Mashinalarni yuklashda xatolik</p>
                         ) : (
                             <div className="space-y-2">
                                 {mostRentedCars.data?.map((car, index) => (

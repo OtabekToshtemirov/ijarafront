@@ -30,6 +30,15 @@ export const deleteCustomerAsync = createAsyncThunk(
     }
 );
 
+// Async thunk for updating a customer
+export const updateCustomerAsync = createAsyncThunk(
+    'customers/updateCustomer',
+    async (customerData) => {
+        const response = await axios.put(`${BASE_URL}/${customerData._id}`, customerData);
+        return response.data;
+    }
+);
+
 const customerSlice = createSlice({
     name: 'customers',
     initialState: {
@@ -87,6 +96,21 @@ const customerSlice = createSlice({
             .addCase(createCustomer.rejected, (state, action) => {
                 state.addStatus = 'failed';
                 state.addError = action.error.message;
+            })
+
+            // Update customer cases
+            .addCase(updateCustomerAsync.pending, (state) => {
+                state.updateStatus = 'loading';
+            })
+            .addCase(updateCustomerAsync.fulfilled, (state, action) => {
+                state.updateStatus = 'succeeded';
+                state.customers = state.customers.map(customer =>
+                    customer._id === action.payload._id ? action.payload : customer
+                );
+            })
+            .addCase(updateCustomerAsync.rejected, (state, action) => {
+                state.updateStatus = 'failed';
+                state.updateError = action.error.message;
             })
 
             // Delete customer cases

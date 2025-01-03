@@ -47,6 +47,7 @@ export const fetchMostRentedCars = createAsyncThunk(
     'statistics/fetchMostRentedCars',
     async () => {
         const response = await api.get(`${BASE_URL}/statistics/cars/most-rented`);
+        console.log(response.data);
         return response.data;
     }
 );

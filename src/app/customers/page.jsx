@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Search, Plus, Edit, Trash, X, Check, Eye } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import  Link  from "next/link";
 import {
     Table,
     TableBody,
@@ -93,14 +94,14 @@ export default function Component() {
 
     const filteredCustomers = customers?.filter((customer) => {
         const searchLower = searchQuery.toLowerCase();
-        const matchesSearch = !searchQuery || 
+        const matchesSearch = !searchQuery ||
             (customer.name && customer.name.toLowerCase().includes(searchLower)) ||
             (customer.phone && customer.phone.toLowerCase().includes(searchLower)) ||
             (customer.address && customer.address.toLowerCase().includes(searchLower));
-        
+
         const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
         const matchesBalance = !showNegativeBalance || customer.balance < 0;
-        
+
         return matchesSearch && matchesStatus && matchesBalance;
     }) || [];
 
@@ -439,12 +440,19 @@ export default function Component() {
                                     </>
                                 ) : (
                                     <>
-                                        <TableCell>{customer.name}</TableCell>
+                                        <TableCell>
+                                            <Link
+                                                href={`/customers/${customer._id}`}
+                                                className="text-blue-500 text-bold hover:underline cursor-pointer"
+                                            >
+                                                {customer.name}
+                                            </Link>
+                                        </TableCell>
                                         <TableCell>{customer.phone}</TableCell>
                                         <TableCell>
                                             <Badge variant={getStatusColor(customer.status)}>
                                                 {customer.status === 'oddiy' ? 'Oddiy' :
-                                                 customer.status === 'VIP' ? 'VIP' : 'Yomon'}
+                                                    customer.status === 'VIP' ? 'VIP' : 'Yomon'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
@@ -510,7 +518,7 @@ export default function Component() {
                                         <Label>Status</Label>
                                         <Badge className={getStatusColor(selectedCustomer.status)}>
                                             {selectedCustomer.status === 'oddiy' ? 'Oddiy' :
-                                             selectedCustomer.status === 'VIP' ? 'VIP' : 'Yomon'}
+                                                selectedCustomer.status === 'VIP' ? 'VIP' : 'Yomon'}
                                         </Badge>
                                     </div>
                                 </CardContent>
@@ -525,7 +533,7 @@ export default function Component() {
                                     <div className="grid gap-6">
                                         <div className="flex items-center justify-center">
                                             <div className="text-center">
-                                                <Badge 
+                                                <Badge
                                                     className="text-lg px-6 py-2"
                                                     variant={selectedCustomer.balance >= 0 ? "success" : "destructive"}
                                                 >
@@ -570,60 +578,60 @@ export default function Component() {
                                             .filter(rental => rental.customer?._id === selectedCustomer?._id)
                                             .filter(rental => rental.status === 'active')
                                             .map((rental) => (
-                                            <div
-                                                key={rental._id}
-                                                className="border rounded-lg p-4"
-                                            >
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <p className="font-medium">{rental.rentalNumber}</p>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {new Date(rental.createdAt).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="font-medium">
-                                                            {rental.totalCost?.toLocaleString()} so'm
-                                                        </p>
-                                                       
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium mb-2">
-                                                        Olingan mahsulotlar:
-                                                    </p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        {rental.borrowedProducts.map((prod, idx) => {
-                                                            const returnedQuantity = rental.returnedProducts
-                                                                .filter(rp => rp.product?._id === prod.product?._id)
-                                                                .reduce((sum, rp) => sum + rp.quantity, 0);
-                                                            const remainingQuantity = prod.quantity - returnedQuantity;
+                                                <div
+                                                    key={rental._id}
+                                                    className="border rounded-lg p-4"
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <p className="font-medium">{rental.rentalNumber}</p>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {new Date(rental.createdAt).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="font-medium">
+                                                                {rental.totalCost?.toLocaleString()} so'm
+                                                            </p>
 
-                                                            return (
-                                                                <div key={idx} className="flex justify-between border-b py-1">
-                                                                    <span className="text-sm">
-                                                                        {prod.product?.name}
-                                                                    </span>
-                                                                    <div className="text-sm text-right">
-                                                                        <span>{prod.quantity} dona</span>
-                                                                        {rental.status === 'active' && remainingQuantity > 0 && (
-                                                                            <span className="text-muted-foreground ml-1">
-                                                                                (Qoldi: {remainingQuantity})
-                                                                            </span>
-                                                                        )}
-                                                                        {rental.status !== 'active' && (
-                                                                            <span className="text-green-500 ml-1">
-                                                                                (Qaytarilgan)
-                                                                            </span>
-                                                                        )}
+                                                        </div>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium mb-2">
+                                                            Olingan mahsulotlar:
+                                                        </p>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {rental.borrowedProducts.map((prod, idx) => {
+                                                                const returnedQuantity = rental.returnedProducts
+                                                                    .filter(rp => rp.product?._id === prod.product?._id)
+                                                                    .reduce((sum, rp) => sum + rp.quantity, 0);
+                                                                const remainingQuantity = prod.quantity - returnedQuantity;
+
+                                                                return (
+                                                                    <div key={idx} className="flex justify-between border-b py-1">
+                                                                        <span className="text-sm">
+                                                                            {prod.product?.name}
+                                                                        </span>
+                                                                        <div className="text-sm text-right">
+                                                                            <span>{prod.quantity} dona</span>
+                                                                            {rental.status === 'active' && remainingQuantity > 0 && (
+                                                                                <span className="text-muted-foreground ml-1">
+                                                                                    (Qoldi: {remainingQuantity})
+                                                                                </span>
+                                                                            )}
+                                                                            {rental.status !== 'active' && (
+                                                                                <span className="text-green-500 ml-1">
+                                                                                    (Qaytarilgan)
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            );
-                                                        })}
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            ))}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -638,83 +646,83 @@ export default function Component() {
                                         {rentals
                                             .filter(rental => rental.customer?._id === selectedCustomer?._id)
                                             .map((rental) => (
-                                            <div
-                                                key={rental._id}
-                                                className="border rounded-lg p-4"
-                                            >
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="font-medium">{rental.rentalNumber}</p>
-                                                            <Badge variant={rental.status === 'active' ? 'default' : 'secondary'}>
-                                                                {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
-                                                            </Badge>
-                                                        </div>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {new Date(rental.startDate).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="font-medium">
-                                                            {rental.totalCost?.toLocaleString()} so'm
-                                                        </p>
-                                                        {rental.debt > 0 && (
-                                                            <p className="text-sm text-red-500">
-                                                                Qarz: {rental.debt?.toLocaleString()} so'm
+                                                <div
+                                                    key={rental._id}
+                                                    className="border rounded-lg p-4"
+                                                >
+                                                    <div className="flex justify-between items-start mb-2">
+                                                        <div>
+                                                            <div className="flex items-center gap-2">
+                                                                <p className="font-medium">{rental.rentalNumber}</p>
+                                                                <Badge variant={rental.status === 'active' ? 'default' : 'secondary'}>
+                                                                    {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="text-sm text-muted-foreground">
+                                                                {new Date(rental.startDate).toLocaleDateString()}
                                                             </p>
-                                                        )}
+                                                        </div>
+                                                        <div className="text-right">
+                                                            <p className="font-medium">
+                                                                {rental.totalCost?.toLocaleString()} so'm
+                                                            </p>
+                                                            {rental.debt > 0 && (
+                                                                <p className="text-sm text-red-500">
+                                                                    Qarz: {rental.debt?.toLocaleString()} so'm
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium mb-2">
-                                                        Olingan mahsulotlar:
-                                                    </p>
-                                                    <div className="grid grid-cols-2 gap-2">
-                                                        {rental.borrowedProducts.map((prod, idx) => {
-                                                            const returnedQuantity = rental.returnedProducts
-                                                                .filter(rp => rp.product?._id === prod.product?._id)
-                                                                .reduce((sum, rp) => sum + rp.quantity, 0);
-                                                            const remainingQuantity = prod.quantity - returnedQuantity;
+                                                    <div>
+                                                        <p className="text-sm font-medium mb-2">
+                                                            Olingan mahsulotlar:
+                                                        </p>
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            {rental.borrowedProducts.map((prod, idx) => {
+                                                                const returnedQuantity = rental.returnedProducts
+                                                                    .filter(rp => rp.product?._id === prod.product?._id)
+                                                                    .reduce((sum, rp) => sum + rp.quantity, 0);
+                                                                const remainingQuantity = prod.quantity - returnedQuantity;
 
-                                                            return (
-                                                                <div key={idx} className="flex justify-between border-b py-1">
-                                                                    <span className="text-sm">
-                                                                        {prod.product?.name}
-                                                                    </span>
-                                                                    <div className="text-sm text-right flex items-center gap-2">
-                                                                        <span>{prod.quantity} dona</span>
-                                                                        {rental.status === 'active' && remainingQuantity > 0 && (
-                                                                            <>
-                                                                                <span className="text-muted-foreground">
-                                                                                    (Qoldi: {remainingQuantity})
+                                                                return (
+                                                                    <div key={idx} className="flex justify-between border-b py-1">
+                                                                        <span className="text-sm">
+                                                                            {prod.product?.name}
+                                                                        </span>
+                                                                        <div className="text-sm text-right flex items-center gap-2">
+                                                                            <span>{prod.quantity} dona</span>
+                                                                            {rental.status === 'active' && remainingQuantity > 0 && (
+                                                                                <>
+                                                                                    <span className="text-muted-foreground">
+                                                                                        (Qoldi: {remainingQuantity})
+                                                                                    </span>
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        variant="outline"
+                                                                                        onClick={() => openReturnDialog(rental, prod)}
+                                                                                    >
+                                                                                        Qaytarish
+                                                                                    </Button>
+                                                                                </>
+                                                                            )}
+                                                                            {rental.status !== 'active' && (
+                                                                                <span className="text-green-500">
+                                                                                    (Qaytarilgan)
                                                                                 </span>
-                                                                                <Button
-                                                                                    size="sm"
-                                                                                    variant="outline"
-                                                                                    onClick={() => openReturnDialog(rental, prod)}
-                                                                                >
-                                                                                    Qaytarish
-                                                                                </Button>
-                                                                            </>
-                                                                        )}
-                                                                        {rental.status !== 'active' && (
-                                                                            <span className="text-green-500">
-                                                                                (Qaytarilgan)
-                                                                            </span>
-                                                                        )}
+                                                                            )}
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            );
-                                                        })}
+                                                                );
+                                                            })}
+                                                        </div>
                                                     </div>
+                                                    {rental.car && (
+                                                        <div className="mt-2 text-sm text-muted-foreground">
+                                                            Mashina: {rental.car.carNumber}
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                {rental.car && (
-                                                    <div className="mt-2 text-sm text-muted-foreground">
-                                                        Mashina: {rental.car.carNumber}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ))}
+                                            ))}
                                     </div>
                                 </CardContent>
                             </Card>
@@ -731,7 +739,7 @@ export default function Component() {
                                                 <div>
                                                     <p className="font-medium">{prod.product?.name}</p>
                                                     <p className="text-sm text-muted-foreground">
-                                                        {prod.rentalNumber} - {new Date(prod.startDate).toLocaleDateString()}
+                                                        {prod.rentalNumber} - {new Date(prod.createdAt).toLocaleDateString()}
                                                     </p>
                                                 </div>
                                                 <Badge variant="outline">

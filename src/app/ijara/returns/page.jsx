@@ -294,7 +294,7 @@ export default function Component() {
                                         Ijara #{rental.rentalNumber}
                                     </h3>
                                     <p className="text-sm text-muted-foreground">
-                                        Boshlangan sana: {new Date(rental.startDate).toLocaleDateString()}
+                                        Boshlangan sana: {new Date(rental.workStartDate).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-4">
