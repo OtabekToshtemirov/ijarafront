@@ -187,6 +187,22 @@ export const fetchRentalsByCarId = createAsyncThunk(
     }
 );
 
+export const createPayment = createAsyncThunk(
+    'rentals/createPayment',
+    async (paymentData) => {
+        try {
+            const response = await axios.post(`${BASE_URL}/payments`, paymentData);
+            return response.data;
+        } catch (error) {
+            throw new Error(
+                error.response?.data?.message || 
+                error.message || 
+                'To\'lovni saqlashda xatolik yuz berdi'
+            );
+        }
+    }
+);
+
 const formatRentalData = (rental) => ({
     ...rental,
     borrowedProducts: (rental.borrowedProducts || []).map(bp => ({
@@ -214,7 +230,9 @@ const initialState = {
     updateStatus: 'idle',
     updateError: null,
     returnStatus: 'idle',
-    returnError: null
+    returnError: null,
+    paymentStatus: 'idle',
+    paymentError: null
 };
 
 const rentalsSlice = createSlice({
@@ -237,6 +255,10 @@ const rentalsSlice = createSlice({
         clearReturnStatus: (state) => {
             state.returnStatus = 'idle';
             state.returnError = null;
+        },
+        clearPaymentStatus: (state) => {
+            state.paymentStatus = 'idle';
+            state.paymentError = null;
         }
     },
     extraReducers: (builder) => {
@@ -401,6 +423,20 @@ const rentalsSlice = createSlice({
             .addCase(fetchRentalsByCarId.fulfilled, (state, action) => {
                 state.rentals = action.payload || [];
                 state.status = 'succeeded';
+            })
+
+            // Create payment
+            .addCase(createPayment.pending, (state) => {
+                state.paymentStatus = 'loading';
+                state.paymentError = null;
+            })
+            .addCase(createPayment.fulfilled, (state, action) => {
+                state.paymentStatus = 'succeeded';
+                state.paymentError = null;
+            })
+            .addCase(createPayment.rejected, (state, action) => {
+                state.paymentStatus = 'failed';
+                state.paymentError = action.error.message;
             });
     }
 });
@@ -417,7 +453,9 @@ export const selectAddRentalError = (state) => state.rentals.addError;
 export const selectCustomerRentals = (state) => state.rentals.customerRentals;
 export const selectCustomerRentalsStatus = (state) => state.rentals.customerRentalsStatus;
 export const selectCustomerRentalsError = (state) => state.rentals.customerRentalsError;
+export const selectPaymentStatus = (state) => state.rentals.paymentStatus;
+export const selectPaymentError = (state) => state.rentals.paymentError;
 
-export const { clearRentalSummary, clearAddStatus, clearUpdateStatus, clearReturnStatus } = rentalsSlice.actions;
+export const { clearRentalSummary, clearAddStatus, clearUpdateStatus, clearReturnStatus, clearPaymentStatus } = rentalsSlice.actions;
 
 export default rentalsSlice.reducer;

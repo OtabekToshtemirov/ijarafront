@@ -22,7 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { fetchRentals, returnProduct } from "@/lib/features/rentals/rentalsSlice";
+import { fetchRentals, returnProduct, createPayment } from "@/lib/features/rentals/rentalsSlice";
 import { toast } from "sonner";
 
 export default function Component() {
@@ -33,6 +33,7 @@ export default function Component() {
     const [discountDays, setDiscountDays] = useState({});
     const [returnDates, setReturnDates] = useState({});
     const [localRentals, setLocalRentals] = useState([]);
+    const [totalDiscount, setTotalDiscount] = useState(0);
 
     const rentals = useSelector((state) => state.rentals.rentals);
     const status = useSelector((state) => state.rentals.status);
@@ -342,6 +343,90 @@ export default function Component() {
                                     Joriy qaytarish: {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
                                 </div>
                             )}
+                            <div className="space-y-2 border rounded-md p-4 bg-white">
+                                <div>
+                                    <Label>Hisoblangan summa</Label>
+                                    <div className="text-lg font-semibold">
+                                        {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label>Chegirma</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => {
+                                                if (totalDiscount > 0) {
+                                                    setTotalDiscount(totalDiscount - 1000);
+                                                }
+                                            }}
+                                            disabled={!totalDiscount}
+                                        >
+                                            -
+                                        </Button>
+                                        <Input
+                                            type="number"
+                                            value={totalDiscount}
+                                            onChange={(e) => {
+                                                const value = parseInt(e.target.value);
+                                                if (value < 0) return;
+                                                if (value > calculateAllCurrentReturnTotal(localRentals)) return;
+                                                setTotalDiscount(value);
+                                            }}
+                                            min="0"
+                                            max={calculateAllCurrentReturnTotal(localRentals)}
+                                            className="w-32 text-center"
+                                        />
+                                        <Button
+                                            variant="outline"
+                                            size="icon"
+                                            onClick={() => {
+                                                const totalAmount = calculateAllCurrentReturnTotal(localRentals);
+                                                if (totalDiscount < totalAmount) {
+                                                    setTotalDiscount(totalDiscount + 1000);
+                                                }
+                                            }}
+                                            disabled={totalDiscount >= calculateAllCurrentReturnTotal(localRentals)}
+                                        >
+                                            +
+                                        </Button>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <Label>To'lov miqdori</Label>
+                                    <div className="text-xl font-bold text-primary">
+                                        {(calculateAllCurrentReturnTotal(localRentals) - totalDiscount).toLocaleString()} so'm
+                                    </div>
+                                </div>
+
+                                <Button
+                                    className="w-full"
+                                    onClick={() => {
+                                        const totalAmount = calculateAllCurrentReturnTotal(localRentals);
+                                        const finalAmount = totalAmount - totalDiscount;
+                                        
+                                        dispatch(createPayment({
+                                            customer: selectedCustomer.customer._id,
+                                            rental: selectedCustomer.rentals[0]._id,
+                                            amount: finalAmount,
+                                            paymentDate: new Date().toISOString(),
+                                            paymentType: 'cash',
+                                            isPrepaid: false,
+                                            description: `Qaytarish to'lovi - ${new Date().toLocaleDateString()}`
+                                        })).then(() => {
+                                            toast.success("To'lov muvaffaqiyatli saqlandi");
+                                            window.location.reload();
+                                        }).catch((error) => {
+                                            toast.error(error.message || "To'lov saqlashda xatolik yuz berdi");
+                                        });
+                                    }}
+                                >
+                                    To'lovni saqlash
+                                </Button>
+                            </div>
                         </div>
                     </div>
 
@@ -408,9 +493,12 @@ export default function Component() {
                                             </Button>
                                             <Input
                                                 type="number"
-                                                min="0"
                                                 value={discountDays[rental._id] || 0}
-                                                onChange={(e) => handleDiscountDaysChange(rental._id, parseInt(e.target.value))}
+                                                onChange={(e) => handleDiscountDaysChange(
+                                                    rental._id,
+                                                    parseInt(e.target.value)
+                                                )}
+                                                min="0"
                                                 className="w-20 text-center"
                                             />
                                             <Button
@@ -510,7 +598,7 @@ export default function Component() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
-                                        
+                                                        
                                                         <Input
                                                             type="number"
                                                             value={discountDays[rental._id] || 0}
@@ -521,7 +609,7 @@ export default function Component() {
                                                             min="0"
                                                             className="w-20 text-center"
                                                         />
-                                                       
+                                                    
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-center">
@@ -608,7 +696,7 @@ export default function Component() {
                                                             ({totalDays} kun × {returnQuantity} dona × {prod.dailyRate?.toLocaleString()} so'm)
                                                         </span>
 
-                                                
+                                                    
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
