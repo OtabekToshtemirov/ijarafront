@@ -34,6 +34,7 @@ export default function Component() {
     const [returnDates, setReturnDates] = useState({});
     const [localRentals, setLocalRentals] = useState([]);
     const [totalDiscount, setTotalDiscount] = useState(0);
+    const [returnedProducts, setReturnedProducts] = useState([]);
 
     const rentals = useSelector((state) => state.rentals.rentals);
     const status = useSelector((state) => state.rentals.status);
@@ -187,6 +188,15 @@ export default function Component() {
             console.log('Return response:', response);
 
             if (response.rental) {
+                // Add returned product to the list
+                setReturnedProducts(prev => [...prev, {
+                    ...product,
+                    quantity: quantity,
+                    returnDate: returnDate,
+                    days: totalDays,
+                    totalCost: totalCost
+                }]);
+
                 // Update local state with the returned rental data
                 setLocalRentals(prev => prev.map(r => 
                     r._id === response.rental._id ? response.rental : r
@@ -338,16 +348,11 @@ export default function Component() {
                             </p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
-                            {calculateAllCurrentReturnTotal(localRentals) > 0 && (
-                                <div className="text-base text-muted-foreground">
-                                    Joriy qaytarish: {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
-                                </div>
-                            )}
                             <div className="space-y-2 border rounded-md p-4 bg-white">
                                 <div>
                                     <Label>Hisoblangan summa</Label>
                                     <div className="text-lg font-semibold">
-                                        {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
+                                        {returnedProducts.reduce((total, product) => total + product.totalCost, 0).toLocaleString()} so'm
                                     </div>
                                 </div>
 
@@ -359,10 +364,10 @@ export default function Component() {
                                             size="icon"
                                             onClick={() => {
                                                 if (totalDiscount > 0) {
-                                                    setTotalDiscount(totalDiscount - 1000);
+                                                    setTotalDiscount(prev => Math.max(0, prev - 1000));
                                                 }
                                             }}
-                                            disabled={!totalDiscount}
+                                            disabled={totalDiscount <= 0}
                                         >
                                             -
                                         </Button>
@@ -370,25 +375,26 @@ export default function Component() {
                                             type="number"
                                             value={totalDiscount}
                                             onChange={(e) => {
-                                                const value = parseInt(e.target.value);
+                                                const value = parseInt(e.target.value) || 0;
+                                                const totalAmount = returnedProducts.reduce((total, product) => total + product.totalCost, 0);
                                                 if (value < 0) return;
-                                                if (value > calculateAllCurrentReturnTotal(localRentals)) return;
+                                                if (value > totalAmount) return;
                                                 setTotalDiscount(value);
                                             }}
                                             min="0"
-                                            max={calculateAllCurrentReturnTotal(localRentals)}
+                                            max={returnedProducts.reduce((total, product) => total + product.totalCost, 0)}
                                             className="w-32 text-center"
                                         />
                                         <Button
                                             variant="outline"
                                             size="icon"
                                             onClick={() => {
-                                                const totalAmount = calculateAllCurrentReturnTotal(localRentals);
+                                                const totalAmount = returnedProducts.reduce((total, product) => total + product.totalCost, 0);
                                                 if (totalDiscount < totalAmount) {
-                                                    setTotalDiscount(totalDiscount + 1000);
+                                                    setTotalDiscount(prev => Math.min(totalAmount, prev + 1000));
                                                 }
                                             }}
-                                            disabled={totalDiscount >= calculateAllCurrentReturnTotal(localRentals)}
+                                            disabled={totalDiscount >= returnedProducts.reduce((total, product) => total + product.totalCost, 0)}
                                         >
                                             +
                                         </Button>
@@ -398,14 +404,14 @@ export default function Component() {
                                 <div>
                                     <Label>To'lov miqdori</Label>
                                     <div className="text-xl font-bold text-primary">
-                                        {(calculateAllCurrentReturnTotal(localRentals) - totalDiscount).toLocaleString()} so'm
+                                        {(returnedProducts.reduce((total, product) => total + product.totalCost, 0) - totalDiscount).toLocaleString()} so'm
                                     </div>
                                 </div>
 
                                 <Button
                                     className="w-full"
                                     onClick={() => {
-                                        const totalAmount = calculateAllCurrentReturnTotal(localRentals);
+                                        const totalAmount = returnedProducts.reduce((total, product) => total + product.totalCost, 0);
                                         const finalAmount = totalAmount - totalDiscount;
                                         
                                         dispatch(createPayment({
@@ -427,6 +433,37 @@ export default function Component() {
                                     To'lovni saqlash
                                 </Button>
                             </div>
+                            {returnedProducts.length > 0 && (
+                                <div className="w-full border rounded-md p-4 bg-white mb-4">
+                                    <h3 className="text-lg font-semibold mb-3">Qaytarilgan tovarlar</h3>
+                                    <div className="space-y-2">
+                                        {returnedProducts.map((product, index) => (
+                                            <div key={index} 
+                                                 className="flex justify-between items-center border-b pb-2">
+                                                <div>
+                                                    <div className="font-medium">{product.product.name}</div>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {product.quantity} dona • {product.days} kun
+                                                    </div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="font-semibold">
+                                                        {product.totalCost.toLocaleString()} so'm
+                                                    </div>
+                                                    <div className="text-sm text-muted-foreground">
+                                                        {product.dailyRate.toLocaleString()} so'm/kun
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                            {calculateAllCurrentReturnTotal(localRentals) > 0 && (
+                                <div className="text-base text-muted-foreground">
+                                    Joriy qaytarish: {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
+                                </div>
+                            )}
                         </div>
                     </div>
 
