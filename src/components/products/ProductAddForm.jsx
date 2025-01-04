@@ -10,110 +10,125 @@ import {
     DialogContent, 
     DialogHeader, 
     DialogTitle, 
+    DialogDescription,
     DialogTrigger, 
     DialogFooter
 } from '@/components/ui/dialog'
-import { Plus } from 'lucide-react'
-import { X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { addProduct } from '@/lib/features/products/productSlice'
+
+const initialProductState = {
+    name: '',
+    type: 'single',
+    dailyRate: 0,
+    quantity: 1,
+    parts: [],
+    availability: true,
+    description: '',
+    category: ''
+}
 
 export default function ProductAddForm() {
     const dispatch = useDispatch()
     const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [newProduct, setNewProduct] = useState({
-        name: '',
-        type: 'single',
-        dailyRate: 0,
-        quantity: 1,
-        parts: [],
-        availability: true,
-        description: '',
-        category: ''
-    })
+    const [newProduct, setNewProduct] = useState(initialProductState)
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
     const validateProduct = () => {
         const errors = []
-
-        if (!newProduct.name.trim()) {
-            errors.push('Mahsulot nomi kiritilishi kerak')
+        const requiredFields = {
+            name: 'Mahsulot nomi',
+            category: 'Mahsulot kategoriyasi'
         }
 
-        if (!newProduct.description.trim()) {
-            errors.push('Mahsulot tavsifi kiritilishi kerak')
+        // Majburiy maydonlarni tekshirish
+        Object.entries(requiredFields).forEach(([field, label]) => {
+            if (!newProduct[field]?.trim()) {
+                errors.push(`${label} kiritilishi kerak`)
+            }
+        })
+
+        // Raqamli maydonlarni tekshirish
+        if (newProduct.quantity < 1) {
+            errors.push('Mahsulot soni 1 dan katta bo\'lishi kerak')
         }
 
-        if (!newProduct.category.trim()) {
-            errors.push('Mahsulot kategoriyasi kiritilishi kerak')
-        }
-
-        if (newProduct.dailyRate <= 0) {
-            errors.push('Kunlik narx 0 dan katta bo\'lishi kerak')
-        }
-
-        if (newProduct.quantity <= 0) {
-            errors.push('Mahsulot soni 0 dan katta bo\'lishi kerak')
-        }
-
-        if (newProduct.type === 'combo' && (!newProduct.parts || newProduct.parts.length === 0)) {
-            errors.push('Kombinatsiya mahsuloti uchun qismlar kiritilishi kerak')
+        // Kombinatsiya mahsuloti uchun qismlarni tekshirish
+        if (newProduct.type === 'combo' && (!newProduct.parts?.length)) {
+            errors.push('Kombinatsiya mahsuloti uchun kamida bitta qism kiritilishi kerak')
         }
 
         return errors
     }
 
-    const handleAddProduct = async () => {
+    const handleSubmit = async (e) => {
+        e.preventDefault()
         const validationErrors = validateProduct()
         
         if (validationErrors.length > 0) {
-            validationErrors.forEach(error => 
+            validationErrors.forEach(error => {
                 toast({
                     title: 'Xatolik',
                     description: error,
                     variant: 'destructive',
                 })
-            )
+            })
             return
         }
 
+        setIsSubmitting(true)
         try {
-            const resultAction = await dispatch(addProduct({
+            const formData = {
                 ...newProduct,
-                parts: newProduct.type === 'combo' ? newProduct.parts : []
-            }))
-            
-            if (addProduct.fulfilled.match(resultAction)) {
-                toast({
-                    title: 'Muvaffaqiyat',
-                    description: 'Mahsulot muvaffaqiyatli qo\'shildi',
-                })
-                setIsDialogOpen(false)
-                setNewProduct({
-                    name: '',
-                    type: 'single',
-                    dailyRate: 0,
-                    quantity: 1,
-                    parts: [],
-                    availability: true,
-                    description: '',
-                    category: ''
-                })
-            } else {
-                throw new Error('Mahsulot qo\'shishda xatolik')
+                dailyRate: Number(newProduct.dailyRate),
+                quantity: Number(newProduct.quantity),
+                parts: newProduct.type === 'combo' 
+                    ? newProduct.parts.map(part => ({
+                        ...part,
+                        quantity: Number(part.quantity)
+                    }))
+                    : []
             }
-        } catch (error) {
+            
+            console.log('Sending product data:', formData)
+            await dispatch(addProduct(formData)).unwrap()
+            
             toast({
-                title: 'Xato',
-                description: error.message,
+                title: 'Muvaffaqiyat',
+                description: 'Mahsulot muvaffaqiyatli qo\'shildi',
+            })
+            
+            setNewProduct(initialProductState)
+            setIsDialogOpen(false)
+        } catch (error) {
+            console.error('Mahsulot qo\'shishda xatolik:', error)
+            toast({
+                title: 'Xatolik',
+                description: error.message || 'Mahsulot qo\'shishda xatolik yuz berdi',
                 variant: 'destructive',
             })
+        } finally {
+            setIsSubmitting(false)
         }
+    }
+
+    const handleInputChange = (field, value) => {
+        // Raqamli maydonlar uchun
+        if (field === 'dailyRate' || field === 'quantity') {
+            value = value === '' ? '' : value === '0' ? 0 : Number(value)
+        }
+        
+        setNewProduct(prev => ({
+            ...prev,
+            [field]: value
+        }))
     }
 
     const handleAddPart = () => {
         setNewProduct(prev => ({
             ...prev,
-            parts: [...prev.parts, { product: '', quantity: 1 }]
+            parts: [...prev.parts, { name: '', quantity: 1 }]
         }))
     }
 
@@ -123,156 +138,173 @@ export default function ProductAddForm() {
             ...updatedParts[index],
             [field]: value
         }
-        setNewProduct(prev => ({
-            ...prev,
-            parts: updatedParts
-        }))
+        handleInputChange('parts', updatedParts)
     }
 
     const handleRemovePart = (index) => {
-        setNewProduct(prev => ({
-            ...prev,
-            parts: prev.parts.filter((_, i) => i !== index)
-        }))
+        handleInputChange('parts', newProduct.parts.filter((_, i) => i !== index))
     }
 
     return (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
                 <Button>
-                    <Plus className="w-4 h-4 mr-2"/>
+                    <Plus className="w-4 h-4 mr-2" />
                     Yangi mahsulot
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Yangi Mahsulot Qo'shish</DialogTitle>
+                    <DialogDescription>
+                        Yangi mahsulot qo'shish uchun quyidagi maydonlarni to'ldiring
+                    </DialogDescription>
                 </DialogHeader>
-                <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                        <Label htmlFor="name">Nomi</Label>
-                        <Input
-                            id="name"
-                            value={newProduct.name}
-                            onChange={(e) =>
-                                setNewProduct({...newProduct, name: e.target.value})
-                            }
-                            placeholder="Mahsulot nomini kiriting"
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="description">Tavsifi</Label>
-                        <Input
-                            id="description"
-                            value={newProduct.description}
-                            onChange={(e) =>
-                                setNewProduct({...newProduct, description: e.target.value})
-                            }
-                            placeholder="Mahsulot tavsifini kiriting"
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="category">Kategoriya</Label>
-                        <Input
-                            id="category"
-                            value={newProduct.category}
-                            onChange={(e) =>
-                                setNewProduct({...newProduct, category: e.target.value})
-                            }
-                            placeholder="Mahsulot kategoriyasini kiriting"
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="type">Turi</Label>
-                        <select
-                            id="type"
-                            value={newProduct.type}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct, 
-                                    type: e.target.value,
-                                    parts: e.target.value === 'combo' ? [] : []
-                                })
-                            }
-                            className="w-full p-2 border rounded"
-                        >
-                            <option value="single">Yakka</option>
-                            <option value="combo">Kombinatsiya</option>
-                        </select>
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="dailyRate">Kunlik Narx</Label>
-                        <Input
-                            id="dailyRate"
-                            type="number"
-                            value={newProduct.dailyRate}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct,
-                                    dailyRate: parseFloat(e.target.value)
-                                })
-                            }
-                            placeholder="Kunlik narxni kiriting"
-                        />
-                    </div>
-                    <div className="grid gap-2">
-                        <Label htmlFor="quantity">Soni</Label>
-                        <Input
-                            id="quantity"
-                            type="number"
-                            value={newProduct.quantity}
-                            onChange={(e) =>
-                                setNewProduct({
-                                    ...newProduct,
-                                    quantity: parseInt(e.target.value)
-                                })
-                            }
-                            placeholder="Mahsulot sonini kiriting"
-                        />
-                    </div>
-                    {newProduct.type === 'combo' && (
-                        <div className="grid gap-2">
-                            <Label>Qismlar</Label>
-                            {newProduct.parts.map((part, index) => (
-                                <div key={index} className="flex gap-2">
-                                    <Input
-                                        value={part.product}
-                                        onChange={(e) => handlePartChange(index, 'product', e.target.value)}
-                                        placeholder="Qism nomi"
-                                        className="flex-1"
-                                    />
-                                    <Input
-                                        type="number"
-                                        value={part.quantity}
-                                        onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value))}
-                                        placeholder="Soni"
-                                        className="w-24"
-                                    />
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="grid gap-4 py-4">
+                        {/* Asosiy ma'lumotlar */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="name" className="text-right">
+                                Nomi
+                            </Label>
+                            <Input
+                                id="name"
+                                value={newProduct.name}
+                                onChange={(e) => handleInputChange('name', e.target.value)}
+                                className="col-span-3"
+                                required
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="type" className="text-right">
+                                Turi
+                            </Label>
+                            <select
+                                id="type"
+                                value={newProduct.type}
+                                onChange={(e) => handleInputChange('type', e.target.value)}
+                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                            >
+                                <option value="single">Oddiy</option>
+                                <option value="combo">Kombinatsiya</option>
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="category" className="text-right">
+                                Kategoriya
+                            </Label>
+                            <Input
+                                id="category"
+                                value={newProduct.category}
+                                onChange={(e) => handleInputChange('category', e.target.value)}
+                                className="col-span-3"
+                                required
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="dailyRate" className="text-right">
+                                Kunlik narx
+                            </Label>
+                            <Input
+                                id="dailyRate"
+                                type="number"
+                                value={newProduct.dailyRate === 0 ? '0' : newProduct.dailyRate || ''}
+                                onChange={(e) => handleInputChange('dailyRate', e.target.value)}
+                                className="col-span-3"
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="quantity" className="text-right">
+                                Soni
+                            </Label>
+                            <Input
+                                id="quantity"
+                                type="number"
+                                value={newProduct.quantity || ''}
+                                onChange={(e) => handleInputChange('quantity', e.target.value)}
+                                className="col-span-3"
+                                min="1"
+                                required
+                            />
+                        </div>
+
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="description" className="text-right">
+                                Tavsif
+                            </Label>
+                            <Input
+                                id="description"
+                                value={newProduct.description}
+                                onChange={(e) => handleInputChange('description', e.target.value)}
+                                className="col-span-3"
+                            
+                            />
+                        </div>
+
+                        {/* Kombinatsiya mahsuloti uchun qismlar */}
+                        {newProduct.type === 'combo' && (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <Label>Qismlar</Label>
                                     <Button 
-                                        variant="destructive" 
-                                        size="icon"
-                                        onClick={() => handleRemovePart(index)}
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={handleAddPart}
                                     >
-                                        <X className="h-4 w-4" />
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Qism qo'shish
                                     </Button>
                                 </div>
-                            ))}
-                            <Button 
-                                type="button" 
-                                variant="outline" 
-                                onClick={handleAddPart}
-                            >
-                                <Plus className="h-4 w-4 mr-2" />
-                                Qism qo'shish
-                            </Button>
-                        </div>
-                    )}
-                </div>
-                <DialogFooter>
-                    <Button onClick={handleAddProduct}>
-                        Qo'shish
-                    </Button>
-                </DialogFooter>
+                                
+                                {newProduct.parts.map((part, index) => (
+                                    <div key={index} className="flex items-end gap-2">
+                                        <div className="flex-1">
+                                            <Label>Nomi</Label>
+                                            <Input
+                                                value={part.name}
+                                                onChange={(e) => handlePartChange(index, 'name', e.target.value)}
+                                                placeholder="Qism nomi"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="w-24">
+                                            <Label>Soni</Label>
+                                            <Input
+                                                type="number"
+                                                value={part.quantity}
+                                                onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value))}
+                                                min="1"
+                                                required
+                                            />
+                                        </div>
+                                        <Button
+                                            type="button"
+                                            variant="ghost"
+                                            size="icon"
+                                            onClick={() => handleRemovePart(index)}
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter>
+                        <Button 
+                            type="submit" 
+                            disabled={isSubmitting}
+                        >
+                            {isSubmitting ? 'Saqlanmoqda...' : 'Saqlash'}
+                        </Button>
+                    </DialogFooter>
+                </form>
             </DialogContent>
         </Dialog>
     )

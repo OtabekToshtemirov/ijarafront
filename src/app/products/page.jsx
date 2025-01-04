@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Eye, Edit2, Check, X } from 'lucide-react'
+import { Eye, Edit2, Check, X, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -14,7 +14,7 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
-import { fetchProducts, updateProduct } from '@/lib/features/products/productSlice'
+import { fetchProducts, updateProduct, deleteProduct } from '@/lib/features/products/productSlice'
 import ProductAddForm from '@/components/products/ProductAddForm'
 import ProductSearchBar from '@/components/products/ProductSearchBar'
 import ProductDetailsSheet from '@/components/products/ProductDetailsSheet'
@@ -123,6 +123,24 @@ export default function ProductsPage() {
         setEditedValues({ ...editedValues, [field]: e.target.value })
     }
 
+    const handleDelete = async (productId) => {
+        if (window.confirm('Mahsulotni o\'chirishni tasdiqlaysizmi?')) {
+            try {
+                await dispatch(deleteProduct(productId)).unwrap()
+                toast({
+                    title: 'Muvaffaqiyat',
+                    description: 'Mahsulot muvaffaqiyatli o\'chirildi',
+                })
+            } catch (error) {
+                toast({
+                    title: 'Xatolik',
+                    description: error.message || 'Mahsulotni o\'chirishda xatolik yuz berdi',
+                    variant: 'destructive',
+                })
+            }
+        }
+    }
+
     if (status === 'loading') {
         return <div>Yuklanmoqda...</div>
     }
@@ -151,6 +169,7 @@ export default function ProductsPage() {
                             <TableHead>Turi</TableHead>
                             <TableHead>Kunlik Narxi</TableHead>
                             <TableHead>Soni</TableHead>
+                            <TableHead>Kategoriya</TableHead>
                             <TableHead>Holati</TableHead>
                             <TableHead>Amallar</TableHead>
                         </TableRow>
@@ -245,6 +264,9 @@ export default function ProductsPage() {
                                     )}
                                 </TableCell>
                                 <TableCell>
+                                    {product.category}
+                                </TableCell>
+                                <TableCell>
                                     <Badge 
                                         variant={product.quantity > 0 ? 'success' : 'destructive'}
                                     >
@@ -284,6 +306,13 @@ export default function ProductsPage() {
                                                 onClick={() => handleEditProduct(product)}
                                             >
                                                 <Edit2 className="h-4 w-4" />
+                                            </Button>
+                                            <Button 
+                                                variant="ghost" 
+                                                size="icon"
+                                                onClick={() => handleDelete(product._id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 text-red-500" />
                                             </Button>
                                         </>
                                     )}
