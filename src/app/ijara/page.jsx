@@ -247,47 +247,45 @@ export default function RentalsPage() {
                     }
                 `}</style>
                 
-                <div style={{ textAlign: 'center', marginBottom: '10px' }}>
-                    <h2 style={{ margin: 0, fontSize: '14px' }}>Ijara Ma'lumotlari</h2>
-                </div>
-                
-                <div style={{ fontSize: '12px', marginBottom: '10px' }}>
-                    <div>№ {rental.rentalNumber}</div>
-                    <div>Sana: {new Date(rental.createdAt).toLocaleDateString()}</div>
-                </div>
-
-                <div style={{ fontSize: '12px', marginBottom: '10px' }}>
-                    <h3 style={{ margin: '5px 0', fontSize: '12px' }}>MIJOZ MA'LUMOTLARI:</h3>
-                    <div>Ism: {rental.customer.name}</div>
-                    <div>Tel: {rental.customer.phone}</div>
-                    <div>Manzil: {rental.customer.address}</div>
+                <div style={{ textAlign: 'center', marginBottom: '15px' }}>
+                    <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>ИЖАРА МАРКАЗИ № {rental.rentalNumber}</h2>
+                    <div style={{ fontSize: '14px' }}>Сана:{new Date(rental.createdAt).toLocaleString('uz-UZ', { 
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hour12: false
+                    })}</div>
                 </div>
 
-                <div style={{ fontSize: '12px', marginBottom: '10px' }}>
-                    <h3 style={{ margin: '5px 0', fontSize: '12px' }}>IJARA MA'LUMOTLARI:</h3>
-                    <div>Boshlanish: {new Date(rental.workStartDate).toLocaleDateString()}</div>
-                    <div>Oldindan to'lov: {(rental.totalCost - rental.debt).toLocaleString()} so'm</div>
-                    <div>Umumiy kunlik narx: {rental.totalCost.toLocaleString()} so'm</div>
-                </div>
-
-                <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse', marginTop: '10px' }}>
+                <table style={{ width: '100%', fontSize: '14px', borderCollapse: 'collapse' }}>
                     <thead>
-                        <tr style={{ borderBottom: '1px solid black' }}>
-                            <th style={{ textAlign: 'left', padding: '2px' }}>Mahsulot</th>
-                            <th style={{ textAlign: 'center', padding: '2px' }}>Soni</th>
-                            <th style={{ textAlign: 'right', padding: '2px' }}>Narx</th>
+                        <tr>
+                            <th style={{ textAlign: 'left', padding: '5px', fontWeight: 'bold', borderBottom: '1px solid black' }}>Т/р</th>
+                            <th style={{ textAlign: 'left', padding: '5px', fontWeight: 'bold', borderBottom: '1px solid black' }}>Мулк номи</th>
+                            <th style={{ textAlign: 'left', padding: '5px', fontWeight: 'bold', borderBottom: '1px solid black' }}>Миқдори</th>
+                            <th style={{ textAlign: 'left', padding: '5px', fontWeight: 'bold', borderBottom: '1px solid black' }}>Кунлик ижара нархи</th>
                         </tr>
                     </thead>
                     <tbody>
                         {rental.borrowedProducts.map((product, index) => (
-                            <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                                <td style={{ padding: '2px' }}>{product.product.name}</td>
-                                <td style={{ textAlign: 'center', padding: '2px' }}>{product.quantity}</td>
-                                <td style={{ textAlign: 'right', padding: '2px' }}>{product.dailyRate.toLocaleString()}</td>
+                            <tr key={index}>
+                                <td style={{ padding: '5px', borderBottom: '1px solid #eee' }}>{index + 1}.</td>
+                                <td style={{ padding: '5px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>{product.product.name}</td>
+                                <td style={{ padding: '5px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>{product.quantity}</td>
+                                <td style={{ padding: '5px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>{product.product.dailyRate * product.quantity} сўм</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+
+                <div style={{ marginTop: '15px', fontSize: '14px' }}>
+                    <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>Олдиндан тўлов: {rental.debt} сўм</div>
+                    <div style={{ marginBottom: '10px' }}>Ижарага олувчи: {rental.customer.name}</div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>КУНЛИК ИЖАРА ҲАҚИ : {rental.totalCost} сўм</div>
+                    <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold' }}>(90) 222 80 86</div>
+                </div>
             </div>
         );
     };
@@ -348,8 +346,10 @@ export default function RentalsPage() {
                         <TableRow>
                             <TableHead>Raqami</TableHead>
                             <TableHead>Mijoz</TableHead>
-                            <TableHead>Sana</TableHead>
-                            <TableHead>Holati</TableHead>
+                            <TableHead>Mashina</TableHead>
+                            <TableHead>Kunlik narxi</TableHead>
+                            <TableHead>Kun</TableHead>
+                            <TableHead>Olingan mulklar</TableHead>
                             <TableHead>Amallar</TableHead>
                         </TableRow>
                     </TableHeader>
@@ -358,7 +358,7 @@ export default function RentalsPage() {
                             <TableRow key={rental._id}>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span>{rental.rentalNumber || '-'}</span>
+                                        <span>Ижара     - {rental.rentalNumber || '-'}</span>
                                         <span className="text-sm text-muted-foreground">
                                             {new Date(rental.createdAt).toLocaleDateString()}
                                         </span>
@@ -441,7 +441,7 @@ export default function RentalsPage() {
                                             </Button>
                                         </div>
                                     ) : (
-                                        <div className="flex justify-end gap-2">
+                                        <div className="flex justify-center gap-2">
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
