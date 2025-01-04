@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,7 +16,14 @@ import {
 } from '@/components/ui/dialog'
 import { Plus, X } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
-import { addProduct } from '@/lib/features/products/productSlice'
+import { addProduct, selectPartProducts } from '@/lib/features/products/productSlice'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 
 const initialProductState = {
     name: '',
@@ -31,6 +38,7 @@ const initialProductState = {
 
 export default function ProductAddForm() {
     const dispatch = useDispatch()
+    const partProducts = useSelector(selectPartProducts)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [newProduct, setNewProduct] = useState(initialProductState)
     const [isSubmitting, setIsSubmitting] = useState(false)
@@ -85,7 +93,7 @@ export default function ProductAddForm() {
                 quantity: Number(newProduct.quantity),
                 parts: newProduct.type === 'combo' 
                     ? newProduct.parts.map(part => ({
-                        ...part,
+                        product: part.productId,
                         quantity: Number(part.quantity)
                     }))
                     : []
@@ -128,7 +136,7 @@ export default function ProductAddForm() {
     const handleAddPart = () => {
         setNewProduct(prev => ({
             ...prev,
-            parts: [...prev.parts, { name: '', quantity: 1 }]
+            parts: [...prev.parts, { productId: '', quantity: 1 }]
         }))
     }
 
@@ -241,7 +249,6 @@ export default function ProductAddForm() {
                                 value={newProduct.description}
                                 onChange={(e) => handleInputChange('description', e.target.value)}
                                 className="col-span-3"
-                            
                             />
                         </div>
 
@@ -264,13 +271,25 @@ export default function ProductAddForm() {
                                 {newProduct.parts.map((part, index) => (
                                     <div key={index} className="flex items-end gap-2">
                                         <div className="flex-1">
-                                            <Label>Nomi</Label>
-                                            <Input
-                                                value={part.name}
-                                                onChange={(e) => handlePartChange(index, 'name', e.target.value)}
-                                                placeholder="Qism nomi"
-                                                required
-                                            />
+                                            <Label>Qism</Label>
+                                            <Select
+                                                value={part.productId}
+                                                onValueChange={(value) => handlePartChange(index, 'productId', value)}
+                                            >
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Qismni tanlang" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {partProducts.map((product) => (
+                                                        <SelectItem 
+                                                            key={product._id} 
+                                                            value={product._id}
+                                                        >
+                                                            {product.name}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
                                         </div>
                                         <div className="w-24">
                                             <Label>Soni</Label>

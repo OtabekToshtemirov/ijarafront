@@ -255,7 +255,7 @@ export default function AddRentalPage() {
 
         try {
             const response = await dispatch(createRental(formData)).unwrap();
-            generatePDF(response, customers.find(customer => customer._id === rentalForm.customer));
+            // generatePDF(response, customers.find(customer => customer._id === rentalForm.customer));
             toast.success('Ijara muvaffaqiyatli yaratildi');
             router.push('/ijara');
         } catch (error) {

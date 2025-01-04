@@ -190,8 +190,8 @@ export default function ProductsPage() {
                                                         <div key={index} className="flex items-center gap-2">
                                                             <Input
                                                                 placeholder="Mahsulot nomi"
-                                                                value={part.product}
-                                                                onChange={(e) => handlePartChange(index, 'product', e.target.value)}
+                                                                value={part.productName}
+                                                                onChange={(e) => handlePartChange(index, 'productName', e.target.value)}
                                                                 className="flex-1"
                                                             />
                                                             <Input
@@ -228,7 +228,7 @@ export default function ProductsPage() {
                                                 <div className="mt-1 space-x-1">
                                                     {product.parts.map((part, index) => (
                                                         <Badge key={index} variant="secondary">
-                                                            {part.product} ({part.quantity})
+                                                            {part.product.name} ({part.quantity})
                                                         </Badge>
                                                     ))}
                                                 </div>

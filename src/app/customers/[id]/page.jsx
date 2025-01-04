@@ -71,26 +71,33 @@ export default function CustomerDetailsPage() {
 
     // Get unreturned products
     const getUnreturnedProducts = () => {
-        return rentals.flatMap(rental => {
-            return rental.borrowedProducts.filter(product => {
+        return activeRentals.flatMap(rental => {
+            // Faqat aktiv ijaralardan qaytarilmagan mahsulotlarni olamiz
+            return rental.borrowedProducts.filter(borrowedProduct => {
+                // Qaytarilgan miqdorni hisoblaymiz
                 const returnedQuantity = rental.returnedProducts
-                    ?.filter(rp => rp.product?._id === product.product?._id)
-                    ?.reduce((sum, rp) => sum + rp.quantity, 0) || 0;
-                return returnedQuantity < product.quantity;
-            }).map(product => ({
-                ...product,
-                rental,
-                remainingQuantity: getRemainingQuantity(rental, product)
-            }));
-        });
-    };
+                    ?.filter(returnedProduct => returnedProduct.product?._id === borrowedProduct.product?._id)
+                    ?.reduce((sum, returnedProduct) => sum + returnedProduct.quantity, 0) || 0;
+                
+                // Qaytarilmagan miqdor bor bo'lsa, bu mahsulotni ko'rsatamiz
+                return returnedQuantity < borrowedProduct.quantity;
+            }).map(borrowedProduct => {
+                // Qaytarilgan miqdorni hisoblaymiz
+                const returnedQuantity = rental.returnedProducts
+                    ?.filter(returnedProduct => returnedProduct.product?._id === borrowedProduct.product?._id)
+                    ?.reduce((sum, returnedProduct) => sum + returnedProduct.quantity, 0) || 0;
+                
+                // Qaytarilmagan miqdorni hisoblaymiz
+                const remainingQuantity = borrowedProduct.quantity - returnedQuantity;
 
-    // Calculate remaining quantity
-    const getRemainingQuantity = (rental, product) => {
-        const returnedQuantity = rental.returnedProducts
-            ?.filter(rp => rp.product?._id === product.product?._id)
-            ?.reduce((sum, rp) => sum + rp.quantity, 0) || 0;
-        return product.quantity - returnedQuantity;
+                return {
+                    ...borrowedProduct,
+                    rental,
+                    remainingQuantity,
+                    returnedQuantity
+                };
+            });
+        });
     };
 
     const openReturnDialog = (rental, product) => {

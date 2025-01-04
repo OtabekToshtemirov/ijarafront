@@ -30,7 +30,8 @@ import {
     fetchRentalsByProductId,
     fetchRentalsByCarId,
     updateRental,
-    returnProduct
+    returnProduct,
+    fetchProducts
 } from '@/lib/features/rentals/rentalsSlice';
 import { toast } from 'sonner';
 import { Loader2, Plus, Edit, Eye, Printer } from 'lucide-react';
@@ -38,9 +39,12 @@ import moment from 'moment';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from "@/components/ui/label";
 import { useReactToPrint } from 'react-to-print';
+import axios from 'axios';
 
 export default function RentalsPage() {
     const dispatch = useDispatch();
+    const rentals = useSelector((state) => state.rentals.rentals);
+    const products = useSelector((state) => state.products.products);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [editingId, setEditingId] = useState(null);
@@ -50,9 +54,27 @@ export default function RentalsPage() {
     const [selectedRental, setSelectedRental] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPrintRental, setSelectedPrintRental] = useState(null);
+    const [error, setError] = useState(null);
     const componentRef = useRef(null);
 
-    const rentals = useSelector((state) => state.rentals.rentals);
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setLoading(true);
+                await Promise.all([
+                    dispatch(fetchRentals()),
+                    dispatch(fetchProducts())
+                ]);
+                setLoading(false);
+            } catch (err) {
+                setError(err.message);
+                setLoading(false);
+                toast.error('Ma\'lumotlarni yuklashda xatolik');
+            }
+        };
+
+        fetchData();
+    }, [dispatch]);
 
     // Get filtered and searched rentals
     const filteredRentals = useMemo(() => {
@@ -83,20 +105,6 @@ export default function RentalsPage() {
             return true;
         });
     }, [rentals, filter, searchQuery]);
-
-    useEffect(() => {
-        const loadData = async () => {
-            try {
-                await dispatch(fetchRentals());
-            } catch (error) {
-                console.error('Error loading data:', error);
-                toast.error('Маълумотларни юклашда хатолик юз берди');
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadData();
-    }, [dispatch]);
 
     const handleFilterChange = (value) => {
         setFilter(value);
@@ -299,6 +307,75 @@ export default function RentalsPage() {
         );
     };
 
+    const handleProductSelect = (productId) => {
+        const selectedProduct = products.find(p => p._id === productId);
+        if (!selectedProduct) return;
+
+        // Asosiy mahsulotni qo'shish
+        const newBorrowedProduct = {
+            product: selectedProduct._id,
+            quantity: 1,
+            days: 1,
+            dailyRate: selectedProduct.dailyRate,
+            rentDate: new Date().toISOString()
+        };
+
+        // Yangi mahsulotlar ro'yxati
+        let newBorrowedProducts = [newBorrowedProduct];
+
+        // Agar combo mahsulot bo'lsa, qismlarini ham qo'shamiz
+        if (selectedProduct.type === 'combo' && selectedProduct.parts?.length > 0) {
+            // Har bir qism uchun mahsulotni topamiz
+            selectedProduct.parts.forEach(part => {
+                const partProduct = products.find(p => p._id === part.product._id);
+                if (partProduct) {
+                    newBorrowedProducts.push({
+                        product: partProduct._id,
+                        quantity: part.quantity,
+                        days: 1,
+                        dailyRate: 0, // Qismlar uchun narx 0
+                        rentDate: new Date().toISOString()
+                    });
+                }
+            });
+        }
+
+        setNewRental(prev => ({
+            ...prev,
+            borrowedProducts: [...prev.borrowedProducts, ...newBorrowedProducts]
+        }));
+
+        setSelectedProduct('');
+    };
+
+    // Mahsulotni o'chirish
+    const handleRemoveProduct = (index) => {
+        setNewRental(prev => {
+            const removedProduct = prev.borrowedProducts[index];
+            let productsToRemove = [index];
+
+            // Agar bu combo mahsulot bo'lsa, uning barcha qismlarini ham o'chiramiz
+            if (removedProduct.isComboMain) {
+                prev.borrowedProducts.forEach((product, idx) => {
+                    if (product.isComboChild && product.parentProduct === removedProduct.product) {
+                        productsToRemove.push(idx);
+                    }
+                });
+            }
+            // Agar bu qism bo'lsa, uni alohida o'chiramiz
+            else if (removedProduct.isComboChild) {
+                productsToRemove = [index];
+            }
+
+            const newBorrowedProducts = prev.borrowedProducts.filter((_, idx) => !productsToRemove.includes(idx));
+
+            return {
+                ...prev,
+                borrowedProducts: newBorrowedProducts
+            };
+        });
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -414,8 +491,16 @@ export default function RentalsPage() {
                                         {rental.borrowedProducts.map((item, index) => (
                                             <div key={index} className="text-sm flex items-center justify-between">
                                                 <div>
-                                                    <span>{item.product.name} </span>
-                                                    <span className="text-muted-foreground">({item.quantity}) дона</span> 
+                                                    <span>{item.product?.name || 'Noma\'lum mahsulot'} </span>
+                                                    {item.product?.type === 'combo' && item.product.parts?.length > 0 && (
+                                                        <div className="ml-4 text-xs text-muted-foreground">
+                                                            {item.product.parts.map((part, idx) => (
+                                                                <div key={idx}>
+                                                                    {part.product?.name || 'Noma\'lum qism'} ({part.quantity} dona)
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 <span className="text-muted-foreground ml-2">
                                                     {new Date(item.rentDate).toLocaleDateString()}
@@ -542,29 +627,71 @@ export default function RentalsPage() {
                                 </div>
                             </div>
 
-                            <div>
-                                <Label>Мулклар</Label>
-                                <div className="space-y-2 mt-2">
-                                    {selectedRental.borrowedProducts.map((item, index) => (
-                                        <div key={index} className="flex justify-between items-center">
-                                            <div>
-                                                <p className="font-medium">{item.product.name}</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {item.quantity} дона × {item.dailyRate?.toLocaleString()} сўм
-                                                </p>
+                            <div className="col-span-4 space-y-4">
+                                {selectedRental.borrowedProducts.map((item, index) => {
+                                    const product = products.find(p => p._id === item.product);
+                                    if (!product) return null;
+                                    
+                                    return (
+                                        <div 
+                                            key={index} 
+                                            className="flex items-center justify-between space-x-4 p-2 rounded border"
+                                        >
+                                            <div className="flex-1 space-y-1">
+                                                <div className="flex items-center">
+                                                    <span>{product.name}</span>
+                                                </div>
+                                                <div className="flex items-center space-x-4">
+                                                    <div className="flex items-center space-x-2">
+                                                        <Label>Soni:</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={item.quantity}
+                                                            onChange={(e) => handleProductChange(index, 'quantity', e.target.value)}
+                                                            className="w-20"
+                                                            min="1"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <Label>Kun:</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={item.days}
+                                                            onChange={(e) => handleProductChange(index, 'days', e.target.value)}
+                                                            className="w-20"
+                                                            min="1"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center space-x-2">
+                                                        <Label>Kunlik narx:</Label>
+                                                        <Input
+                                                            type="number"
+                                                            value={item.dailyRate}
+                                                            onChange={(e) => handleProductChange(index, 'dailyRate', e.target.value)}
+                                                            className="w-32"
+                                                            min="0"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-muted-foreground">
-                                                {new Date(item.rentDate).toLocaleDateString()}
-                                            </p>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => handleRemoveProduct(index)}
+                                            >
+                                                <X className="h-4 w-4" />
+                                            </Button>
                                         </div>
-                                    ))}
-                                </div>
+                                    );
+                                })}
                             </div>
 
                             <div>
                                 <Label>Изоҳ</Label>
                                 <p className="text-lg">{selectedRental.description == '' ? 'Изоҳ мавжуд эмас' : selectedRental.description}</p>
                             </div>
+
+                            {/* Mahsulotlar ro'yxati */}
                         </div>
                     )}
                 </DialogContent>
