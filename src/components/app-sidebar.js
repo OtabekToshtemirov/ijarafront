@@ -15,42 +15,42 @@ import  { ModeToggle} from "@/components/theme-toggle"
 // Menu items.
 const items = [
     {
-        title: "Ijara",
+        title: "Ижара",
         url: "/ijara",
         icon: Home,
     },
     {
-        title: "Qaytarish",
+        title: "Қайтариш",
         url: "/ijara/returns",
         icon: RotateCcw,
     },
     {
-        title: "Mijozlar",
+        title: "Мижозлар",
         url: "/customers",
         icon: Inbox,
     },
     {
-        title: "Mahsulotlar",
+        title: "Маҳсулотлар",
         url: "/products",
         icon: PackageSearch,
     },
     {
-        title: "Mashinalar",
+        title: "Машиналар",
         url: "/cars",
         icon: Car,
     },
     {
-        title: "Statistika",
+        title: "Статистика",
         url: "/statistics",
         icon: Search,
     },
     {
-        title: "To'lovlar",
+        title: "Тўловлар",
         url: "/payments",
         icon: BadgeDollarSign,
     },
     {
-        title: "Xarajatlar",
+        title: "Харажатлар",
         url: "/expenses",
         icon: Inbox,
     }
@@ -61,7 +61,7 @@ export function AppSidebar() {
         <Sidebar>
             <SidebarContent>
                 <SidebarGroup>
-                    <SidebarGroupLabel>Ijara mahsulotlari
+                    <SidebarGroupLabel>Ижара маҳсулотлари
                     </SidebarGroupLabel>
                     <SidebarGroupContent>
                         <ModeToggle />

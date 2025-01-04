@@ -30,8 +30,13 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
 
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
-        const date = new Date(dateString);
-        return !isNaN(date.getTime()) ? format(date, "dd.MM.yyyy") : 'N/A';
+        try {
+            const date = new Date(dateString);
+            if (isNaN(date.getTime())) return 'N/A';
+            return date.toLocaleDateString();
+        } catch (error) {
+            return 'N/A';
+        }
     };
 
     useEffect(() => {
@@ -151,7 +156,7 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                                             </div>
                                         </div>
                                         <div className="text-sm text-muted-foreground">
-                                            Sana: {format(new Date(rental.startDate), "dd.MM.yyyy")}
+                                            Sana: {formatDate(rental.startDate)}
                                         </div>
                                     </div>
                                 ))}

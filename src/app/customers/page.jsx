@@ -107,7 +107,7 @@ export default function Component() {
 
     const handleAddCustomer = () => {
         if (!newCustomer.name || !newCustomer.phone) {
-            toast.error("Ism va telefon raqam kiritilishi shart");
+            toast.error("Исм ва телефон рақам киритилиши шарт");
             return;
         }
         dispatch(addCustomerAsync(newCustomer));
@@ -127,7 +127,7 @@ export default function Component() {
 
     const handleSaveEdit = () => {
         if (!editingCustomer.name || !editingCustomer.phone) {
-            toast.error("Ism va telefon raqam kiritilishi shart");
+            toast.error("Исм ва телефон рақам киритилиши шарт");
             return;
         }
         dispatch(updateCustomerAsync(editingCustomer));
@@ -139,7 +139,7 @@ export default function Component() {
     };
 
     const handleDeleteCustomer = (id) => {
-        if (window.confirm("Mijozni o'chirishni xohlaysizmi?")) {
+        if (window.confirm("Мижозни ўчиришни хоҳлайсизми?")) {
             dispatch(deleteCustomerAsync(id));
         }
     };
@@ -162,71 +162,14 @@ export default function Component() {
         }
     };
 
-    const getActiveRentals = () => {
-        return rentals.filter(rental => rental.customer?._id === selectedCustomer?._id && rental.status === 'active');
-    };
 
-    const getUnreturnedProducts = () => {
-        const unreturnedProducts = [];
-        getActiveRentals()
-            .forEach(rental => {
-                if (rental.status === 'active') {
-                    rental.borrowedProducts.forEach(prod => {
-                        const returnedQuantity = rental.returnedProducts
-                            .filter(rp => rp.product?._id === prod.product?._id)
-                            .reduce((sum, rp) => sum + rp.quantity, 0);
-                        const remainingQuantity = prod.quantity - returnedQuantity;
-                        if (remainingQuantity > 0) {
-                            unreturnedProducts.push({
-                                ...prod,
-                                remainingQuantity,
-                                rentalNumber: rental.rentalNumber,
-                                startDate: rental.startDate
-                            });
-                        }
-                    });
-                }
-            });
-        return unreturnedProducts;
-    };
 
-    const getTotalPayments = () => {
-        return payments.reduce((sum, payment) => sum + payment.amount, 0);
-    };
+  
 
-    const handleReturn = async () => {
-        if (!selectedRental || !selectedProduct) return;
+   
 
-        const returnData = {
-            rentalId: selectedRental._id,
-            productId: selectedProduct.product._id,
-            quantity: returnQuantity,
-            returnDate: returnDate
-        };
+    
 
-        try {
-            await dispatch(returnProduct(returnData)).unwrap();
-            toast.success("Mahsulot muvaffaqiyatli qaytarildi");
-            setReturnDialogOpen(false);
-            setSelectedRental(null);
-            setSelectedProduct(null);
-            setReturnQuantity(1);
-        } catch (error) {
-            toast.error(error.message || "Mahsulotni qaytarishda xatolik yuz berdi");
-        }
-    };
-
-    const openReturnDialog = (rental, product) => {
-        const returnedQuantity = rental.returnedProducts
-            .filter(rp => rp.product?._id === product.product?._id)
-            .reduce((sum, rp) => sum + rp.quantity, 0);
-        const remainingQuantity = product.quantity - returnedQuantity;
-
-        setSelectedRental(rental);
-        setSelectedProduct(product);
-        setReturnQuantity(1);
-        setReturnDialogOpen(true);
-    };
 
     // Show loading state
     if (status === 'loading') {
@@ -241,7 +184,7 @@ export default function Component() {
     if (status === 'failed') {
         return (
             <div className="flex justify-center items-center min-h-screen">
-                <div className="text-red-500">Xatolik yuz berdi: {error}</div>
+                <div className="text-red-500">Хатолик юз берди: {error}</div>
             </div>
         );
     }
@@ -249,21 +192,21 @@ export default function Component() {
     return (
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold">Mijozlar</h1>
+                <h1 className="text-4xl font-bold">Мижозлар</h1>
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
                             <Plus className="w-4 h-4 mr-2" />
-                            Yangi mijoz
+                            Янги мижоз
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Yangi mijoz qo'shish</DialogTitle>
+                            <DialogTitle>Янги мижоз қўшиш</DialogTitle>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="name">Ism</Label>
+                                <Label htmlFor="name">Исм</Label>
                                 <Input
                                     id="name"
                                     value={newCustomer.name}
@@ -273,7 +216,7 @@ export default function Component() {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="phone">Telefon</Label>
+                                <Label htmlFor="phone">Телефон</Label>
                                 <Input
                                     id="phone"
                                     value={newCustomer.phone}
@@ -283,7 +226,7 @@ export default function Component() {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="address">Manzil</Label>
+                                <Label htmlFor="address">Манзил</Label>
                                 <Input
                                     id="address"
                                     value={newCustomer.address}
@@ -293,7 +236,7 @@ export default function Component() {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="status">Status</Label>
+                                <Label htmlFor="status">Статус</Label>
                                 <Select
                                     value={newCustomer.status}
                                     onValueChange={(value) =>
@@ -301,17 +244,17 @@ export default function Component() {
                                     }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Status tanlang" />
+                                        <SelectValue placeholder="Статус танланг" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="oddiy">Oddiy</SelectItem>
+                                        <SelectItem value="oddiy">Оддий</SelectItem>
                                         <SelectItem value="VIP">VIP</SelectItem>
-                                        <SelectItem value="bad">Yomon</SelectItem>
+                                        <SelectItem value="bad">Ёмон</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="balance">Balans</Label>
+                                <Label htmlFor="balance">Баланс</Label>
                                 <Input
                                     id="balance"
                                     type="number"
@@ -326,7 +269,7 @@ export default function Component() {
                             </div>
                         </div>
                         <div className="flex justify-end">
-                            <Button onClick={handleAddCustomer}>Qo'shish</Button>
+                            <Button onClick={handleAddCustomer}>Қўшиш</Button>
                         </div>
                     </DialogContent>
                 </Dialog>
@@ -337,7 +280,7 @@ export default function Component() {
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Mijoz ismi, telefon raqami yoki manzili bo'yicha qidirish"
+                            placeholder="Мижоз исми, телефон рақами ёки манзили бўйича қидириш"
                             className="pl-8"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -348,13 +291,13 @@ export default function Component() {
                 <div className="w-[200px]">
                     <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger>
-                            <SelectValue placeholder="Status bo'yicha filter" />
+                            <SelectValue placeholder="Статус бўйича филтр" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Barchasi</SelectItem>
-                            <SelectItem value="oddiy">Oddiy</SelectItem>
+                            <SelectItem value="all">Барча</SelectItem>
+                            <SelectItem value="oddiy">Оддий</SelectItem>
                             <SelectItem value="VIP">VIP</SelectItem>
-                            <SelectItem value="bad">Yomon</SelectItem>
+                            <SelectItem value="bad">Ёмон</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -366,7 +309,7 @@ export default function Component() {
                         onCheckedChange={setShowNegativeBalance}
                     />
                     <Label htmlFor="negativeBalance">
-                        Qarzdor mijozlar
+                    Қарздор мижозлар
                     </Label>
                 </div>
             </div>
@@ -376,12 +319,12 @@ export default function Component() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Ism</TableHead>
-                            <TableHead>Telefon</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Moliyaviy holat</TableHead>
-                            <TableHead>Manzil</TableHead>
-                            <TableHead className="text-right">Amallar</TableHead>
+                            <TableHead>Исм</TableHead>
+                            <TableHead>Телефон</TableHead>
+                            <TableHead>Статус</TableHead>
+                            <TableHead>Молиявий холат</TableHead>
+                            <TableHead>Манзил</TableHead>
+                            <TableHead className="text-right">Амаллар</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -410,9 +353,9 @@ export default function Component() {
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="oddiy">Oddiy</SelectItem>
+                                                    <SelectItem value="oddiy"> Оддий</SelectItem>
                                                     <SelectItem value="VIP">VIP</SelectItem>
-                                                    <SelectItem value="bad">Yomon</SelectItem>
+                                                    <SelectItem value="bad">Ёмон</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </TableCell>
@@ -458,20 +401,16 @@ export default function Component() {
                                         <TableCell>
                                             <div className="space-y-1">
                                                 <Badge variant={customer.balance >= 0 ? "success" : "destructive"}>
-                                                    Balans: {customer.balance?.toLocaleString()} so'm
+                                                Баланс: {customer.balance?.toLocaleString()} сўм
                                                 </Badge>
                                                 <div className="text-xs text-muted-foreground">
-                                                    To'lovlar: {customer.totalPayments?.toLocaleString()} so'm
-                                                    <br />
-                                                    Qaytarishlar: {customer.totalReturnAmount?.toLocaleString()} so'm
+                                    
                                                 </div>
                                             </div>
                                         </TableCell>
                                         <TableCell>{customer.address}</TableCell>
                                         <TableCell className="text-right space-x-2">
-                                            <Button onClick={() => handleViewCustomer(customer)} size="sm" variant="outline">
-                                                <Eye className="w-4 h-4" />
-                                            </Button>
+                                            
                                             <Button onClick={() => handleEditCustomer(customer)} size="sm">
                                                 <Edit className="w-4 h-4" />
                                             </Button>
@@ -485,345 +424,7 @@ export default function Component() {
                         ))}
                     </TableBody>
                 </Table>
-            </div>
-
-
-            {/* View Customer Dialog */}
-            <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Mijoz ma'lumotlari</DialogTitle>
-                    </DialogHeader>
-                    {selectedCustomer && (
-                        <div className="grid gap-6">
-                            {/* Customer Info */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Shaxsiy ma'lumotlar</CardTitle>
-                                </CardHeader>
-                                <CardContent className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <Label>Ism</Label>
-                                        <p className="text-lg">{selectedCustomer.name}</p>
-                                    </div>
-                                    <div>
-                                        <Label>Telefon</Label>
-                                        <p className="text-lg">{selectedCustomer.phone}</p>
-                                    </div>
-                                    <div>
-                                        <Label>Manzil</Label>
-                                        <p className="text-lg">{selectedCustomer.address}</p>
-                                    </div>
-                                    <div>
-                                        <Label>Status</Label>
-                                        <Badge className={getStatusColor(selectedCustomer.status)}>
-                                            {selectedCustomer.status === 'oddiy' ? 'Oddiy' :
-                                                selectedCustomer.status === 'VIP' ? 'VIP' : 'Yomon'}
-                                        </Badge>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Financial Info */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Moliyaviy ma'lumotlar</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="grid gap-6">
-                                        <div className="flex items-center justify-center">
-                                            <div className="text-center">
-                                                <Badge
-                                                    className="text-lg px-6 py-2"
-                                                    variant={selectedCustomer.balance >= 0 ? "success" : "destructive"}
-                                                >
-                                                    Balans: {selectedCustomer.balance?.toLocaleString()} so'm
-                                                </Badge>
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <Card>
-                                                <CardHeader>
-                                                    <CardTitle className="text-green-600">To'lovlar</CardTitle>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <div className="text-2xl font-bold text-green-600">
-                                                        {getTotalPayments().toLocaleString()} so'm
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                            <Card>
-                                                <CardHeader>
-                                                    <CardTitle className="text-red-600">Qaytarishlar</CardTitle>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <div className="text-2xl font-bold text-red-600">
-                                                        {selectedCustomer.totalReturnAmount?.toLocaleString()} so'm
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Active Rentals */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Faol ijaralar</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {rentals
-                                            .filter(rental => rental.customer?._id === selectedCustomer?._id)
-                                            .filter(rental => rental.status === 'active')
-                                            .map((rental) => (
-                                                <div
-                                                    key={rental._id}
-                                                    className="border rounded-lg p-4"
-                                                >
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div>
-                                                            <p className="font-medium">{rental.rentalNumber}</p>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {new Date(rental.createdAt).toLocaleDateString()}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="font-medium">
-                                                                {rental.totalCost?.toLocaleString()} so'm
-                                                            </p>
-
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium mb-2">
-                                                            Olingan mahsulotlar:
-                                                        </p>
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            {rental.borrowedProducts.map((prod, idx) => {
-                                                                const returnedQuantity = rental.returnedProducts
-                                                                    .filter(rp => rp.product?._id === prod.product?._id)
-                                                                    .reduce((sum, rp) => sum + rp.quantity, 0);
-                                                                const remainingQuantity = prod.quantity - returnedQuantity;
-
-                                                                return (
-                                                                    <div key={idx} className="flex justify-between border-b py-1">
-                                                                        <span className="text-sm">
-                                                                            {prod.product?.name}
-                                                                        </span>
-                                                                        <div className="text-sm text-right">
-                                                                            <span>{prod.quantity} dona</span>
-                                                                            {rental.status === 'active' && remainingQuantity > 0 && (
-                                                                                <span className="text-muted-foreground ml-1">
-                                                                                    (Qoldi: {remainingQuantity})
-                                                                                </span>
-                                                                            )}
-                                                                            {rental.status !== 'active' && (
-                                                                                <span className="text-green-500 ml-1">
-                                                                                    (Qaytarilgan)
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* All Rentals History */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Barcha ijaralar tarixi</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-4">
-                                        {rentals
-                                            .filter(rental => rental.customer?._id === selectedCustomer?._id)
-                                            .map((rental) => (
-                                                <div
-                                                    key={rental._id}
-                                                    className="border rounded-lg p-4"
-                                                >
-                                                    <div className="flex justify-between items-start mb-2">
-                                                        <div>
-                                                            <div className="flex items-center gap-2">
-                                                                <p className="font-medium">{rental.rentalNumber}</p>
-                                                                <Badge variant={rental.status === 'active' ? 'default' : 'secondary'}>
-                                                                    {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
-                                                                </Badge>
-                                                            </div>
-                                                            <p className="text-sm text-muted-foreground">
-                                                                {new Date(rental.startDate).toLocaleDateString()}
-                                                            </p>
-                                                        </div>
-                                                        <div className="text-right">
-                                                            <p className="font-medium">
-                                                                {rental.totalCost?.toLocaleString()} so'm
-                                                            </p>
-                                                            {rental.debt > 0 && (
-                                                                <p className="text-sm text-red-500">
-                                                                    Qarz: {rental.debt?.toLocaleString()} so'm
-                                                                </p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-sm font-medium mb-2">
-                                                            Olingan mahsulotlar:
-                                                        </p>
-                                                        <div className="grid grid-cols-2 gap-2">
-                                                            {rental.borrowedProducts.map((prod, idx) => {
-                                                                const returnedQuantity = rental.returnedProducts
-                                                                    .filter(rp => rp.product?._id === prod.product?._id)
-                                                                    .reduce((sum, rp) => sum + rp.quantity, 0);
-                                                                const remainingQuantity = prod.quantity - returnedQuantity;
-
-                                                                return (
-                                                                    <div key={idx} className="flex justify-between border-b py-1">
-                                                                        <span className="text-sm">
-                                                                            {prod.product?.name}
-                                                                        </span>
-                                                                        <div className="text-sm text-right flex items-center gap-2">
-                                                                            <span>{prod.quantity} dona</span>
-                                                                            {rental.status === 'active' && remainingQuantity > 0 && (
-                                                                                <>
-                                                                                    <span className="text-muted-foreground">
-                                                                                        (Qoldi: {remainingQuantity})
-                                                                                    </span>
-                                                                                    <Button
-                                                                                        size="sm"
-                                                                                        variant="outline"
-                                                                                        onClick={() => openReturnDialog(rental, prod)}
-                                                                                    >
-                                                                                        Qaytarish
-                                                                                    </Button>
-                                                                                </>
-                                                                            )}
-                                                                            {rental.status !== 'active' && (
-                                                                                <span className="text-green-500">
-                                                                                    (Qaytarilgan)
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                );
-                                                            })}
-                                                        </div>
-                                                    </div>
-                                                    {rental.car && (
-                                                        <div className="mt-2 text-sm text-muted-foreground">
-                                                            Mashina: {rental.car.carNumber}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Unreturned Products */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>Qaytarilmagan mahsulotlar</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
-                                        {getUnreturnedProducts().map((prod, idx) => (
-                                            <div key={idx} className="flex justify-between items-center border-b py-2">
-                                                <div>
-                                                    <p className="font-medium">{prod.product?.name}</p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {prod.rentalNumber} - {new Date(prod.createdAt).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                                <Badge variant="outline">
-                                                    {prod.remainingQuantity} dona
-                                                </Badge>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Payment History */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle>To'lovlar tarixi</CardTitle>
-                                </CardHeader>
-                                <CardContent>
-                                    <div className="space-y-2">
-                                        {payments.map((payment) => (
-                                            <div key={payment._id} className="flex justify-between items-center border-b py-2">
-                                                <div>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {new Date(payment.paymentDate).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                                <p className="font-medium">
-                                                    {payment.amount?.toLocaleString()} so'm
-                                                </p>
-                                                <p className="font-medium">
-                                                    {payment.paymentType?.toLocaleString() === 'cash' ? 'Naqd' : 'Plastik'}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
-
-            {/* Return Product Dialog */}
-            <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Mahsulotni qaytarish</DialogTitle>
-                    </DialogHeader>
-                    {selectedRental && selectedProduct && (
-                        <div className="space-y-4">
-                            <div>
-                                <Label>Ijara raqami</Label>
-                                <p className="text-lg font-medium">{selectedRental.rentalNumber}</p>
-                            </div>
-                            <div>
-                                <Label>Mahsulot</Label>
-                                <p className="text-lg font-medium">{selectedProduct.product?.name}</p>
-                            </div>
-                            <div>
-                                <Label>Qaytarish miqdori</Label>
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    max={selectedProduct.quantity}
-                                    value={returnQuantity}
-                                    onChange={(e) => setReturnQuantity(parseInt(e.target.value))}
-                                />
-                            </div>
-                            <div>
-                                <Label>Qaytarish sanasi</Label>
-                                <Input
-                                    type="date"
-                                    value={returnDate}
-                                    onChange={(e) => setReturnDate(e.target.value)}
-                                />
-                            </div>
-                            <div className="flex justify-end">
-                                <Button onClick={handleReturn}>
-                                    Qaytarish
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
+            </div>          
         </div>
     );
 }

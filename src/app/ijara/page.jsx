@@ -4,6 +4,7 @@ import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import {
     Table,
     TableBody,
@@ -66,9 +67,17 @@ export default function RentalsPage() {
                 const customer = rental.customer?.name?.toLowerCase() || '';
                 const rentalNumber = rental.rentalNumber?.toLowerCase() || '';
                 const searchLower = searchQuery.toLowerCase();
+                const rentalCar = rental.car?.carNumber?.toLowerCase() || '';
+                const rentalDriver = rental.car?.driverName?.toLowerCase() || '';
+                const rentalDriverPhone = rental.car?.driverPhone?.toLowerCase() || '';
+                const product = rental.product?.name?.toLowerCase() || '';
                 
                 return customer.includes(searchLower) || 
-                       rentalNumber.includes(searchLower);
+                       rentalNumber.includes(searchLower) ||
+                       rentalCar.includes(searchLower) ||
+                       rentalDriver.includes(searchLower) ||
+                       rentalDriverPhone.includes(searchLower) ||
+                       product.includes(searchLower);
             }
 
             return true;
@@ -81,7 +90,7 @@ export default function RentalsPage() {
                 await dispatch(fetchRentals());
             } catch (error) {
                 console.error('Error loading data:', error);
-                toast.error('Ma\'lumotlarni yuklashda xatolik yuz berdi');
+                toast.error('Маълумотларни юклашда хатолик юз берди');
             } finally {
                 setLoading(false);
             }
@@ -121,11 +130,11 @@ export default function RentalsPage() {
             };
 
             await dispatch(updateRental({ id, data: updateData })).unwrap();
-            toast.success("O'zgarishlar saqlandi");
+            toast.success("Ўзгаришлар сакланди");
             setEditingId(null);
             dispatch(fetchRentals());
         } catch (error) {
-            toast.error(error.message || "Xatolik yuz berdi");
+            toast.error(error.message || "Хатолик юз берди");
         }
     };
 
@@ -154,17 +163,17 @@ export default function RentalsPage() {
                 };
                 
                 await dispatch(returnProduct(returnData)).unwrap();
-                toast.success("Mahsulotlar muvaffaqiyatli qaytarildi");
+                toast.success("Маҳсулотлар муваффакиятли қайтарилди");
             }
 
             await dispatch(updateRental({ id: rental._id, data: updateData })).unwrap();
-            toast.success(`Ijara holati ${newStatus === 'active' ? 'Faol' : 
-                                       newStatus === 'completed' ? 'Yakunlangan' : 
-                                       'Bekor qilindi'} ga o'zgartirildi`);
+            toast.success(`Ижара ҳолати ${newStatus === 'active' ? 'Фаол' : 
+                                       newStatus === 'completed' ? 'Якунланган' : 
+                                       'Бекор қилинди'} га ўзгартирildi`);
             
             dispatch(fetchRentals());
         } catch (error) {
-            toast.error(error.message || "Xatolik yuz berdi");
+            toast.error(error.message || "Хатолик юз берди");
         }
     };
 
@@ -208,12 +217,12 @@ export default function RentalsPage() {
             };
 
             await dispatch(updateRental({ id: rental._id, data: updateData })).unwrap();
-            toast.success("Mahsulot miqdori muvaffaqiyatli o'zgartirildi");
+            toast.success("Маҳсулот миқдори муваффакиятли ўзгартирилди");
             
             setEditingProduct(null);
             dispatch(fetchRentals());
         } catch (error) {
-            toast.error(error.message || "Xatolik yuz berdi");
+            toast.error(error.message || "Хатолик юз берди");
         }
     };
 
@@ -274,16 +283,16 @@ export default function RentalsPage() {
                                 <td style={{ padding: '5px', borderBottom: '1px solid #eee' }}>{index + 1}.</td>
                                 <td style={{ padding: '5px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>{product.product.name}</td>
                                 <td style={{ padding: '5px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>{product.quantity}</td>
-                                <td style={{ padding: '5px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>{product.product.dailyRate * product.quantity} сўм</td>
+                                <td style={{ padding: '5px', borderBottom: '1px solid #eee', fontWeight: 'bold' }}>{product.product.dailyRate * product.quantity} сўм</td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
 
                 <div style={{ marginTop: '15px', fontSize: '14px' }}>
-                    <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>Олдиндан тўлов: {rental.debt} сўм</div>
+                    <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>Олдиндан тўлов: {rental.debt} сўм</div>
                     <div style={{ marginBottom: '10px' }}>Ижарага олувчи: {rental.customer.name}</div>
-                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>КУНЛИК ИЖАРА ҲАҚИ : {rental.totalCost} сўм</div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>КУНЛИК ИЖАРА ҲАҚИ : {rental.totalCost} сўм</div>
                     <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold' }}>(90) 222 80 86</div>
                 </div>
             </div>
@@ -302,29 +311,29 @@ export default function RentalsPage() {
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-6">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold tracking-tight">Ijara</h2>
+                    <h2 className="text-2xl font-semibold tracking-tight">Ижара</h2>
                     <p className="text-sm text-muted-foreground">
-                        Barcha ijaralar ro'yxati
+                        Барча ижаралар рўйхати
                     </p>
                 </div>
 
                 <div className="flex items-center gap-4">
                     <Select value={filter} onValueChange={handleFilterChange}>
                         <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Filtr" />
+                            <SelectValue placeholder="Филтр" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Barchasi</SelectItem>
-                            <SelectItem value="active">Faol</SelectItem>
-                            <SelectItem value="completed">Yakunlangan</SelectItem>
-                            <SelectItem value="canceled">Bekor qilindi</SelectItem>
+                            <SelectItem value="all">Барчаси</SelectItem>
+                            <SelectItem value="active">Фаол</SelectItem>
+                            <SelectItem value="completed">Якунланган</SelectItem>
+                            <SelectItem value="canceled">Бекор қилинган</SelectItem>
                         </SelectContent>
                     </Select>
 
                     <Link href="/ijara/add-rental">
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
-                            Yangi ijara
+                            Янги ижара
                         </Button>
                     </Link>
                 </div>
@@ -334,7 +343,7 @@ export default function RentalsPage() {
             <div className="mb-6">
                 <Input
                     className="max-w-md"
-                    placeholder="Mijoz, mashina yoki mahsulot bo'yicha qidirish"
+                    placeholder="Мижоз, машина ёки маҳсулот бўйича қидириш"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -344,13 +353,13 @@ export default function RentalsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Raqami</TableHead>
-                            <TableHead>Mijoz</TableHead>
-                            <TableHead>Mashina</TableHead>
-                            <TableHead>Kunlik narxi</TableHead>
-                            <TableHead>Kun</TableHead>
-                            <TableHead>Olingan mulklar</TableHead>
-                            <TableHead>Amallar</TableHead>
+                            <TableHead>Рақами</TableHead>
+                            <TableHead>Мижоз</TableHead>
+                            <TableHead>Машина</TableHead>
+                            <TableHead>Кунлик нархи</TableHead>
+                            <TableHead>Кун</TableHead>
+                            <TableHead>Олинган мулклар</TableHead>
+                            <TableHead>Амаллар</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -358,7 +367,7 @@ export default function RentalsPage() {
                             <TableRow key={rental._id}>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span>Ижара     - {rental.rentalNumber || '-'}</span>
+                                        <span>Ижара - {rental.rentalNumber || '-'}</span>
                                         <span className="text-sm text-muted-foreground">
                                             {new Date(rental.createdAt).toLocaleDateString()}
                                         </span>
@@ -381,30 +390,32 @@ export default function RentalsPage() {
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span>{rental.totalCost?.toLocaleString()} so'm</span>
+                                        <span>{rental.totalCost?.toLocaleString()} сўм</span>
                                         {rental.payments?.length > 0 && (
                                             <span className="text-sm text-green-600">
-                                                To'langan: {rental.totalPayments?.toLocaleString()} so'm
+                                                Олдиндан тўлов: {rental.totalPayments?.toLocaleString()} сўм
                                             </span>
                                         )}
                                     </div>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span>{rental.rentalDays} kun</span>
+                                        <span>{rental.rentalDays} кун</span>
                                         <span className="text-sm text-muted-foreground">
-                                            {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
+                                            <Badge variant={rental.status === 'active' ? 'success' : 'danger'}>
+                                                {rental.status === 'active' ? 'Фаол' : 'Якунланган'}
+                                            </Badge>
                                         </span>
                                     </div>
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span>Mulklar:</span>
+                                        <span>Мулклар:</span>
                                         {rental.borrowedProducts.map((item, index) => (
                                             <div key={index} className="text-sm flex items-center justify-between">
                                                 <div>
                                                     <span>{item.product.name} </span>
-                                                    <span className="text-muted-foreground">({item.quantity}) dona</span> 
+                                                    <span className="text-muted-foreground">({item.quantity}) дона</span> 
                                                 </div>
                                                 <span className="text-muted-foreground ml-2">
                                                     {new Date(item.rentDate).toLocaleDateString()}
@@ -424,12 +435,12 @@ export default function RentalsPage() {
                                                 }}
                                             >
                                                 <SelectTrigger className="w-[140px]">
-                                                    <SelectValue placeholder="Status" />
+                                                    <SelectValue placeholder="Статус" />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="active">Faol</SelectItem>
-                                                    <SelectItem value="completed">Yakunlangan</SelectItem>
-                                                    <SelectItem value="canceled">Bekor qilingan</SelectItem>
+                                                    <SelectItem value="active">Фаол</SelectItem>
+                                                    <SelectItem value="completed">Якунланган</SelectItem>
+                                                    <SelectItem value="canceled">Бекор қилинган</SelectItem>
                                                 </SelectContent>
                                             </Select>
                                             <Button
@@ -437,7 +448,7 @@ export default function RentalsPage() {
                                                 size="sm"
                                                 onClick={handleCancel}
                                             >
-                                                Bekor
+                                                Бекор
                                             </Button>
                                         </div>
                                     ) : (
@@ -479,67 +490,67 @@ export default function RentalsPage() {
             <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
                 <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Ijara ma'lumotlari</DialogTitle>
+                        <DialogTitle>Ижара маълумотлари</DialogTitle>
                     </DialogHeader>
                     {selectedRental && (
                         <div className="grid gap-6">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <Label>Raqam</Label>
+                                    <Label>Рақам</Label>
                                     <p className="text-lg">{selectedRental.rentalNumber}</p>
                                     <p className="text-sm text-muted-foreground">
                                         {new Date(selectedRental.createdAt).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <div>
-                                    <Label>Status</Label>
+                                    <Label>Статус</Label>
                                     <p className="text-lg">
-                                        {selectedRental.status === 'active' ? 'Faol' :
-                                         selectedRental.status === 'completed' ? 'Yakunlangan' :
-                                         'Bekor qilingan'}
+                                        {selectedRental.status === 'active' ? 'Фаол' :
+                                         selectedRental.status === 'completed' ? 'Якунланган' :
+                                         'Бекор қилинган'}
                                     </p>
                                 </div>
                             </div>
 
                             <div>
-                                <Label>Mijoz</Label>
+                                <Label>Мижоз</Label>
                                 <p className="text-lg">{selectedRental.customer?.name}</p>
                                 <p className="text-sm text-muted-foreground">{selectedRental.customer?.phone}</p>
                             </div>
 
                             <div>
-                                <Label>Mashina</Label>
+                                <Label>Машина</Label>
                                 <p className="text-lg">{selectedRental.car?.carNumber || '-'}</p>
                                 <p className="text-sm text-muted-foreground">{selectedRental.car?.driverName || '-'}</p>
                             </div>
 
                             <div>
-                                <Label>Moliyaviy ma'lumotlar</Label>
+                                <Label>Молиявий маълумотлар</Label>
                                 <div className="grid grid-cols-2 gap-4 mt-2">
                                     <div>
-                                        <p className="text-lg font-medium">{selectedRental.totalCost?.toLocaleString()} so'm</p>
-                                        <p className="text-sm text-muted-foreground">Umumiy summa</p>
+                                        <p className="text-lg font-medium">{selectedRental.totalCost?.toLocaleString()} сўм</p>
+                                        <p className="text-sm text-muted-foreground">Умумий сумма</p>
                                     </div>
                                     {selectedRental.payments?.length > 0 && (
                                         <div>
                                             <p className="text-lg font-medium text-green-600">
-                                                {selectedRental.totalPayments?.toLocaleString()} so'm
+                                                {selectedRental.totalPayments?.toLocaleString()} сўм
                                             </p>
-                                            <p className="text-sm text-muted-foreground">To'langan</p>
+                                            <p className="text-sm text-muted-foreground">Тўланган</p>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
                             <div>
-                                <Label>Mulklar</Label>
+                                <Label>Мулклар</Label>
                                 <div className="space-y-2 mt-2">
                                     {selectedRental.borrowedProducts.map((item, index) => (
                                         <div key={index} className="flex justify-between items-center">
                                             <div>
                                                 <p className="font-medium">{item.product.name}</p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {item.quantity} dona × {item.dailyRate?.toLocaleString()} so'm
+                                                    {item.quantity} дона × {item.dailyRate?.toLocaleString()} сўм
                                                 </p>
                                             </div>
                                             <p className="text-sm text-muted-foreground">
@@ -551,8 +562,8 @@ export default function RentalsPage() {
                             </div>
 
                             <div>
-                                <Label>Izoh</Label>
-                                <p className="text-lg">{selectedRental.description == '' ? 'Izoh mavjud emas' : selectedRental.description}</p>
+                                <Label>Изоҳ</Label>
+                                <p className="text-lg">{selectedRental.description == '' ? 'Изоҳ мавжуд эмас' : selectedRental.description}</p>
                             </div>
                         </div>
                     )}

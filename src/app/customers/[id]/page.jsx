@@ -37,7 +37,7 @@ export default function CustomerDetailsPage() {
     const { id } = useParams();
     
     const customer = useSelector((state) => state.customers.customers.find(c => c._id === id));
-    const rentals = useSelector((state) => state.rentals.rentals) || [];
+    const rentals = useSelector((state) => state.rentals.rentals.filter(r => r.customer?._id === id)) || [];
     const payments = useSelector(selectPayments) || [];
     const status = useSelector((state) => state.customers.status);
     const paymentsStatus = useSelector(selectPaymentsStatus);
@@ -49,13 +49,11 @@ export default function CustomerDetailsPage() {
     const [returnDate, setReturnDate] = useState(new Date().toISOString().split('T')[0]);
 
     useEffect(() => {
-        dispatch(fetchCustomers());
-    }, [dispatch]);
-
-    useEffect(() => {
         if (id) {
-            dispatch(fetchRentalsByCustomerId(id));
+            // Fetch all required data at once
+            dispatch(fetchCustomers());
             dispatch(fetchPaymentsByCustomerId(id));
+            dispatch(fetchRentalsByCustomerId(id));
         }
     }, [dispatch, id]);
 
@@ -103,13 +101,13 @@ export default function CustomerDetailsPage() {
 
     const handleReturn = async () => {
         if (!returnQuantity || returnQuantity <= 0) {
-            toast.error("Qaytarish miqdorini kiriting!");
+            toast.error("Қайтариш миқдорини киритинг!");
             return;
         }
 
         const remainingQuantity = getRemainingQuantity(selectedRental, selectedProduct);
         if (returnQuantity > remainingQuantity) {
-            toast.error("Qaytarish miqdori qolgan miqdordan ko'p bo'lishi mumkin emas!");
+            toast.error("Қайтариш миқдори қолган миқдордан кўп бўлиши мумкин эмас!");
             return;
         }
 
@@ -121,7 +119,7 @@ export default function CustomerDetailsPage() {
                 returnDate: returnDate
             })).unwrap();
 
-            toast.success("Mahsulot muvaffaqiyatli qaytarildi");
+            toast.success("Маҳсулот муваффақиятли қайтарилди");
             setReturnDialogOpen(false);
             setSelectedRental(null);
             setSelectedProduct(null);
@@ -130,7 +128,7 @@ export default function CustomerDetailsPage() {
             // Refresh data
             dispatch(fetchRentalsByCustomerId(id));
         } catch (error) {
-            toast.error("Xatolik yuz berdi");
+            toast.error("Хатолик юз берди");
         }
     };
 
@@ -145,7 +143,7 @@ export default function CustomerDetailsPage() {
     if (!customer) {
         return (
             <div className="flex items-center justify-center min-h-screen">
-                <p className="text-muted-foreground">Mijoz topilmadi</p>
+                <p className="text-muted-foreground">Мижоз топилмади</p>
             </div>
         );
     }
@@ -155,7 +153,7 @@ export default function CustomerDetailsPage() {
             <div className="mb-6">
                 <Button variant="ghost" onClick={() => router.back()} className="hover:bg-blue-50">
                     <ArrowLeft className="h-4 w-4 mr-2 text-blue-600" />
-                    <span className="text-blue-600">Orqaga</span>
+                    <span className="text-blue-600">Орқага</span>
                 </Button>
             </div>
 
@@ -163,54 +161,54 @@ export default function CustomerDetailsPage() {
                 {/* Customer Information */}
                 <Card className="border-t-4 border-t-blue-500 shadow-lg dark:bg-gray-800">
                     <CardHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-900/50 dark:to-gray-800">
-                        <CardTitle className="text-blue-700 dark:text-blue-300">Mijoz ma'lumotlari</CardTitle>
+                        <CardTitle className="text-blue-700 dark:text-blue-300">Мижоз маълумотлари</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid md:grid-cols-3 gap-6">
                             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-                                <h3 className="font-medium mb-2 text-blue-700 dark:text-blue-300">Asosiy ma'lumotlar</h3>
+                                <h3 className="font-medium mb-2 text-blue-700 dark:text-blue-300">Асосий маълумотлар</h3>
                                 <div className="space-y-2">
-                                    <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Ism:</span> {customer.name}</p>
-                                    <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Telefon:</span> {customer.phone}</p>
-                                    <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Manzil:</span> {customer.address}</p>
+                                    <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Исм:</span> {customer.name}</p>
+                                    <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Телефон:</span> {customer.phone}</p>
+                                    <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Манзил:</span> {customer.address}</p>
                                     <Badge className={customer.status === 'VIP' ? 'bg-yellow-500 dark:bg-yellow-600' : 'bg-blue-500 dark:bg-blue-600'}>
-                                        {customer.status === 'VIP' ? 'VIP' : 'Oddiy'}
+                                        {customer.status === 'VIP' ? 'VIP' : 'Оддий'}
                                     </Badge>
                                 </div>
                             </div>
                             <div className="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
-                                <h3 className="font-medium mb-2 text-green-700 dark:text-green-300">Moliyaviy ma'lumotlar</h3>
+                                <h3 className="font-medium mb-2 text-green-700 dark:text-green-300">Молиявий маълумотлар</h3>
                                 <div className="space-y-2">
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        <span className="font-medium">Balans:</span> 
+                                        <span className="font-medium">Баланс:</span> 
                                         <span className={customer.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                                            {customer.balance?.toLocaleString()} so'm
+                                            {customer.balance?.toLocaleString()} сўм
                                         </span>
                                     </p>
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        <span className="font-medium">Jami to'lovlar:</span>
-                                        <span className="text-green-600 dark:text-green-400"> {totalPayments.toLocaleString()} so'm</span>
+                                        <span className="font-medium">Жами тўловлар:</span>
+                                        <span className="text-green-600 dark:text-green-400"> {totalPayments.toLocaleString()} сўм</span>
                                     </p>
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        <span className="font-medium">Qaytarishlar:</span>
-                                        <span className="text-blue-600 dark:text-blue-400"> {totalReturnsCost.toLocaleString()} so'm</span>
+                                        <span className="font-medium">Қайтаришлар:</span>
+                                        <span className="text-blue-600 dark:text-blue-400"> {totalReturnsCost.toLocaleString()} сўм</span>
                                     </p>
                                 </div>
                             </div>
                             <div className="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
-                                <h3 className="font-medium mb-2 text-purple-700 dark:text-purple-300">Statistika</h3>
+                                <h3 className="font-medium mb-2 text-purple-700 dark:text-purple-300">Статистика</h3>
                                 <div className="space-y-2">
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        <span className="font-medium">Faol ijaralar:</span>
-                                        <span className="text-purple-600 dark:text-purple-400"> {activeRentals.length} ta</span>
+                                        <span className="font-medium">Фаол ижаралар:</span>
+                                        <span className="text-purple-600 dark:text-purple-400"> {activeRentals.length} та</span>
                                     </p>
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        <span className="font-medium">Jami ijaralar:</span>
-                                        <span className="text-purple-600 dark:text-purple-400"> {rentals.length} ta</span>
+                                        <span className="font-medium">Жами ижаралар:</span>
+                                        <span className="text-purple-600 dark:text-purple-400"> {rentals.length} та</span>
                                     </p>
                                     <p className="text-gray-700 dark:text-gray-300">
-                                        <span className="font-medium">Qaytarilmagan maxsulotlar:</span>
-                                        <span className="text-purple-600 dark:text-purple-400"> {getUnreturnedProducts().length} ta</span>
+                                        <span className="font-medium">Қайтарилмаган маҳсулотлар:</span>
+                                        <span className="text-purple-600 dark:text-purple-400"> {getUnreturnedProducts().length} та</span>
                                     </p>
                                 </div>
                             </div>
@@ -221,43 +219,38 @@ export default function CustomerDetailsPage() {
                 {/* Active Rentals */}
                 <Card className="border-t-4 border-t-green-500 shadow-lg dark:bg-gray-800">
                     <CardHeader className="bg-gradient-to-r from-green-50 to-white dark:from-green-900/50 dark:to-gray-800">
-                        <CardTitle className="text-green-700 dark:text-green-300">Faol ijaralar</CardTitle>
+                        <CardTitle className="text-green-700 dark:text-green-300">Фаол ижаралар</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {activeRentals.length === 0 ? (
                             <div className="text-center py-4 text-muted-foreground dark:text-gray-400">
-                                Faol ijaralar mavjud emas
+                                Фаол ижаралар мавжуд эмас
                             </div>
                         ) : (
                             <div className="rounded-md border dark:border-gray-700">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="dark:border-gray-700">
-                                            <TableHead className="dark:text-gray-300">Sana</TableHead>
-                                            <TableHead className="dark:text-gray-300">Mahsulotlar</TableHead>
-                                            <TableHead className="dark:text-gray-300">Umumiy narx</TableHead>
-                                            <TableHead className="dark:text-gray-300">Qarz</TableHead>
+                                            <TableHead className="dark:text-gray-300">Сана</TableHead>
+                                            <TableHead className="dark:text-gray-300">Ижара рақами</TableHead>
+                                            <TableHead className="dark:text-gray-300">Маҳсулотлар</TableHead>
+                                            <TableHead className="dark:text-gray-300">Умумий нарх</TableHead> 
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {activeRentals.map((rental) => (
                                             <TableRow key={rental._id} className="dark:border-gray-700">
                                                 <TableCell className="dark:text-gray-300">{new Date(rental.workStartDate || rental.createdAt).toLocaleDateString()}</TableCell>
+                                                <TableCell className="dark:text-gray-300">{rental.rentalNumber}</TableCell>
                                                 <TableCell className="dark:text-gray-300">
                                                     {rental.borrowedProducts.map((product, index) => (
                                                         <div key={index}>
-                                                            {product.product?.name} ({product.quantity} dona)
+                                                            {product.product?.name} ({product.quantity} дона)
                                                         </div>
                                                     ))}
                                                 </TableCell>
-                                                <TableCell className="dark:text-gray-300">{rental.totalCost?.toLocaleString()} so'm</TableCell>
-                                                <TableCell>
-                                                    {rental.debt > 0 ? (
-                                                        <span className="text-red-500 dark:text-red-400">{rental.debt?.toLocaleString()} so'm</span>
-                                                    ) : (
-                                                        <Badge variant="success" className="dark:bg-green-700">To'langan</Badge>
-                                                    )}
-                                                </TableCell>
+                                                <TableCell className="dark:text-gray-300">{rental.totalCost?.toLocaleString()} сўм</TableCell>
+                                               
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -270,22 +263,21 @@ export default function CustomerDetailsPage() {
                 {/* Unreturned Products */}
                 <Card className="border-t-4 border-t-red-500 shadow-lg dark:bg-gray-800">
                     <CardHeader className="bg-gradient-to-r from-red-50 to-white dark:from-red-900/50 dark:to-gray-800">
-                        <CardTitle className="text-red-700 dark:text-red-300">Qaytarilmagan mahsulotlar</CardTitle>
+                        <CardTitle className="text-red-700 dark:text-red-300">Қайтарилмаган маҳсулотлар</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {getUnreturnedProducts().length === 0 ? (
                             <div className="text-center py-4 text-muted-foreground dark:text-gray-400">
-                                Qaytarilmagan mahsulotlar mavjud emas
+                                Қайтарилмаган маҳсулотлар мавжуд эмас
                             </div>
                         ) : (
                             <div className="rounded-md border dark:border-gray-700">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="dark:border-gray-700">
-                                            <TableHead className="dark:text-gray-300">Mahsulot</TableHead>
-                                            <TableHead className="dark:text-gray-300">Ijara sanasi</TableHead>
-                                            <TableHead className="dark:text-gray-300">Qolgan miqdor</TableHead>
-                                            <TableHead className="dark:text-gray-300">Amallar</TableHead>
+                                            <TableHead className="dark:text-gray-300">Маҳсулот</TableHead>
+                                            <TableHead className="dark:text-gray-300">Ижара санаси</TableHead>
+                                            <TableHead className="dark:text-gray-300">Қолган миқдор</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -295,16 +287,7 @@ export default function CustomerDetailsPage() {
                                                 <TableCell className="dark:text-gray-300">
                                                     {new Date(product.rental.workStartDate || product.rental.createdAt).toLocaleDateString()}
                                                 </TableCell>
-                                                <TableCell className="dark:text-gray-300">{product.remainingQuantity} dona</TableCell>
-                                                <TableCell>
-                                                    <Button 
-                                                        size="sm" 
-                                                        onClick={() => openReturnDialog(product.rental, product)}
-                                                        className="dark:bg-blue-600 dark:hover:bg-blue-700 dark:text-white"
-                                                    >
-                                                        Qaytarish
-                                                    </Button>
-                                                </TableCell>
+                                                <TableCell className="dark:text-gray-300">{product.remainingQuantity} дона</TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -317,22 +300,22 @@ export default function CustomerDetailsPage() {
                 {/* All Rentals History */}
                 <Card className="border-t-4 border-t-purple-500 shadow-lg dark:bg-gray-800">
                     <CardHeader className="bg-gradient-to-r from-purple-50 to-white dark:from-purple-900/50 dark:to-gray-800">
-                        <CardTitle className="text-purple-700 dark:text-purple-300">Barcha ijaralar tarixi</CardTitle>
+                        <CardTitle className="text-purple-700 dark:text-purple-300">Барча ижаралар тарихи</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {rentals.length === 0 ? (
                             <div className="text-center py-4 text-muted-foreground dark:text-gray-400">
-                                Ijaralar tarixi mavjud emas
+                                Ижаралар тарихи мавжуд эмас
                             </div>
                         ) : (
                             <div className="rounded-md border dark:border-gray-700">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="dark:border-gray-700">
-                                            <TableHead className="dark:text-gray-300">Sana</TableHead>
-                                            <TableHead className="dark:text-gray-300">Mahsulotlar</TableHead>
-                                            <TableHead className="dark:text-gray-300">Umumiy narx</TableHead>
-                                            <TableHead className="dark:text-gray-300">Status</TableHead>
+                                            <TableHead className="dark:text-gray-300">Сана</TableHead>
+                                            <TableHead className="dark:text-gray-300">Маҳсулотлар</TableHead>
+                                            <TableHead className="dark:text-gray-300">Умумий нарх</TableHead>
+                                            <TableHead className="dark:text-gray-300">Статус</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -344,17 +327,17 @@ export default function CustomerDetailsPage() {
                                                 <TableCell className="dark:text-gray-300">
                                                     {rental.borrowedProducts.map((product, index) => (
                                                         <div key={index}>
-                                                            {product.product?.name} ({product.quantity} dona)
+                                                            {product.product?.name} ({product.quantity} дона)
                                                         </div>
                                                     ))}
                                                 </TableCell>
-                                                <TableCell className="dark:text-gray-300">{rental.totalCost?.toLocaleString()} so'm</TableCell>
+                                                <TableCell className="dark:text-gray-300">{rental.totalCost?.toLocaleString()} сўм</TableCell>
                                                 <TableCell>
                                                     <Badge 
                                                         variant={rental.status === 'active' ? 'default' : 'secondary'}
                                                         className={rental.status === 'active' ? 'dark:bg-blue-600' : 'dark:bg-gray-600'}
                                                     >
-                                                        {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
+                                                        {rental.status === 'active' ? 'Фаол' : 'Якунланган'}
                                                     </Badge>
                                                 </TableCell>
                                             </TableRow>
@@ -369,21 +352,21 @@ export default function CustomerDetailsPage() {
                 {/* Payments History */}
                 <Card className="border-t-4 border-t-indigo-500 shadow-lg dark:bg-gray-800">
                     <CardHeader className="bg-gradient-to-r from-indigo-50 to-white dark:from-indigo-900/50 dark:to-gray-800">
-                        <CardTitle className="text-indigo-700 dark:text-indigo-300">To'lovlar tarixi</CardTitle>
+                        <CardTitle className="text-indigo-700 dark:text-indigo-300">Тўловлар тарихи</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {payments.length === 0 ? (
                             <div className="text-center py-4 text-muted-foreground dark:text-gray-400">
-                                To'lovlar tarixi mavjud emas
+                                Тўловлар тарихи мавжуд эмас
                             </div>
                         ) : (
                             <div className="rounded-md border dark:border-gray-700">
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="dark:border-gray-700">
-                                            <TableHead className="dark:text-gray-300">Sana</TableHead>
-                                            <TableHead className="dark:text-gray-300">Summa</TableHead>
-                                            <TableHead className="dark:text-gray-300">To'lov turi</TableHead>
+                                            <TableHead className="dark:text-gray-300">Сана</TableHead>
+                                            <TableHead className="dark:text-gray-300">Сумма</TableHead>
+                                            <TableHead className="dark:text-gray-300">Тўлов тури</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -392,9 +375,9 @@ export default function CustomerDetailsPage() {
                                                 <TableCell className="dark:text-gray-300">
                                                     {new Date(payment.paymentDate).toLocaleDateString()}
                                                 </TableCell>
-                                                <TableCell className="dark:text-gray-300">{payment.amount?.toLocaleString()} so'm</TableCell>
+                                                <TableCell className="dark:text-gray-300">{payment.amount?.toLocaleString()} сўм</TableCell>
                                                 <TableCell className="dark:text-gray-300">
-                                                    {payment.paymentType === 'cash' ? 'Naqd' : 'Plastik'}
+                                                    {payment.paymentType === 'cash' ? 'Нақд' : 'Пластик'}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -410,20 +393,20 @@ export default function CustomerDetailsPage() {
             <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
                 <DialogContent className="bg-white dark:bg-gray-800">
                     <DialogHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-900/50 dark:to-gray-800 border-b dark:border-gray-700 pb-4">
-                        <DialogTitle className="text-blue-700 dark:text-blue-300">Mahsulotni qaytarish</DialogTitle>
+                        <DialogTitle className="text-blue-700 dark:text-blue-300">Маҳсулотни қайтариш</DialogTitle>
                     </DialogHeader>
                     {selectedRental && selectedProduct && (
                         <div className="space-y-4 pt-4">
                             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                <Label className="text-gray-600 dark:text-gray-300">Ijara raqami</Label>
+                                <Label className="text-gray-600 dark:text-gray-300">Иjarа рақами</Label>
                                 <p className="text-lg font-medium text-gray-900 dark:text-gray-100">{selectedRental.rentalNumber}</p>
                             </div>
                             <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                <Label className="text-gray-600 dark:text-gray-300">Mahsulot</Label>
+                                <Label className="text-gray-600 dark:text-gray-300">Маҳсулот</Label>
                                 <p className="text-lg font-medium text-gray-900 dark:text-gray-100">{selectedProduct.product?.name}</p>
                             </div>
                             <div>
-                                <Label className="text-gray-600 dark:text-gray-300">Qaytarish miqdori</Label>
+                                <Label className="text-gray-600 dark:text-gray-300">Қайтариш миқдори</Label>
                                 <Input
                                     type="number"
                                     min="1"
@@ -434,7 +417,7 @@ export default function CustomerDetailsPage() {
                                 />
                             </div>
                             <div>
-                                <Label className="text-gray-600 dark:text-gray-300">Qaytarish sanasi</Label>
+                                <Label className="text-gray-600 dark:text-gray-300">Қайтариш санаси</Label>
                                 <Input
                                     type="date"
                                     value={returnDate}
@@ -447,7 +430,7 @@ export default function CustomerDetailsPage() {
                                     onClick={handleReturn}
                                     className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600"
                                 >
-                                    Qaytarish
+                                    Қайтариш
                                 </Button>
                             </div>
                         </div>

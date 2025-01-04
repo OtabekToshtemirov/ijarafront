@@ -40,7 +40,7 @@ const CarForm = ({ onSubmit, formData, onChange, isEdit, isLoading, onClose }) =
         e.preventDefault();
         const success = await onSubmit(e);
         if (success) {
-            toast.success(isEdit ? 'Mashina muvaffaqiyatli yangilandi' : 'Mashina muvaffaqiyatli qo\'shildi');
+            toast.success(isEdit ? 'Машина муваффақиятли янгиланди' : 'Машина муваффақиятли қўшилди');
             onClose();
         }
     };
@@ -48,7 +48,7 @@ const CarForm = ({ onSubmit, formData, onChange, isEdit, isLoading, onClose }) =
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="carNumber">Mashina raqami</Label>
+                <Label htmlFor="carNumber">Машина рақами</Label>
                 <Input
                     id="carNumber"
                     name="carNumber"
@@ -59,7 +59,7 @@ const CarForm = ({ onSubmit, formData, onChange, isEdit, isLoading, onClose }) =
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="driverName">Haydovchi ismi</Label>
+                <Label htmlFor="driverName">Ҳайдовчи исми</Label>
                 <Input
                     id="driverName"
                     name="driverName"
@@ -70,7 +70,7 @@ const CarForm = ({ onSubmit, formData, onChange, isEdit, isLoading, onClose }) =
                 />
             </div>
             <div className="space-y-2">
-                <Label htmlFor="driverPhone">Telefon raqami</Label>
+                <Label htmlFor="driverPhone">Телефон рақами</Label>
                 <Input
                     id="driverPhone"
                     name="driverPhone"
@@ -86,13 +86,13 @@ const CarForm = ({ onSubmit, formData, onChange, isEdit, isLoading, onClose }) =
                     variant="outline"
                     onClick={onClose}
                 >
-                    Bekor qilish
+                    Бекор қилиш
                 </Button>
                 <Button type="submit" disabled={isLoading}>
                     {isLoading && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     )}
-                    {isEdit ? 'Yangilash' : 'Saqlash'}
+                    {isEdit ? 'Янгилаш' : 'Сақлаш'}
                 </Button>
             </DialogFooter>
         </form>
@@ -159,7 +159,7 @@ export default function CarsPage() {
             await dispatch(createCar(formData)).unwrap();
             return true;
         } catch (error) {
-            toast.error('Xatolik yuz berdi');
+            toast.error('Хатолик юз берди');
             return false;
         }
     };
@@ -170,7 +170,7 @@ export default function CarsPage() {
             await dispatch(updateCar({ id: selectedCar._id, data: formData })).unwrap();
             return true;
         } catch (error) {
-            toast.error('Xatolik yuz berdi');
+            toast.error('Хатолик юз берди');
             return false;
         }
     };
@@ -180,9 +180,9 @@ export default function CarsPage() {
             try {
                 await dispatch(deleteCar(selectedCar._id)).unwrap();
                 setIsDeleteDialogOpen(false);
-                toast.success('Mashina muvaffaqiyatli o\'chirildi');
+                toast.success('Машина муваффақиятли ўчирилди');
             } catch (error) {
-                toast.error('Xatolik yuz berdi');
+                toast.error('Хатолик юз берди');
             }
         }
     };
@@ -205,17 +205,17 @@ export default function CarsPage() {
     return (
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Mashinalar</h1>
+                <h1 className="text-3xl font-bold">Машиналар</h1>
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
-                            Mashina qo'shish
+                            Машина қўшиш
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Yangi mashina qo'shish</DialogTitle>
+                            <DialogTitle>Янги машина қўшиш</DialogTitle>
                         </DialogHeader>
                         <CarForm 
                             onSubmit={handleAddCar}
@@ -232,7 +232,7 @@ export default function CarsPage() {
             {/* Search input */}
             <div className="mb-4">
                 <Input
-                    placeholder="Mashina raqami, haydovchi yoki telefon raqami bo'yicha qidirish..."
+                    placeholder="Машина рақами, ҳайдовчи ёки телефон рақами бўйича қидириш..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="max-w-md"
@@ -245,25 +245,25 @@ export default function CarsPage() {
                 </div>
             ) : status === 'failed' ? (
                 <div className="text-center text-red-500">
-                    Xatolik yuz berdi. Qaytadan urinib ko'ring.
+                    Хатолик юз берди. Қайтадан уриниб кўринг.
                 </div>
             ) : (
                 <div className="border rounded-lg">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Mashina raqami</TableHead>
-                                <TableHead>Haydovchi</TableHead>
-                                <TableHead>Telefon</TableHead>
-                                <TableHead>Ijaralar soni</TableHead>
-                                <TableHead>Amallar</TableHead>
+                                <TableHead>Машина рақами</TableHead>
+                                <TableHead>Ҳайдовчи</TableHead>
+                                <TableHead>Телефон</TableHead>
+                                <TableHead>Ижаралар сони</TableHead>
+                                <TableHead>Амаллар</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {filteredCars.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-4">
-                                        Mashinalar topilmadi
+                                        Машиналар топилмади
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -300,7 +300,7 @@ export default function CarsPage() {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Mashinani tahrirlash</DialogTitle>
+                        <DialogTitle>Машинани таҳрирлаш</DialogTitle>
                     </DialogHeader>
                     <CarForm 
                         onSubmit={handleEditCar}
@@ -316,21 +316,21 @@ export default function CarsPage() {
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Mashinani o'chirish</DialogTitle>
+                        <DialogTitle>Машинани ўчириш</DialogTitle>
                     </DialogHeader>
-                    <p>Haqiqatan ham bu mashinani o'chirmoqchimisiz?</p>
+                    <p>Ҳақиқатан ҳам бу машинани ўчирмоқчимисиз?</p>
                     <DialogFooter>
                         <Button
                             variant="ghost"
                             onClick={() => setIsDeleteDialogOpen(false)}
                         >
-                            Bekor qilish
+                            Бекор қилиш
                         </Button>
                         <Button
                             variant="destructive"
                             onClick={handleDeleteCar}
                         >
-                            O'chirish
+                            Ўчириш
                         </Button>
                     </DialogFooter>
                 </DialogContent>
