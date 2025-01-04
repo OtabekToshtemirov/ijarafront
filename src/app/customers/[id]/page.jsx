@@ -144,6 +144,23 @@ export default function CustomerDetailsPage() {
         });
     };
 
+    // Add this function to calculate total discounts
+    const getTotalDiscounts = () => {
+        if (!customer?.rentals) return 0;
+        
+        return customer.rentals.reduce((total, rental) => {
+            // Get discounts from payments
+            const paymentDiscounts = (rental.payments || []).reduce((sum, payment) => 
+                sum + (payment.discount || 0), 0);
+            
+            // Get discounts from returned products
+            const returnDiscounts = (rental.returnedProducts || []).reduce((sum, product) => 
+                sum + (product.discount || 0), 0);
+            
+            return total + paymentDiscounts + returnDiscounts;
+        }, 0);
+    };
+
     const openReturnDialog = (rental, product) => {
         setSelectedRental(rental);
         setSelectedProduct(product);
@@ -242,7 +259,11 @@ export default function CustomerDetailsPage() {
                                     </p>
                                     <p className="text-gray-700 dark:text-gray-300">
                                         <span className="font-medium">Қайтаришлар:</span>
-                                        <span className="text-blue-600 dark:text-blue-400"> {totalReturnsCost.toLocaleString()} сўм</span>
+                                        <span className="text-blue-600 dark:text-blue-400">   {getReturnHistory().reduce((total, item) => 
+                                                    total + (item.totalCost || 0), 0).toLocaleString()} сўм</span>
+                                        <span className="ml-2 text-orange-600">
+                                            (Чегирма: {getTotalDiscounts().toLocaleString()} сўм)
+                                        </span>
                                     </p>
                                 </div>
                             </div>
@@ -395,6 +416,48 @@ export default function CustomerDetailsPage() {
                                         ))}
                                     </TableBody>
                                 </Table>
+                                {/* Add total amount summary */}
+                                <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-600 font-medium">Жами ижара суммаси:</span>
+                                                <span className="text-lg font-semibold text-green-600">
+                                                    {(customer?.rentals || []).reduce((total, rental) => 
+                                                        total + (rental?.summAmount || 0), 0).toLocaleString()} сўм
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-600 font-medium">Жами чегирма:</span>
+                                                <span className="text-lg font-semibold text-orange-600">
+                                                    {(customer?.rentals || []).reduce((total, rental) => 
+                                                        total + (rental?.totalDiscount || 0), 0).toLocaleString()} сўм
+                                                </span>
+                                            </div>
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-gray-600 font-medium">Жами тўланган:</span>
+                                                <span className="text-lg font-semibold text-blue-600">
+                                                    {(customer?.rentals || []).reduce((total, rental) => 
+                                                        total + ((rental?.payments || []).reduce((sum, payment) => 
+                                                            sum + (payment?.amount || 0), 0) || 0), 0).toLocaleString()} сўм
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {/* Add returned products total */}
+                                <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-gray-700 font-medium">Қайтаришлар учун ижара суммаси:</span>
+                                        <span className="text-lg font-semibold text-green-600">
+                                            {(customer?.rentals || []).reduce((total, rental) => {
+                                                const returnedTotal = (rental?.returnedProducts || []).reduce((sum, product) => 
+                                                    sum + (product?.totalCost || 0), 0);
+                                                return total + returnedTotal;
+                                            }, 0).toLocaleString()} сўм
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         )}
                     </CardContent>
@@ -415,25 +478,45 @@ export default function CustomerDetailsPage() {
                                 <Table>
                                     <TableHeader>
                                         <TableRow className="dark:border-gray-700">
-                                            <TableHead className="dark:text-gray-300">Сана</TableHead>
-                                            <TableHead className="dark:text-gray-300">Сумма</TableHead>
+                                            <TableHead className="dark:text-gray-300">Тўлов санаси</TableHead>
+                                            <TableHead className="dark:text-gray-300">Ижара рақами</TableHead>
                                             <TableHead className="dark:text-gray-300">Тўлов тури</TableHead>
+                                            <TableHead className="dark:text-gray-300">Тўлов суммаси</TableHead>
+                                            <TableHead className="dark:text-gray-300">Чегирма</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {payments.map((payment) => (
-                                            <TableRow key={payment._id} className="dark:border-gray-700">
-                                                <TableCell className="dark:text-gray-300">
-                                                    {new Date(payment.paymentDate).toLocaleDateString()}
-                                                </TableCell>
+                                        {payments.map((payment, index) => (
+                                            <TableRow key={index} className="dark:border-gray-700">
+                                                <TableCell className="dark:text-gray-300">{new Date(payment.paymentDate).toLocaleDateString()}</TableCell>
+                                                <TableCell className="dark:text-gray-300">{payment.rental?.rentalNumber}</TableCell>
+                                                <TableCell className="dark:text-gray-300">{payment.paymentType}</TableCell>
                                                 <TableCell className="dark:text-gray-300">{payment.amount?.toLocaleString()} сўм</TableCell>
-                                                <TableCell className="dark:text-gray-300">
-                                                    {payment.paymentType === 'cash' ? 'Нақд' : 'Пластик'}
+                                                <TableCell className="text-orange-600">
+                                                    {payment.discount > 0 ? `${payment.discount?.toLocaleString()} сўм` : '-'}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
                                 </Table>
+                                {payments.length > 0 && (
+                                    <div className="mt-4 flex justify-end gap-4">
+                                        <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
+                                            <span className="text-gray-600 mr-3">Жами тўланган:</span>
+                                            <span className="text-lg font-semibold text-blue-600">
+                                                {payments.reduce((total, payment) => 
+                                                    total + (payment.amount || 0), 0).toLocaleString()} сўм
+                                            </span>
+                                        </div>
+                                        <div className="bg-orange-50 p-3 rounded-lg border border-orange-200">
+                                            <span className="text-gray-600 mr-3">Жами чегирма:</span>
+                                            <span className="text-lg font-semibold text-orange-600">
+                                                {payments.reduce((total, payment) => 
+                                                    total + (payment.discount || 0), 0).toLocaleString()} сўм
+                                            </span>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </CardContent>
@@ -496,6 +579,11 @@ export default function CustomerDetailsPage() {
                                             <div className="text-xs text-muted-foreground">
                                                 {returnItem.dailyRate?.toLocaleString()} × {returnItem.days} kun × {returnItem.quantity} dona
                                             </div>
+                                            {returnItem.discount > 0 && (
+                                                <div className="text-xs text-orange-600">
+                                                    Чегирма: {returnItem.discount?.toLocaleString()} сўм
+                                                </div>
+                                            )}
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -506,60 +594,87 @@ export default function CustomerDetailsPage() {
                                         </TableCell>
                                     </TableRow>
                                 )}
+                                {rentals.some(rental => rental.returnedProducts?.length > 0) && (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-right">
+                                            <span className="text-gray-600 font-medium">Жами қайтариш суммаси:</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-lg font-semibold text-green-600">
+                                                {getReturnHistory().reduce((total, item) => 
+                                                    total + (item.totalCost || 0), 0).toLocaleString()} сўм
+                                            </span>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                                {rentals.some(rental => rental.returnedProducts?.length > 0) && (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-right">
+                                            <span className="text-gray-600 font-medium">Жами чегирма:</span>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className="text-lg font-semibold text-orange-600">
+                                                {getReturnHistory().reduce((total, item) => 
+                                                    total + (item.discount || 0), 0).toLocaleString()} сўм
+                                            </span>
+                                        </TableCell>
+                                    </TableRow>
+                                )}
                             </TableBody>
                         </Table>
                     </CardContent>
                 </Card>
+
+                {/* Return Product Dialog */}
+                <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
+                    <DialogContent className="bg-white dark:bg-gray-800">
+                        <DialogHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-900/50 dark:to-gray-800 border-b dark:border-gray-700 pb-4">
+                            <DialogTitle className="text-blue-700 dark:text-blue-300">Маҳсулотни қайтариш</DialogTitle>
+                        </DialogHeader>
+                        {selectedRental && selectedProduct && (
+                            <div className="space-y-4 pt-4">
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <Label className="text-gray-600 dark:text-gray-300">Иjarа рақами</Label>
+                                    <p className="text-lg font-medium text-gray-900 dark:text-gray-100">{selectedRental.rentalNumber}</p>
+                                </div>
+                                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                                    <Label className="text-gray-600 dark:text-gray-300">Маҳсулот</Label>
+                                    <p className="text-lg font-medium text-gray-900 dark:text-gray-100">{selectedProduct.product?.name}</p>
+                                </div>
+                                <div>
+                                    <Label className="text-gray-600 dark:text-gray-300">Қайтариш миқдори</Label>
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        max={getRemainingQuantity(selectedRental, selectedProduct)}
+                                        value={returnQuantity}
+                                        onChange={(e) => setReturnQuantity(parseInt(e.target.value))}
+                                        className="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-gray-600 dark:text-gray-300">Қайтариш санаси</Label>
+                                    <Input
+                                        type="date"
+                                        value={returnDate}
+                                        onChange={(e) => setReturnDate(e.target.value)}
+                                        className="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
+                                    />
+                                </div>
+                                <div className="flex justify-end">
+                                    <Button 
+                                        onClick={handleReturn}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600"
+                                    >
+                                        Қайтариш
+                                    </Button>
+                                </div>
+                            </div>
+                        )}
+                    </DialogContent>
+                </Dialog>
             </div>
 
-            {/* Return Product Dialog */}
-            <Dialog open={returnDialogOpen} onOpenChange={setReturnDialogOpen}>
-                <DialogContent className="bg-white dark:bg-gray-800">
-                    <DialogHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-900/50 dark:to-gray-800 border-b dark:border-gray-700 pb-4">
-                        <DialogTitle className="text-blue-700 dark:text-blue-300">Маҳсулотни қайтариш</DialogTitle>
-                    </DialogHeader>
-                    {selectedRental && selectedProduct && (
-                        <div className="space-y-4 pt-4">
-                            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                <Label className="text-gray-600 dark:text-gray-300">Иjarа рақами</Label>
-                                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">{selectedRental.rentalNumber}</p>
-                            </div>
-                            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                <Label className="text-gray-600 dark:text-gray-300">Маҳсулот</Label>
-                                <p className="text-lg font-medium text-gray-900 dark:text-gray-100">{selectedProduct.product?.name}</p>
-                            </div>
-                            <div>
-                                <Label className="text-gray-600 dark:text-gray-300">Қайтариш миқдори</Label>
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    max={getRemainingQuantity(selectedRental, selectedProduct)}
-                                    value={returnQuantity}
-                                    onChange={(e) => setReturnQuantity(parseInt(e.target.value))}
-                                    className="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                                />
-                            </div>
-                            <div>
-                                <Label className="text-gray-600 dark:text-gray-300">Қайтариш санаси</Label>
-                                <Input
-                                    type="date"
-                                    value={returnDate}
-                                    onChange={(e) => setReturnDate(e.target.value)}
-                                    className="border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 focus:border-blue-500 dark:focus:border-blue-400 focus:ring-blue-500 dark:focus:ring-blue-400"
-                                />
-                            </div>
-                            <div className="flex justify-end">
-                                <Button 
-                                    onClick={handleReturn}
-                                    className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600"
-                                >
-                                    Қайтариш
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-                </DialogContent>
-            </Dialog>
         </div>
     );
 }

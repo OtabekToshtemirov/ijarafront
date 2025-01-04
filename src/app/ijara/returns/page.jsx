@@ -22,7 +22,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { fetchRentals, returnProduct, createPayment } from "@/lib/features/rentals/rentalsSlice";
+import { fetchRentals, returnProduct, createPayment, fetchRentalById } from "@/lib/features/rentals/rentalsSlice";
 import { toast } from "sonner";
 
 export default function Component() {
@@ -35,6 +35,9 @@ export default function Component() {
     const [localRentals, setLocalRentals] = useState([]);
     const [totalDiscount, setTotalDiscount] = useState(0);
     const [returnedProducts, setReturnedProducts] = useState([]);
+    const [paymentAmount, setPaymentAmount] = useState('');
+    const [paymentType, setPaymentType] = useState('cash');
+    const [paymentDiscount, setPaymentDiscount] = useState('0');
 
     const rentals = useSelector((state) => state.rentals.rentals);
     const status = useSelector((state) => state.rentals.status);
@@ -194,7 +197,8 @@ export default function Component() {
                     quantity: quantity,
                     returnDate: returnDate,
                     days: totalDays,
-                    totalCost: totalCost
+                    totalCost: totalCost,
+                    discount: totalDiscount
                 }]);
 
                 // Update local state with the returned rental data
@@ -221,6 +225,92 @@ export default function Component() {
         } catch (error) {
             console.error('Return error:', error);
             toast.error(error.message || "Xatolik yuz berdi");
+        }
+    };
+
+    const handleDiscountChange = (value) => {
+        const discount = Number(value) || 0;
+        console.log('Setting discount:', discount);
+        setTotalDiscount(discount);
+    };
+
+    const handlePayment = async () => {
+        try {
+            // Validate rental exists
+            if (!selectedCustomer?.rentals?.[0]) {
+                toast.error("Ijara ma'lumotlari topilmadi");
+                return;
+            }
+
+            const rental = selectedCustomer.rentals[0];
+
+            // Calculate total cost from returned products
+            const totalAmount = returnedProducts.reduce((total, product) => {
+                const productTotal = product.totalCost || 0;
+                console.log(`Product ${product.product?.name}: ${productTotal}`);
+                return total + productTotal;
+            }, 0);
+
+            // Validate amount
+            if (totalAmount <= 0) {
+                toast.error("To'lov summasi noto'g'ri");
+                return;
+            }
+
+            // Calculate final amount after discount
+            const finalAmount = totalAmount - (totalDiscount || 0);
+            
+            // Prepare returned products summary for description
+            const productsSummary = returnedProducts.map(p => 
+                `${p.product?.name} (${p.quantity} dona)`
+            ).join(', ');
+
+            // Prepare payment data
+            const paymentData = {
+                customer: selectedCustomer.customer._id,
+                rental: rental._id,
+                amount: finalAmount,
+                discount: Number(totalDiscount) || 0,
+                paymentType: 'cash',
+                description: `Qaytarish to'lovi: ${productsSummary} - Chegirma: ${totalDiscount} so'm - ${new Date().toLocaleDateString()}`
+            };
+
+            console.log('To\'lov ma\'lumotlari:', {
+                customer: selectedCustomer._id,
+                totalAmount,
+                discount: totalDiscount,
+                finalAmount,
+                products: returnedProducts.length
+            });
+
+            // Create payment
+            const response = await dispatch(createPayment(paymentData)).unwrap();
+            console.log('To\'lov natijasi:', response);
+
+            if (response.success) {
+                toast.success("To'lov muvaffaqiyatli saqlandi");
+                
+                // Update data
+                await Promise.all([
+                    dispatch(fetchRentalById(rental._id)),
+                    dispatch(fetchRentals())
+                ]);
+
+                // Clear form data
+                setSelectedCustomer(null);
+                setReturnedProducts([]);
+                setTotalDiscount(0);
+
+                // Refresh the page after a short delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                toast.error(response.message || "To'lov saqlashda xatolik yuz berdi");
+            }
+        } catch (error) {
+            console.error('To\'lov xatosi:', error);
+            toast.error(error.message || "To'lov saqlashda xatolik yuz berdi");
         }
     };
 
@@ -357,48 +447,14 @@ export default function Component() {
                                 </div>
 
                                 <div>
-                                    <Label>Chegirma</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => {
-                                                if (totalDiscount > 0) {
-                                                    setTotalDiscount(prev => Math.max(0, prev - 1000));
-                                                }
-                                            }}
-                                            disabled={totalDiscount <= 0}
-                                        >
-                                            -
-                                        </Button>
-                                        <Input
-                                            type="number"
-                                            value={totalDiscount}
-                                            onChange={(e) => {
-                                                const value = parseInt(e.target.value) || 0;
-                                                const totalAmount = returnedProducts.reduce((total, product) => total + product.totalCost, 0);
-                                                if (value < 0) return;
-                                                if (value > totalAmount) return;
-                                                setTotalDiscount(value);
-                                            }}
-                                            min="0"
-                                            max={returnedProducts.reduce((total, product) => total + product.totalCost, 0)}
-                                            className="w-32 text-center"
-                                        />
-                                        <Button
-                                            variant="outline"
-                                            size="icon"
-                                            onClick={() => {
-                                                const totalAmount = returnedProducts.reduce((total, product) => total + product.totalCost, 0);
-                                                if (totalDiscount < totalAmount) {
-                                                    setTotalDiscount(prev => Math.min(totalAmount, prev + 1000));
-                                                }
-                                            }}
-                                            disabled={totalDiscount >= returnedProducts.reduce((total, product) => total + product.totalCost, 0)}
-                                        >
-                                            +
-                                        </Button>
-                                    </div>
+                                    <Label>Chegirma summasi</Label>
+                                    <Input
+                                        type="number"
+                                        value={totalDiscount}
+                                        onChange={(e) => handleDiscountChange(e.target.value)}
+                                        placeholder="Chegirma summasi"
+                                        className="mt-1"
+                                    />
                                 </div>
 
                                 <div>
@@ -410,55 +466,46 @@ export default function Component() {
 
                                 <Button
                                     className="w-full"
-                                    onClick={() => {
-                                        const totalAmount = returnedProducts.reduce((total, product) => total + product.totalCost, 0);
-                                        const finalAmount = totalAmount - totalDiscount;
-                                        
-                                        dispatch(createPayment({
-                                            customer: selectedCustomer.customer._id,
-                                            rental: selectedCustomer.rentals[0]._id,
-                                            amount: finalAmount,
-                                            paymentDate: new Date().toISOString(),
-                                            paymentType: 'cash',
-                                            isPrepaid: false,
-                                            description: `Qaytarish to'lovi - ${new Date().toLocaleDateString()}`
-                                        })).then(() => {
-                                            toast.success("To'lov muvaffaqiyatli saqlandi");
-                                            window.location.reload();
-                                        }).catch((error) => {
-                                            toast.error(error.message || "To'lov saqlashda xatolik yuz berdi");
-                                        });
-                                    }}
+                                    onClick={handlePayment}
                                 >
                                     To'lovni saqlash
                                 </Button>
-                            </div>
-                            {returnedProducts.length > 0 && (
-                                <div className="w-full border rounded-md p-4 bg-white mb-4">
-                                    <h3 className="text-lg font-semibold mb-3">Qaytarilgan tovarlar</h3>
-                                    <div className="space-y-2">
-                                        {returnedProducts.map((product, index) => (
-                                            <div key={index} 
-                                                 className="flex justify-between items-center border-b pb-2">
-                                                <div>
-                                                    <div className="font-medium">{product.product.name}</div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {product.quantity} dona • {product.days} kun
+
+                                {returnedProducts.length > 0 && (
+                                    <div className="w-full border rounded-md p-4 bg-white mb-4">
+                                        <h3 className="text-lg font-semibold mb-3">Qaytarilgan tovarlar</h3>
+                                        <div className="space-y-2">
+                                            {returnedProducts.map((product, index) => (
+                                                <div key={index} 
+                                                     className="flex justify-between items-center border-b pb-2">
+                                                    <div>
+                                                        <div className="font-medium">{product.product.name}</div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            {product.quantity} dona • {product.days} kun
+                                                        </div>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="font-semibold">
+                                                            {product.totalCost.toLocaleString()} so'm
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            ({product.days} kun × {product.quantity} dona × {product.dailyRate?.toLocaleString()} so'm)
+                                                        </div>
+                                                        <div className="text-sm text-muted-foreground">
+                                                            Chegirma: {product.discount.toLocaleString()} so'm
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div className="text-right">
-                                                    <div className="font-semibold">
-                                                        {product.totalCost.toLocaleString()} so'm
-                                                    </div>
-                                                    <div className="text-sm text-muted-foreground">
-                                                        {product.dailyRate.toLocaleString()} so'm/kun
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
-                            )}
+                                )}
+                                {calculateAllCurrentReturnTotal(localRentals) > 0 && (
+                                    <div className="text-base text-muted-foreground">
+                                        Joriy qaytarish: {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
+                                    </div>
+                                )}
+                            </div>
                             {calculateAllCurrentReturnTotal(localRentals) > 0 && (
                                 <div className="text-base text-muted-foreground">
                                     Joriy qaytarish: {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm

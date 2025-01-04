@@ -191,9 +191,15 @@ export const createPayment = createAsyncThunk(
     'rentals/createPayment',
     async (paymentData) => {
         try {
+            console.log('Sending payment data:', paymentData);
             const response = await axios.post(`${BASE_URL}/payments`, paymentData);
+            console.log('Payment response:', response.data);
             return response.data;
         } catch (error) {
+            console.error('Payment error:', error);
+            if (!error.response) {
+                throw new Error('Server bilan bog\'lanishda xatolik yuz berdi');
+            }
             throw new Error(
                 error.response?.data?.message || 
                 error.message || 
@@ -433,6 +439,13 @@ const rentalsSlice = createSlice({
             .addCase(createPayment.fulfilled, (state, action) => {
                 state.paymentStatus = 'succeeded';
                 state.paymentError = null;
+                // Update the rental in state if needed
+                if (action.payload.rental) {
+                    const index = state.rentals.findIndex(r => r._id === action.payload.rental._id);
+                    if (index !== -1) {
+                        state.rentals[index] = action.payload.rental;
+                    }
+                }
             })
             .addCase(createPayment.rejected, (state, action) => {
                 state.paymentStatus = 'failed';
