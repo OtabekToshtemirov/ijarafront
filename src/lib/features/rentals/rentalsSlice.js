@@ -118,20 +118,23 @@ export const returnProduct = createAsyncThunk(
     async (returnData) => {
         try {
             console.log('Sending return data:', returnData);
-            const { rentalId, products } = returnData;
-            const response = await axios.post(`${BASE_URL}/rentals/${rentalId}/return`, { products });
+            const { rentalId, ...data } = returnData;
+            const response = await axios.post(`${BASE_URL}/rentals/${rentalId}/return`, {
+                products: data.products
+            });
             console.log('Return response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Return error:', error);
-            if (!error.response) {
-                throw new Error('Server bilan bog\'lanishda xatolik yuz berdi');
+            if (error.response?.data?.message) {
+                throw new Error(error.response.data.message);
+            } else if (error.response?.data?.error) {
+                throw new Error(error.response.data.error);
+            } else if (error.message) {
+                throw new Error(error.message);
+            } else {
+                throw new Error('Mahsulotni qaytarishda xatolik yuz berdi');
             }
-            throw new Error(
-                error.response?.data?.message || 
-                error.message || 
-                'Mahsulotni qaytarishda xatolik yuz berdi'
-            );
         }
     }
 );

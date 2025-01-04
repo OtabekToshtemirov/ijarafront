@@ -57,6 +57,15 @@ export default function CustomerDetailsPage() {
         }
     }, [dispatch, id]);
 
+    // Debug: rentals ma'lumotlarini konsolga chiqarish
+    useEffect(() => {
+        if (rentals.length > 0) {
+            console.log('Rentals:', rentals);
+            const returnHistory = getReturnHistory();
+            console.log('Return History:', returnHistory);
+        }
+    }, [rentals]);
+
     // Calculate total payments
     const totalPayments = payments.reduce((sum, payment) => sum + payment.amount, 0);
 
@@ -76,7 +85,7 @@ export default function CustomerDetailsPage() {
             return rental.borrowedProducts.filter(borrowedProduct => {
                 // Qaytarilgan miqdorni hisoblaymiz
                 const returnedQuantity = rental.returnedProducts
-                    ?.filter(returnedProduct => returnedProduct.product?._id === borrowedProduct.product?._id)
+                    ?.filter(returnedProduct => returnedProduct.product === borrowedProduct.product)
                     ?.reduce((sum, returnedProduct) => sum + returnedProduct.quantity, 0) || 0;
                 
                 // Qaytarilmagan miqdor bor bo'lsa, bu mahsulotni ko'rsatamiz
@@ -84,7 +93,7 @@ export default function CustomerDetailsPage() {
             }).map(borrowedProduct => {
                 // Qaytarilgan miqdorni hisoblaymiz
                 const returnedQuantity = rental.returnedProducts
-                    ?.filter(returnedProduct => returnedProduct.product?._id === borrowedProduct.product?._id)
+                    ?.filter(returnedProduct => returnedProduct.product === borrowedProduct.product)
                     ?.reduce((sum, returnedProduct) => sum + returnedProduct.quantity, 0) || 0;
                 
                 // Qaytarilmagan miqdorni hisoblaymiz
@@ -95,6 +104,41 @@ export default function CustomerDetailsPage() {
                     rental,
                     remainingQuantity,
                     returnedQuantity
+                };
+            });
+        });
+    };
+
+    // Kunlarni hisoblash
+    const calculateDays = (startDate, endDate) => {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diffTime = Math.abs(end - start);
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+        return diffDays || 1; // Kamida 1 kun
+    };
+
+    // Qaytarish tarixi
+    const getReturnHistory = () => {
+        return rentals.flatMap(rental => {
+            return (rental.returnedProducts || []).map((returnedProduct) => {
+                // Mahsulotni topamiz
+                const borrowedProduct = rental.borrowedProducts.find(
+                    bp => bp.product?._id === returnedProduct.product
+                );
+
+                // Mahsulot ma'lumotlarini olamiz
+                const product = borrowedProduct?.product;
+
+                return {
+                    ...returnedProduct,
+                    rental,
+                    days: returnedProduct.days || 1,
+                    startDate: borrowedProduct?.rentDate || rental.workStartDate,
+                    dailyRate: returnedProduct.dailyRate || borrowedProduct?.dailyRate || 0,
+                    totalCost: returnedProduct.totalCost || 0,
+                    discountDays: returnedProduct.discountDays || 0,
+                    productName: product?.name || borrowedProduct?.product?.name || 'Noma\'lum mahsulot'
                 };
             });
         });
@@ -392,6 +436,78 @@ export default function CustomerDetailsPage() {
                                 </Table>
                             </div>
                         )}
+                    </CardContent>
+                </Card>
+
+                {/* Qaytarish tarixi */}
+                <Card className="mt-8">
+                    <CardHeader>
+                        <CardTitle>Qaytarish tarixi</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Sana</TableHead>
+                                    <TableHead>Ijara №</TableHead>
+                                    <TableHead>Mahsulot</TableHead>
+                                    <TableHead>Miqdor</TableHead>
+                                    <TableHead>Kunlar</TableHead>
+                                    <TableHead>Kunlik narx</TableHead>
+                                    <TableHead>Summa</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {getReturnHistory().map((returnItem, index) => (
+                                    <TableRow key={index}>
+                                        <TableCell>
+                                            {new Date(returnItem.returnDate).toLocaleDateString()}
+                                        </TableCell>
+                                        <TableCell>
+                                            {returnItem.rental.rentalNumber}
+                                        </TableCell>
+                                        <TableCell>
+                                            {returnItem.productName}
+                                            {returnItem.productCode && (
+                                                <div className="text-xs text-muted-foreground">
+                                                    Kod: {returnItem.productCode}
+                                                </div>
+                                            )}
+                                        </TableCell>
+                                        <TableCell>
+                                            {returnItem.quantity}
+                                        </TableCell>
+                                        <TableCell>
+                                            {returnItem.days} kun
+                                            {returnItem.discountDays > 0 && (
+                                                <div className="text-xs text-muted-foreground">
+                                                    Chegirma: {returnItem.discountDays} kun
+                                                </div>
+                                            )}
+                                            <div className="text-xs text-muted-foreground">
+                                                {new Date(returnItem.startDate).toLocaleDateString()} - {new Date(returnItem.returnDate).toLocaleDateString()}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            {returnItem.dailyRate?.toLocaleString()} so'm
+                                        </TableCell>
+                                        <TableCell>
+                                            {returnItem.totalCost?.toLocaleString()} so'm
+                                            <div className="text-xs text-muted-foreground">
+                                                {returnItem.dailyRate?.toLocaleString()} × {returnItem.days} kun × {returnItem.quantity} dona
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                                {!rentals.some(rental => rental.returnedProducts?.length > 0) && (
+                                    <TableRow>
+                                        <TableCell colSpan={7} className="text-center">
+                                            Qaytarish tarixi mavjud emas
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
                     </CardContent>
                 </Card>
             </div>

@@ -42,7 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
     fetchCustomers,
-    addCustomerAsync,
+    createCustomer,
     updateCustomerAsync,
     deleteCustomerAsync
 } from "@/lib/features/customers/customerSlice";
@@ -110,7 +110,7 @@ export default function Component() {
             toast.error("Исм ва телефон рақам киритилиши шарт");
             return;
         }
-        dispatch(addCustomerAsync(newCustomer));
+        dispatch(createCustomer(newCustomer));
         setIsAddDialogOpen(false);
         setNewCustomer({
             name: "",
@@ -161,15 +161,6 @@ export default function Component() {
                 return 'bg-gray-500';
         }
     };
-
-
-
-  
-
-   
-
-    
-
 
     // Show loading state
     if (status === 'loading') {
@@ -314,7 +305,6 @@ export default function Component() {
                 </div>
             </div>
 
-
             <div className="border rounded-lg">
                 <Table>
                     <TableHeader>
@@ -332,6 +322,7 @@ export default function Component() {
                             <TableRow key={customer._id}>
                                 {editingCustomer && editingCustomer._id === customer._id ? (
                                     <>
+
                                         <TableCell>
                                             <Input
                                                 value={editingCustomer.name}
@@ -381,8 +372,10 @@ export default function Component() {
                                             </Button>
                                         </TableCell>
                                     </>
+
                                 ) : (
                                     <>
+
                                         <TableCell>
                                             <Link
                                                 href={`/customers/${customer._id}`}
@@ -404,13 +397,13 @@ export default function Component() {
                                                 Баланс: {customer.balance?.toLocaleString()} сўм
                                                 </Badge>
                                                 <div className="text-xs text-muted-foreground">
-                                    
+
                                                 </div>
                                             </div>
                                         </TableCell>
                                         <TableCell>{customer.address}</TableCell>
                                         <TableCell className="text-right space-x-2">
-                                            
+
                                             <Button onClick={() => handleEditCustomer(customer)} size="sm">
                                                 <Edit className="w-4 h-4" />
                                             </Button>
@@ -419,12 +412,13 @@ export default function Component() {
                                             </Button>
                                         </TableCell>
                                     </>
+
                                 )}
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
-            </div>          
+            </div>
         </div>
     );
 }

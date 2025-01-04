@@ -31,6 +31,7 @@ export default function Component() {
     const [selectedCustomer, setSelectedCustomer] = useState(null);
     const [returnQuantities, setReturnQuantities] = useState({});
     const [discountDays, setDiscountDays] = useState({});
+    const [returnDates, setReturnDates] = useState({});
     const [localRentals, setLocalRentals] = useState([]);
 
     const rentals = useSelector((state) => state.rentals.rentals);
@@ -53,7 +54,7 @@ export default function Component() {
         // Check if there are any unreturned products
         return rental.borrowedProducts.some(prod => {
             const returnedQuantity = rental.returnedProducts
-                .filter(rp => rp.product?._id === prod.product?._id)
+                .filter(rp => rp.product === prod.product._id)
                 .reduce((sum, rp) => sum + rp.quantity, 0);
             return prod.quantity - returnedQuantity > 0;
         });
@@ -75,7 +76,7 @@ export default function Component() {
 
         const unreturnedCount = rental.borrowedProducts.reduce((count, prod) => {
             const returnedQuantity = rental.returnedProducts
-                .filter(rp => rp.product?._id === prod.product?._id)
+                .filter(rp => rp.product === prod.product._id)
                 .reduce((sum, rp) => sum + rp.quantity, 0);
             return count + (prod.quantity - returnedQuantity);
         }, 0);
@@ -104,6 +105,17 @@ export default function Component() {
         return (product.dailyRate || 0) * days * quantity;
     };
 
+    const calculateDays = (startDate, returnDate, discountDays = 0) => {
+        const start = new Date(startDate);
+        const end = new Date(returnDate);
+        const days = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24)));
+        const totalDays = Math.max(1, days - discountDays);
+        return {
+            days,
+            totalDays
+        };
+    };
+
     const handleReturnQuantityChange = (rentalId, productId, quantity, maxQuantity) => {
         if (quantity > maxQuantity) quantity = maxQuantity;
         if (quantity < 0) quantity = 0;
@@ -122,48 +134,81 @@ export default function Component() {
         }));
     };
 
+    const handleReturnDateChange = (rentalId, productId, date) => {
+        const key = `${rentalId}-${productId}`;
+        setReturnDates(prev => ({
+            ...prev,
+            [key]: date
+        }));
+    };
+
     const handleReturn = async (rental, product) => {
         const key = `${rental._id}-${product.product._id}`;
-        const quantity = returnQuantities[key];
+        const quantity = Number(returnQuantities[key]);
+        const discountDay = Number(discountDays[rental._id]) || 0;
+        const returnDate = returnDates[key] ? new Date(returnDates[key]) : new Date();
 
         if (!quantity) return;
 
+        // Qaytarish sanasi ish boshlash sanasidan oldin bo'lmasligi kerak
+        if (returnDate < new Date(rental.workStartDate)) {
+            toast.error("Qaytarish sanasi ish boshlash sanasidan oldin bo'lishi mumkin emas");
+            return;
+        }
+
         try {
-            await dispatch(returnProduct({
+            // Kunlarni hisoblaymiz
+            const startDate = new Date(rental.workStartDate);
+            const { days, totalDays } = calculateDays(startDate.toISOString().split('T')[0], returnDate.toISOString().split('T')[0], discountDay);
+            
+            // Kunlik narx va jami summani hisoblaymiz
+            const dailyRate = Number(product.dailyRate) || 0;
+            const totalCost = Number(totalDays * dailyRate * quantity);
+
+            const returnData = {
                 rentalId: rental._id,
                 products: [{
                     product: product.product._id,
                     quantity: quantity,
-                    returnDate: new Date()
+                    startDate: startDate.toISOString(),
+                    returnDate: returnDate.toISOString(),
+                    discountDays: discountDay,
+                    dailyRate: dailyRate,
+                    totalCost: totalCost,
+                    days: totalDays
                 }]
-            })).unwrap();
+            };
 
-            // Update local state
-            setLocalRentals(prev => prev.map(r => {
-                if (r._id === rental._id) {
-                    const updatedProducts = r.borrowedProducts.map(p => {
-                        if (p.product._id === product.product._id) {
-                            const newQuantity = p.quantity - quantity;
-                            return newQuantity > 0 ? { ...p, quantity: newQuantity } : null;
-                        }
-                        return p;
-                    }).filter(Boolean);
+            console.log('Return data:', returnData);
 
-                    return updatedProducts.length > 0 
-                        ? { ...r, borrowedProducts: updatedProducts }
-                        : null;
-                }
-                return r;
-            }).filter(Boolean));
+            // Qaytarish so'rovini yuborish
+            const response = await dispatch(returnProduct(returnData)).unwrap();
+            console.log('Return response:', response);
 
-            // Clear return quantity
-            setReturnQuantities(prev => ({
-                ...prev,
-                [key]: ''
-            }));
+            if (response.rental) {
+                // Update local state with the returned rental data
+                setLocalRentals(prev => prev.map(r => 
+                    r._id === response.rental._id ? response.rental : r
+                ));
 
-            toast.success("Mahsulot muvaffaqiyatli qaytarildi");
+                // Clear return quantity, discount days and return date
+                setReturnQuantities(prev => ({
+                    ...prev,
+                    [key]: ''
+                }));
+                setDiscountDays(prev => ({
+                    ...prev,
+                    [rental._id]: 0
+                }));
+                setReturnDates(prev => ({
+                    ...prev,
+                    [key]: ''
+                }));
+
+                toast.success("Mahsulot muvaffaqiyatli qaytarildi");
+            }
         } catch (error) {
+            console.error('Return error:', error);
             toast.error(error.message || "Xatolik yuz berdi");
         }
     };
@@ -175,6 +220,35 @@ export default function Component() {
             // Subtract payments
             balance -= rental.payments?.reduce((sum, payment) => sum + (payment.amount || 0), 0) || 0;
             return balance;
+        }, 0);
+    };
+
+    // Calculate total sum of all returned products across all rentals
+    const calculateAllReturnedTotal = (rentals) => {
+        return rentals.reduce((total, rental) => {
+            return total + rental.returnedProducts.reduce((rentalTotal, rp) => {
+                return rentalTotal + (rp.totalCost || 0);
+            }, 0);
+        }, 0);
+    };
+
+    // Calculate current return total for all rentals
+    const calculateAllCurrentReturnTotal = (rentals) => {
+        return rentals.reduce((total, rental) => {
+            return total + rental.borrowedProducts.reduce((rentalTotal, prod) => {
+                const key = `${rental._id}-${prod.product._id}`;
+                const returnQuantity = returnQuantities[key] || 0;
+                if (!returnQuantity) return rentalTotal;
+
+                const { totalDays } = calculateDays(
+                    rental.workStartDate,
+                    returnDates[key] || new Date().toISOString().split('T')[0],
+                    discountDays[rental._id] || 0
+                );
+
+                const cost = calculateProductCost(prod, totalDays, returnQuantity);
+                return rentalTotal + cost;
+            }, 0);
         }, 0);
     };
 
@@ -253,7 +327,25 @@ export default function Component() {
             ) : (
                 // Customer Detail View
                 <div className="space-y-6">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between border-b pb-4">
+                        <div className="space-y-1">
+                            <h2 className="text-2xl font-semibold tracking-tight">
+                                Qaytarilgan mahsulotlar hisoboti
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                Barcha ijara qaytarishlari bo'yicha umumiy hisob
+                            </p>
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                            {calculateAllCurrentReturnTotal(localRentals) > 0 && (
+                                <div className="text-base text-muted-foreground">
+                                    Joriy qaytarish: {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center justify-between">
                         <div className="space-y-2">
                             <div className="flex items-center gap-4">
                                 <h2 className="text-2xl font-bold">{selectedCustomer.customer.name}</h2>
@@ -274,6 +366,7 @@ export default function Component() {
                                 </Badge>
                             </div>
                         </div>
+
                         <Button
                             variant="outline"
                             onClick={() => setSelectedCustomer(null)}
@@ -289,24 +382,52 @@ export default function Component() {
                                     <h3 className="text-lg font-semibold">
                                         Ijara #{rental.rentalNumber}
                                     </h3>
+                                    <h2>
+                                        Olish sanasi: {new Date(rental.createdAt).toLocaleDateString()}
+                                    </h2>
                                     <p className="text-sm text-muted-foreground">
-                                        Boshlangan sana: {new Date(rental.workStartDate).toLocaleDateString()}
+                                        Ish boshlanish sanasi: {new Date(rental.workStartDate).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
                                         <Label>Chegirma kunlar:</Label>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            value={discountDays[rental._id] || 0}
-                                            onChange={(e) => handleDiscountDaysChange(rental._id, e.target.value)}
-                                            className="w-20"
-                                        />
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={() => {
+                                                    const currentValue = discountDays[rental._id] || 0;
+                                                    if (currentValue > 0) {
+                                                        handleDiscountDaysChange(rental._id, currentValue - 1);
+                                                    }
+                                                }}
+                                                disabled={!discountDays[rental._id]}
+                                            >
+                                                -
+                                            </Button>
+                                            <Input
+                                                type="number"
+                                                min="0"
+                                                value={discountDays[rental._id] || 0}
+                                                onChange={(e) => handleDiscountDaysChange(rental._id, parseInt(e.target.value))}
+                                                className="w-20 text-center"
+                                            />
+                                            <Button
+                                                variant="outline"
+                                                size="icon"
+                                                onClick={() => {
+                                                    const currentValue = discountDays[rental._id] || 0;
+                                                    handleDiscountDaysChange(rental._id, currentValue + 1);
+                                                }}
+                                            >
+                                                +
+                                            </Button>
+                                        </div>
                                     </div>
                                     <Badge>
-                                        {rental.startDate && (
-                                            `${calculateRentalDays(rental.startDate, discountDays[rental._id] || 0)} kun`
+                                        {rental.workStartDate&& (
+                                            `${calculateRentalDays(rental.workStartDate, discountDays[rental._id] || 0)} kun`
                                         )}
                                     </Badge>
                                 </div>
@@ -317,59 +438,158 @@ export default function Component() {
                                     <TableRow>
                                         <TableHead>Mahsulot</TableHead>
                                         <TableHead>Ish boshlash sanasi</TableHead>
+                                        <TableHead>Qaytarish sanasi</TableHead>
+                                        <TableHead>Jami kunlar</TableHead>
+                                        <TableHead>Chegirma kunlar</TableHead>
+                                        <TableHead>Hisoblanadigan kunlar</TableHead>
                                         <TableHead>Kunlik narx</TableHead>
-                                        <TableHead>Olingan</TableHead>
+                                        <TableHead>Miqdor</TableHead>
                                         <TableHead>Qaytarilgan</TableHead>
-                                        <TableHead>Qaytarish</TableHead>
                                         <TableHead>Qoldiq</TableHead>
+                                        <TableHead>Qaytarish</TableHead>
                                         <TableHead>Summa</TableHead>
-                                        <TableHead></TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {rental.borrowedProducts.map((prod) => {
                                         const returnedQuantity = rental.returnedProducts
-                                            .filter(rp => rp.product?._id === prod.product?._id)
+                                            .filter(rp => rp.product === prod.product._id)
                                             .reduce((sum, rp) => sum + rp.quantity, 0);
+
+                                        if (returnedQuantity >= prod.quantity) return null;
+
                                         const remainingQuantity = prod.quantity - returnedQuantity;
-                                        const days = calculateRentalDays(
-                                            prod.startDate || rental.startDate,
-                                            discountDays[rental._id] || 0
-                                        );
                                         const key = `${rental._id}-${prod.product._id}`;
                                         
-                                        if (remainingQuantity <= 0) return null;
+                                        // Calculate days
+                                        const returnDate = returnDates[key] || new Date().toISOString().split('T')[0];
+                                        const { days, totalDays } = calculateDays(
+                                            rental.workStartDate,
+                                            returnDate,
+                                            discountDays[rental._id] || 0
+                                        );
 
+                                        // Calculate total cost
                                         const returnQuantity = returnQuantities[key] || 0;
-                                        const cost = calculateProductCost(prod, days, returnQuantity);
+                                        const totalCost = calculateProductCost(
+                                            prod,
+                                            totalDays,
+                                            returnQuantity
+                                        );
 
                                         return (
                                             <TableRow key={prod.product._id}>
-                                                <TableCell>{prod.product.name}</TableCell>
                                                 <TableCell>
-                                                    {new Date(prod.startDate || rental.startDate).toLocaleDateString()}
+                                                    <div>
+                                                        <p className="font-medium">
+                                                            {prod.product.name}
+                                                        </p>
+                                                        <p className="text-sm text-muted-foreground">
+                                                            {prod.product.code}
+                                                        </p>
+                                                    </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    {prod.dailyRate?.toLocaleString()} so'm
+                                                    {new Date(rental.workStartDate).toLocaleDateString()}
                                                 </TableCell>
-                                                <TableCell>{prod.quantity}</TableCell>
-                                                <TableCell>{returnedQuantity}</TableCell>
+                                                <TableCell>
+                                                    <Input
+                                                        type="date"
+                                                        value={returnDates[key] || new Date().toISOString().split('T')[0]}
+                                                        onChange={(e) => handleReturnDateChange(
+                                                            rental._id,
+                                                            prod.product._id,
+                                                            e.target.value
+                                                        )}
+                                                        min={new Date(rental.workStartDate).toISOString().split('T')[0]}
+                                                        className="w-40"
+                                                    />
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {days}
+                                                </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
+                                        
                                                         <Input
                                                             type="number"
+                                                            value={discountDays[rental._id] || 0}
+                                                            onChange={(e) => handleDiscountDaysChange(
+                                                                rental._id,
+                                                                parseInt(e.target.value)
+                                                            )}
                                                             min="0"
-                                                            max={remainingQuantity}
-                                                            value={returnQuantities[key] || ""}
-                                                            onChange={(e) => {
-                                                                const value = parseInt(e.target.value) || 0;
-                                                                setReturnQuantities(prev => ({
-                                                                    ...prev,
-                                                                    [key]: Math.min(value, remainingQuantity)
-                                                                }));
-                                                            }}
-                                                            className="w-20"
+                                                            className="w-20 text-center"
                                                         />
+                                                       
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {totalDays}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {prod.dailyRate.toLocaleString()} so'm
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {prod.quantity}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {returnedQuantity}
+                                                </TableCell>
+                                                <TableCell className="text-center">
+                                                    {remainingQuantity}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex items-center gap-2">
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            onClick={() => {
+                                                                const currentValue = returnQuantities[key] || 0;
+                                                                if (currentValue > 0) {
+                                                                    handleReturnQuantityChange(
+                                                                        rental._id,
+                                                                        prod.product._id,
+                                                                        currentValue - 1,
+                                                                        remainingQuantity
+                                                                    );
+                                                                }
+                                                            }}
+                                                            disabled={!returnQuantities[key]}
+                                                        >
+                                                            -
+                                                        </Button>
+                                                        <Input
+                                                            type="number"
+                                                            value={returnQuantities[key] || ''}
+                                                            onChange={(e) => handleReturnQuantityChange(
+                                                                rental._id,
+                                                                prod.product._id,
+                                                                parseInt(e.target.value),
+                                                                remainingQuantity
+                                                            )}
+                                                            min="1"
+                                                            max={remainingQuantity}
+                                                            className="w-20 text-center"
+                                                        />
+                                                        <Button
+                                                            variant="outline"
+                                                            size="icon"
+                                                            onClick={() => {
+                                                                const currentValue = returnQuantities[key] || 0;
+                                                                if (currentValue < remainingQuantity) {
+                                                                    handleReturnQuantityChange(
+                                                                        rental._id,
+                                                                        prod.product._id,
+                                                                        currentValue + 1,
+                                                                        remainingQuantity
+                                                                    );
+                                                                }
+                                                            }}
+                                                            disabled={returnQuantities[key] >= remainingQuantity}
+                                                        >
+                                                            +
+                                                        </Button>
                                                         <Button 
                                                             variant="outline"
                                                             onClick={() => handleReturn(rental, prod)}
@@ -380,29 +600,16 @@ export default function Component() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
-                                                    <Badge variant={remainingQuantity > 0 ? "secondary" : "success"}>
-                                                        {remainingQuantity} dona
-                                                    </Badge>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <div>
-                                                        <div className="font-medium">
-                                                            {calculateProductCost(
-                                                                prod, 
-                                                                calculateRentalDays(
-                                                                    prod.startDate || rental.startDate,
-                                                                    discountDays[rental._id] || 0
-                                                                ),
-                                                                returnQuantities[key] || 0
-                                                            ).toLocaleString()} so'm
-                                                        </div>
-                                                        <div className="text-sm text-muted-foreground">
-                                                            ({calculateRentalDays(prod.startDate || rental.startDate, discountDays[rental._id] || 0)} kun × {returnQuantities[key] || 0} dona × {prod.dailyRate?.toLocaleString()} so'm)
-                                                        </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium">
+                                                            {totalCost.toLocaleString()} so'm
+                                                        </span>
+                                                        <span className="text-sm text-muted-foreground">
+                                                            ({totalDays} kun × {returnQuantity} dona × {prod.dailyRate?.toLocaleString()} so'm)
+                                                        </span>
+
+                                                
                                                     </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    
                                                 </TableCell>
                                             </TableRow>
                                         );

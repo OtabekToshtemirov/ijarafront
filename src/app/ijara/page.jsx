@@ -298,10 +298,10 @@ export default function RentalsPage() {
                 </table>
 
                 <div style={{ marginTop: '15px', fontSize: '14px' }}>
-                    <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>Олдиндан тўлов: {rental.debt} сўм</div>
+                    <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>Олдиндан тўлов: {} сўм</div>
                     <div style={{ marginBottom: '10px' }}>Ижарага олувчи: {rental.customer.name}</div>
-                    <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>КУНЛИК ИЖАРА ҲАҚИ : {rental.totalCost} сўм</div>
-                    <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold' }}>(90) 222 80 86</div>
+                    <div style={{ fontWeight: 'bold', marginBottom: '5px', fontSize: '20px' }}>КУНЛИК ИЖАРА ҲАҚИ : <span style={{fontSize:'20px', color:'red'}}></span> {rental.totalCost} сўм</div>
+                    <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold',fontSize :'30px'}}>(99890) 222 80 86</div>
                 </div>
             </div>
         );

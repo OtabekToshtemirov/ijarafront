@@ -248,14 +248,14 @@ export default function AddRentalPage() {
             })),
             workStartDate: rentalForm.workStartDate,
             totalCost: totalCost,
-            debt: totalCost,
+            debt: Number(rentalForm.prepaidAmount),
             prepaidAmount: Number(rentalForm.prepaidAmount || 0),
             description: rentalForm.description
         };
 
         try {
             const response = await dispatch(createRental(formData)).unwrap();
-            // generatePDF(response, customers.find(customer => customer._id === rentalForm.customer));
+            generatePDF(response, customers.find(customer => customer._id === rentalForm.customer));
             toast.success('Ijara muvaffaqiyatli yaratildi');
             router.push('/ijara');
         } catch (error) {
