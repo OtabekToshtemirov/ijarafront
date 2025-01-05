@@ -276,7 +276,7 @@ export default function Component() {
             };
 
             console.log('To\'lov ma\'lumotlari:', {
-                customer: selectedCustomer._id,
+                customer: selectedCustomer.customer._id,
                 totalAmount,
                 discount: totalDiscount,
                 finalAmount,
@@ -655,10 +655,26 @@ export default function Component() {
                                                     <div>
                                                         <p className="font-medium">
                                                             {prod.product.name}
+                                                            {prod.product.type === 'combo' && (
+                                                                <Badge variant="secondary" className="ml-2">
+                                                                    Kombinatsiya
+                                                                </Badge>
+                                                            )}
                                                         </p>
                                                         <p className="text-sm text-muted-foreground">
                                                             {prod.product.code}
                                                         </p>
+                                                        {prod.product.type === 'combo' && prod.product.parts && (
+                                                            <div className="mt-2 space-y-1">
+                                                                <p className="text-sm font-medium text-muted-foreground">Qismlar:</p>
+                                                                {prod.product.parts.map((part, index) => (
+                                                                    <div key={index} className="ml-4 text-sm text-muted-foreground flex justify-between">
+                                                                        <span>{part.product.name}</span>
+                                                                        <span>{part.quantity} dona × {part.dailyRate.toLocaleString()} so'm</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>

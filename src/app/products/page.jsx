@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
-import { Eye, Edit2, Check, X, Trash2 } from 'lucide-react'
+import { Eye, Edit2, Check, X, Trash2, Search, Filter } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -14,9 +14,23 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table'
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card"
 import { fetchProducts, updateProduct, deleteProduct } from '@/lib/features/products/productSlice'
 import ProductAddForm from '@/components/products/ProductAddForm'
-import ProductSearchBar from '@/components/products/ProductSearchBar'
 import ProductDetailsSheet from '@/components/products/ProductDetailsSheet'
 import { toast } from '@/hooks/use-toast'
 
@@ -28,6 +42,13 @@ export default function ProductsPage() {
     const [editingProduct, setEditingProduct] = useState(null)
     const [editedValues, setEditedValues] = useState({})
     const [editingParts, setEditingParts] = useState([])
+    const [filters, setFilters] = useState({
+        type: 'all',
+        category: 'all',
+        status: 'all',
+        minPrice: '',
+        maxPrice: ''
+    })
 
     const products = useSelector((state) => state.products.products)
     const status = useSelector((state) => state.products.status)
@@ -39,13 +60,51 @@ export default function ProductsPage() {
         }
     }, [dispatch, status])
 
+    // Helper function to get product status
+    const getProductStatus = (quantity) => {
+        if (quantity === 0) return 'mavjud_emas'
+        if (quantity <= 10) return 'oz_qoldi'
+        return 'mavjud'
+    }
+
     const filteredProducts = Array.isArray(products)
-        ? products.filter((product) =>
-            Object.values(product).some((value) =>
+        ? products.filter((product) => {
+            // Search filter
+            const matchesSearch = Object.values(product).some((value) =>
                 value.toString().toLowerCase().includes(searchQuery.toLowerCase())
             )
-        )
+
+            // Type filter
+            const matchesType = filters.type === 'all' || product.type === filters.type
+
+            // Category filter
+            const matchesCategory = filters.category === 'all' || product.category === filters.category
+
+            // Status filter based on quantity
+            const productStatus = getProductStatus(product.quantity)
+            const matchesStatus = filters.status === 'all' || productStatus === filters.status
+
+            // Price filter
+            const matchesPrice = (!filters.minPrice || product.dailyRate >= Number(filters.minPrice)) &&
+                (!filters.maxPrice || product.dailyRate <= Number(filters.maxPrice))
+
+            return matchesSearch && matchesType && matchesCategory && matchesStatus && matchesPrice
+        })
         : []
+
+    // Get unique values for filters
+    const types = ['all', ...new Set(products.map(p => p.type))]
+    const categories = ['all', ...new Set(products.map(p => p.category))]
+    const statuses = [
+        { value: 'all', label: 'Barchasi' },
+        { value: 'mavjud', label: 'Mavjud' },
+        { value: 'oz_qoldi', label: 'Oz qoldi' },
+        { value: 'mavjud_emas', label: 'Mavjud emas' }
+    ]
+
+    const handleFilterChange = (field, value) => {
+        setFilters(prev => ({ ...prev, [field]: value }))
+    }
 
     const handleViewProduct = (product) => {
         setSelectedProduct(product)
@@ -142,196 +201,184 @@ export default function ProductsPage() {
     }
 
     if (status === 'loading') {
-        return <div>Yuklanmoqda...</div>
+        return <div className="flex items-center justify-center h-screen">Yuklanmoqda...</div>
     }
 
     if (status === 'failed') {
-        return <div>Xatolik: {error}</div>
+        return <div className="text-red-500">Xatolik: {error}</div>
     }
 
     return (
-        <div className="container mx-auto py-10">
-            <div className="flex justify-between items-center mb-8">
+        <div className="container mx-auto py-10 space-y-8">
+            <div className="flex justify-between items-center">
                 <h1 className="text-4xl font-bold">Mahsulotlar</h1>
                 <ProductAddForm />
             </div>
 
-            <ProductSearchBar 
-                searchQuery={searchQuery} 
-                onSearchChange={setSearchQuery} 
-            />
+            {/* Search and Filters */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Qidiruv va Filterlar</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Qidiruv</label>
+                            <div className="relative">
+                                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                    placeholder="Mahsulot qidirish..."
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="pl-8"
+                                />
+                            </div>
+                        </div>
 
-            <div className="border rounded-lg">
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Nomi</TableHead>
-                            <TableHead>Turi</TableHead>
-                            <TableHead>Kunlik Narxi</TableHead>
-                            <TableHead>Soni</TableHead>
-                            <TableHead>Kategoriya</TableHead>
-                            <TableHead>Holati</TableHead>
-                            <TableHead>Amallar</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {filteredProducts.map((product, index) => (
-                            <TableRow key={`${product._id}-${index}`}>
-                                <TableCell>
-                                    {editingProduct?._id === product._id ? (
-                                        <div className="space-y-2">
-                                            <Input
-                                                value={editedValues.name}
-                                                onChange={(e) => handleInputChange(e, 'name')}
-                                            />
-                                            {product.type === 'combo' && (
-                                                <div className="mt-2 space-y-2">
-                                                    {editingParts.map((part, index) => (
-                                                        <div key={index} className="flex items-center gap-2">
-                                                            <Input
-                                                                placeholder="Mahsulot nomi"
-                                                                value={part.productName}
-                                                                onChange={(e) => handlePartChange(index, 'productName', e.target.value)}
-                                                                className="flex-1"
-                                                            />
-                                                            <Input
-                                                                type="number"
-                                                                placeholder="Soni"
-                                                                value={part.quantity}
-                                                                onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value))}
-                                                                className="w-24"
-                                                            />
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                onClick={() => handleRemovePart(index)}
-                                                            >
-                                                                <X className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
-                                                    ))}
-                                                    <Button
-                                                        variant="outline"
-                                                        size="sm"
-                                                        onClick={handleAddPart}
-                                                        className="w-full"
-                                                    >
-                                                        Qism qo'shish
-                                                    </Button>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            <div>{product.name}</div>
-                                            {product.type === 'combo' && product.parts && (
-                                                <div className="mt-1 space-x-1">
-                                                    {product.parts.map((part, index) => (
-                                                        <Badge key={index} variant="secondary">
-                                                            {part.product.name} ({part.quantity})
-                                                        </Badge>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge variant={product.type === 'single' ? 'default' : 'secondary'}>
-                                        {product.type === 'single' ? 'Yakka Mahsulot' : 'Komplekt Mahsulot'}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    {editingProduct?._id === product._id ? (
-                                        <Input
-                                            type="number"
-                                            value={editedValues.dailyRate}
-                                            onChange={(e) => handleInputChange(e, 'dailyRate')}
-                                        />
-                                    ) : (
-                                        `${product.dailyRate} so'm/kun`
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {editingProduct?._id === product._id ? (
-                                        <Input
-                                            type="number"
-                                            value={editedValues.quantity}
-                                            onChange={(e) => handleInputChange(e, 'quantity')}
-                                        />
-                                    ) : (
-                                        product.quantity
-                                    )}
-                                </TableCell>
-                                <TableCell>
-                                    {product.category}
-                                </TableCell>
-                                <TableCell>
-                                    <Badge 
-                                        variant={product.quantity > 0 ? 'success' : 'destructive'}
-                                    >
-                                        {product.quantity>0 ? 'Mavjud' : 'Mavjud Emas'}
-                                    </Badge>
-                                </TableCell>
-                                <TableCell>
-                                    {editingProduct?._id === product._id ? (
-                                        <>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon"
-                                                onClick={handleSaveEdit}
-                                            >
-                                                <Check className="h-4 w-4" />
-                                            </Button>
-                                            <Button 
-                                                variant="ghost" 
-                                                size="icon"
-                                                onClick={handleCancelEdit}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Button 
-                                                variant="ghost" 
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Turi</label>
+                            <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Turini tanlang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {types.map((type) => (
+                                        <SelectItem key={type} value={type}>
+                                            {type === 'all' ? 'Barchasi' : type}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Kategoriya</label>
+                            <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Kategoriyani tanlang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {categories.map((category) => (
+                                        <SelectItem key={category} value={category}>
+                                            {category === 'all' ? 'Barchasi' : category}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Holati</label>
+                            <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Holatini tanlang" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {statuses.map((status) => (
+                                        <SelectItem key={status.value} value={status.value}>
+                                            {status.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Minimal narx</label>
+                            <Input
+                                type="number"
+                                placeholder="Minimal narx"
+                                value={filters.minPrice}
+                                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Maksimal narx</label>
+                            <Input
+                                type="number"
+                                placeholder="Maksimal narx"
+                                value={filters.maxPrice}
+                                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Products Table */}
+            <Card>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Nomi</TableHead>
+                                <TableHead>Turi</TableHead>
+                                <TableHead>Kunlik Narxi</TableHead>
+                                <TableHead>Soni</TableHead>
+                                <TableHead>Kategoriya</TableHead>
+                                <TableHead>Holati</TableHead>
+                                <TableHead>Amallar</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {filteredProducts.map((product) => (
+                                <TableRow key={product._id}>
+                                    <TableCell className="font-medium">{product.name}</TableCell>
+                                    <TableCell>{product.type}</TableCell>
+                                    <TableCell>{product.dailyRate} so'm</TableCell>
+                                    <TableCell>{product.quantity}</TableCell>
+                                    <TableCell>{product.category}</TableCell>
+                                    <TableCell>
+                                        <Badge 
+                                            variant={
+                                                product.quantity === 0 ? 'destructive' : 
+                                                product.quantity <= 10 ? 'warning' : 
+                                                'success'
+                                            }
+                                        >
+                                            {getProductStatus(product.quantity) === 'mavjud_emas' ? 'Mavjud emas' : 
+                                             getProductStatus(product.quantity) === 'oz_qoldi' ? 'Oz qoldi' : 
+                                             'Mavjud'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            <Button
+                                                variant="ghost"
                                                 size="icon"
                                                 onClick={() => handleViewProduct(product)}
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
-                                            <Button 
-                                                variant="ghost" 
+                                            <Button
+                                                variant="ghost"
                                                 size="icon"
                                                 onClick={() => handleEditProduct(product)}
                                             >
                                                 <Edit2 className="h-4 w-4" />
                                             </Button>
-                                            <Button 
-                                                variant="ghost" 
+                                            <Button
+                                                variant="ghost"
                                                 size="icon"
                                                 onClick={() => handleDelete(product._id)}
                                             >
-                                                <Trash2 className="h-4 w-4 text-red-500" />
+                                                <Trash2 className="h-4 w-4" />
                                             </Button>
-                                        </>
-                                    )}
-                                </TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
-            </div>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
 
-            <ProductDetailsSheet 
-                product={selectedProduct} 
+            {/* Product Details Sheet */}
+            <ProductDetailsSheet
+                product={selectedProduct}
                 isOpen={isDetailsOpen}
-                onOpenChange={(open) => {
-                    setIsDetailsOpen(open);
-                    if (!open) {
-                        setSelectedProduct(null);
-                    }
-                }}
+                onClose={handleCloseDetails}
             />
         </div>
     )

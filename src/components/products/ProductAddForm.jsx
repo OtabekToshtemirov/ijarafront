@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -42,6 +42,19 @@ export default function ProductAddForm() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [newProduct, setNewProduct] = useState(initialProductState)
     const [isSubmitting, setIsSubmitting] = useState(false)
+    const [totalComboPrice, setTotalComboPrice] = useState(0)
+
+    useEffect(() => {
+        if (newProduct.type === 'combo') {
+            const total = newProduct.parts.reduce((sum, part) => {
+                return sum + (part.dailyRate || 0) * (part.quantity || 0)
+            }, 0)
+            setTotalComboPrice(total)
+            if (!newProduct.manualPrice) {
+                handleInputChange('dailyRate', total)
+            }
+        }
+    }, [newProduct.parts])
 
     const validateProduct = () => {
         const errors = []
@@ -50,21 +63,31 @@ export default function ProductAddForm() {
             category: 'Mahsulot kategoriyasi'
         }
 
-        // Majburiy maydonlarni tekshirish
         Object.entries(requiredFields).forEach(([field, label]) => {
             if (!newProduct[field]?.trim()) {
                 errors.push(`${label} kiritilishi kerak`)
             }
         })
 
-        // Raqamli maydonlarni tekshirish
         if (newProduct.quantity < 1) {
             errors.push('Mahsulot soni 1 dan katta bo\'lishi kerak')
         }
 
-        // Kombinatsiya mahsuloti uchun qismlarni tekshirish
-        if (newProduct.type === 'combo' && (!newProduct.parts?.length)) {
-            errors.push('Kombinatsiya mahsuloti uchun kamida bitta qism kiritilishi kerak')
+        if (newProduct.type === 'combo') {
+            if (!newProduct.parts?.length) {
+                errors.push('Kombinatsiya mahsuloti uchun kamida bitta qism kiritilishi kerak')
+            }
+            newProduct.parts.forEach((part, index) => {
+                if (!part.productId) {
+                    errors.push(`${index + 1}-qism tanlanmagan`)
+                }
+                if (!part.quantity || part.quantity < 1) {
+                    errors.push(`${index + 1}-qism soni noto'g'ri`)
+                }
+                if (!part.dailyRate || part.dailyRate < 0) {
+                    errors.push(`${index + 1}-qism narxi noto'g'ri`)
+                }
+            })
         }
 
         return errors
@@ -94,12 +117,12 @@ export default function ProductAddForm() {
                 parts: newProduct.type === 'combo' 
                     ? newProduct.parts.map(part => ({
                         product: part.productId,
-                        quantity: Number(part.quantity)
+                        quantity: Number(part.quantity),
+                        dailyRate: Number(part.dailyRate)
                     }))
                     : []
             }
             
-            console.log('Sending product data:', formData)
             await dispatch(addProduct(formData)).unwrap()
             
             toast({
@@ -122,30 +145,39 @@ export default function ProductAddForm() {
     }
 
     const handleInputChange = (field, value) => {
-        // Raqamli maydonlar uchun
         if (field === 'dailyRate' || field === 'quantity') {
             value = value === '' ? '' : value === '0' ? 0 : Number(value)
         }
         
+        if (field === 'type' && value === 'single') {
+            value = { type: 'single', parts: [], dailyRate: 0 }
+        }
+        
         setNewProduct(prev => ({
             ...prev,
-            [field]: value
+            ...(typeof value === 'object' ? value : { [field]: value })
         }))
     }
 
     const handleAddPart = () => {
         setNewProduct(prev => ({
             ...prev,
-            parts: [...prev.parts, { productId: '', quantity: 1 }]
+            parts: [...prev.parts, { productId: '', quantity: 1, dailyRate: 0 }]
         }))
     }
 
     const handlePartChange = (index, field, value) => {
         const updatedParts = [...newProduct.parts]
-        updatedParts[index] = {
-            ...updatedParts[index],
-            [field]: value
+        const part = updatedParts[index]
+
+        if (field === 'productId') {
+            const selectedProduct = partProducts.find(p => p._id === value)
+            part.productId = value
+            part.dailyRate = selectedProduct?.dailyRate || 0
+        } else {
+            part[field] = field === 'quantity' || field === 'dailyRate' ? Number(value) : value
         }
+
         handleInputChange('parts', updatedParts)
     }
 
@@ -170,7 +202,6 @@ export default function ProductAddForm() {
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid gap-4 py-4">
-                        {/* Asosiy ma'lumotlar */}
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="name" className="text-right">
                                 Nomi
@@ -212,18 +243,91 @@ export default function ProductAddForm() {
                             />
                         </div>
 
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="dailyRate" className="text-right">
-                                Kunlik narx
-                            </Label>
-                            <Input
-                                id="dailyRate"
-                                type="number"
-                                value={newProduct.dailyRate === 0 ? '0' : newProduct.dailyRate || ''}
-                                onChange={(e) => handleInputChange('dailyRate', e.target.value)}
-                                className="col-span-3"
-                            />
-                        </div>
+                        {newProduct.type === 'combo' && (
+                            <div className="space-y-4">
+                                <div className="flex items-center justify-between">
+                                    <Label>Qismlar</Label>
+                                    <Button 
+                                        type="button" 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={handleAddPart}
+                                    >
+                                        <Plus className="h-4 w-4 mr-2" />
+                                        Qism qo'shish
+                                    </Button>
+                                </div>
+                                
+                                {newProduct.parts.map((part, index) => (
+                                    <div key={index} className="space-y-4 border rounded-lg p-4">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>Qism</Label>
+                                                <Select
+                                                    value={part.productId}
+                                                    onValueChange={(value) => handlePartChange(index, 'productId', value)}
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Qismni tanlang" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {partProducts.map((product) => (
+                                                            <SelectItem 
+                                                                key={product._id} 
+                                                                value={product._id}
+                                                            >
+                                                                {product.name}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div>
+                                                <Label>Soni</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={part.quantity}
+                                                    onChange={(e) => handlePartChange(index, 'quantity', e.target.value)}
+                                                    min="1"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <Label>Narxi</Label>
+                                                <Input
+                                                    type="number"
+                                                    value={part.dailyRate}
+                                                    onChange={(e) => handlePartChange(index, 'dailyRate', e.target.value)}
+                                                    min="0"
+                                                />
+                                            </div>
+                                            <div className="flex items-end">
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleRemovePart(index)}
+                                                    className="ml-auto"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                        <div className="text-sm text-muted-foreground">
+                                            Jami: {(part.dailyRate || 0) * (part.quantity || 0)} so'm/kun
+                                        </div>
+                                    </div>
+                                ))}
+                                
+                                <div className="pt-2 border-t">
+                                    <div className="flex justify-between text-sm font-medium">
+                                        <span>Jami narx:</span>
+                                        <span>{totalComboPrice} so'm/kun</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="quantity" className="text-right">
@@ -251,75 +355,10 @@ export default function ProductAddForm() {
                                 className="col-span-3"
                             />
                         </div>
-
-                        {/* Kombinatsiya mahsuloti uchun qismlar */}
-                        {newProduct.type === 'combo' && (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <Label>Qismlar</Label>
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={handleAddPart}
-                                    >
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Qism qo'shish
-                                    </Button>
-                                </div>
-                                
-                                {newProduct.parts.map((part, index) => (
-                                    <div key={index} className="flex items-end gap-2">
-                                        <div className="flex-1">
-                                            <Label>Qism</Label>
-                                            <Select
-                                                value={part.productId}
-                                                onValueChange={(value) => handlePartChange(index, 'productId', value)}
-                                            >
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Qismni tanlang" />
-                                                </SelectTrigger>
-                                                <SelectContent>
-                                                    {partProducts.map((product) => (
-                                                        <SelectItem 
-                                                            key={product._id} 
-                                                            value={product._id}
-                                                        >
-                                                            {product.name}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="w-24">
-                                            <Label>Soni</Label>
-                                            <Input
-                                                type="number"
-                                                value={part.quantity}
-                                                onChange={(e) => handlePartChange(index, 'quantity', parseInt(e.target.value))}
-                                                min="1"
-                                                required
-                                            />
-                                        </div>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() => handleRemovePart(index)}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
                     </div>
 
                     <DialogFooter>
-                        <Button 
-                            type="submit" 
-                            disabled={isSubmitting}
-                        >
+                        <Button type="submit" disabled={isSubmitting}>
                             {isSubmitting ? 'Saqlanmoqda...' : 'Saqlash'}
                         </Button>
                     </DialogFooter>

@@ -861,10 +861,33 @@ export default function AddRentalPage() {
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
-                                                
                                             </div>
                                         </div>
                                     ))}
+                                    {products.product && products.find(p => p._id === product.product)?.type === 'combo' && (
+                                               <div className="ml-8 space-y-4 mt-2 border-l-2 border-blue-200 pl-4">
+                                                <p className="text-sm font-medium text-gray-500">Qismlar:</p>
+                                                {products.find(p => p._id === product.product)?.parts?.map((part, partIndex) => {
+                                                    const partProduct = products.find(p => p._id === part.product);
+                                                    return (
+                                                        <div key={partIndex} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-2 bg-gray-50 rounded-lg">
+                                                            <div>
+                                                                <span className="text-sm text-gray-600">{partProduct?.name}</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-sm text-gray-600">Miqdor: {part.quantity}</span>
+                                                            </div>
+                                                            <div>
+                                                                <span className="text-sm text-gray-600">
+                                                                    Kunlik narx: {part.dailyRate?.toLocaleString()} so'm
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                           
+                                        )}
                                 </div>
 
                               
