@@ -115,29 +115,20 @@ export const returnProducts = createAsyncThunk(
 
 export const returnProduct = createAsyncThunk(
     'rentals/returnProduct',
-    async (returnData) => {
+    async (returnData, { rejectWithValue }) => {
         try {
-            console.log('Sending return data:', returnData);
             const { rentalId, ...data } = returnData;
             const response = await axios.post(`${BASE_URL}/rentals/${rentalId}/return`, {
-                products: data.products
+                products: data.products,
             });
-            console.log('Return response:', response.data);
             return response.data;
         } catch (error) {
             console.error('Return error:', error);
-            if (error.response?.data?.message) {
-                throw new Error(error.response.data.message);
-            } else if (error.response?.data?.error) {
-                throw new Error(error.response.data.error);
-            } else if (error.message) {
-                throw new Error(error.message);
-            } else {
-                throw new Error('Mahsulotni qaytarishda xatolik yuz berdi');
-            }
+            return rejectWithValue(error.response?.data?.message || 'Failed to process return');
         }
     }
 );
+
 
 export const deleteRental = createAsyncThunk(
     'rentals/deleteRental',

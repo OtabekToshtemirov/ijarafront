@@ -156,8 +156,27 @@ export default function PaymentManagement() {
     setPaymentToDelete(null)
   }
 
-  const currentMonthPayments = payments.filter(payment => isSameMonth(new Date(payment.paymentDate), new Date()))
-  const totalForCurrentMonth = currentMonthPayments.reduce((total, payment) => total + payment.amount, 0)
+  const formatDate = (dateString) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return '-';
+      }
+      return format(date, "PPP");
+    } catch (error) {
+      return '-';
+    }
+  };
+
+  const currentMonthPayments = payments.filter(payment => {
+    try {
+      return isSameMonth(new Date(payment.paymentDate), new Date());
+    } catch (error) {
+      return false;
+    }
+  });
+
+  const totalForCurrentMonth = currentMonthPayments.reduce((total, payment) => total + (payment.amount || 0), 0)
 
   return (
       <div className="container mx-auto p-6">
@@ -200,8 +219,8 @@ export default function PaymentManagement() {
                                   />
                                 </div>
                                 <div className="max-h-[200px] overflow-y-auto">
-                                  {(filteredCustomers || customers).map((customer) => (
-                                    <SelectItem key={customer._id} value={customer._id}>
+                                  {(filteredCustomers || customers).map((customer, index) => (
+                                    <SelectItem key={index} value={customer._id}>
                                       <div className="flex flex-col">
                                         <span>{customer.name}</span>
                                         <span className="text-sm text-muted-foreground">
@@ -444,11 +463,11 @@ export default function PaymentManagement() {
                       
                       return true;
                     })
-                    .map((payment) => (
-                      <TableRow key={payment._id}>
+                    .map((payment, index) => (
+                      <TableRow key={index}>
                         <TableCell>{customers.find((customer) => customer._id === payment.customer)?.name || "Noma'lum"}</TableCell>
-                        <TableCell>{payment.amount.toLocaleString()} so'm</TableCell>
-                        <TableCell>{format(new Date(payment.paymentDate), "PPP")}</TableCell>
+                        <TableCell>{(payment.amount || 0).toLocaleString()} so'm</TableCell>
+                        <TableCell>{formatDate(payment.paymentDate)}</TableCell>
                         <TableCell>{payment.paymentType === "cash" ? "Naqd" : "Karta"}</TableCell>
                         <TableCell>{payment.memo || "-"}</TableCell>
                         <TableCell>{payment.isPrepaid ? "Ha" : "Yo'q"}</TableCell>
@@ -484,7 +503,7 @@ export default function PaymentManagement() {
         <div className="mt-8">
           <h2 className="text-xl font-bold">
             {filters.startDate || filters.endDate ? (
-              `Tanlangan davr uchun jami: ${payments
+              `Tanlangan davr uchun jami: ${(payments
                 .filter(payment => {
                   const paymentDate = new Date(payment.paymentDate);
                   if (filters.startDate && paymentDate < filters.startDate) {
@@ -499,10 +518,10 @@ export default function PaymentManagement() {
                   }
                   return true;
                 })
-                .reduce((total, payment) => total + payment.amount, 0)
-                .toLocaleString()} so'm`
+                .reduce((total, payment) => total + (payment.amount || 0), 0)
+                ).toLocaleString()} so'm`
             ) : (
-              `Ushbu oydagi jami: ${totalForCurrentMonth.toLocaleString()} so'm`
+              `Ushbu oydagi jami: ${(totalForCurrentMonth || 0).toLocaleString()} so'm`
             )}
           </h2>
         </div>

@@ -165,7 +165,16 @@ export default function CustomerReturnDetails({ customer, isOpen, onClose }) {
                                 </p>
                                 <div className="space-y-4">
                                     {rental.borrowedProducts.map((product) => {
-                                        if (product.quantity <= 0) return null;
+                                        // Qaytarilgan miqdorni hisoblash
+                                        const returnedQuantity = rental.returnedProducts
+                                            .filter(rp => rp.product._id === product.product._id)
+                                            .reduce((sum, rp) => sum + rp.quantity, 0);
+
+                                        // Qaytarilmagan miqdorni hisoblash
+                                        const remainingQuantity = product.quantity - returnedQuantity;
+
+                                        // Agar qaytarilmagan miqdor 0 bo'lsa, ko'rsatmaslik
+                                        if (remainingQuantity <= 0) return null;
                                         
                                         const returnDate = returnDates[`${rental._id}_${product.product._id}`] || new Date().toISOString().split('T')[0]
                                         const days = calculateDays(product.startDate, returnDate)
@@ -177,7 +186,7 @@ export default function CustomerReturnDetails({ customer, isOpen, onClose }) {
                                                     <div className="flex-1">
                                                         <p className="font-medium">{product.product.name}</p>
                                                         <p className="text-sm text-gray-500">
-                                                            Miqdori: {product.quantity} dona | 
+                                                            Qaytarilmagan miqdor: {remainingQuantity} dona | 
                                                             Kunlik narx: {product.product.dailyRate} so'm
                                                         </p>
                                                         <p className="text-sm text-gray-500">
@@ -199,8 +208,7 @@ export default function CustomerReturnDetails({ customer, isOpen, onClose }) {
                                                         type="number"
                                                         placeholder="Qaytarish miqdori"
                                                         min="1"
-                                                        max={product.quantity}
-                                                        value={returnQuantities[`${rental._id}_${product.product._id}`] || ''}
+                                                        max={remainingQuantity}
                                                         onChange={(e) => handleQuantityChange(rental._id, product.product._id, e.target.value)}
                                                     />
                                                     <Button 

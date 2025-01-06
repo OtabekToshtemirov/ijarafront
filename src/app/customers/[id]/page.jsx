@@ -550,7 +550,7 @@ export default function CustomerDetailsPage() {
                                             {returnItem.rental.rentalNumber}
                                         </TableCell>
                                         <TableCell>
-                                            {returnItem.productName}
+                                            {returnItem.product.name}
                                             {returnItem.productCode && (
                                                 <div className="text-xs text-muted-foreground">
                                                     Kod: {returnItem.productCode}

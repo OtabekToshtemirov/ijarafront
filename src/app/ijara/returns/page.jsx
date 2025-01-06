@@ -58,8 +58,10 @@ export default function Component() {
         
         // Check if there are any unreturned products
         return rental.borrowedProducts.some(prod => {
+            if (!prod.product?._id) return false;
+            
             const returnedQuantity = rental.returnedProducts
-                .filter(rp => rp.product === prod.product._id)
+                .filter(rp => rp.product?.toString() === prod.product._id.toString())
                 .reduce((sum, rp) => sum + rp.quantity, 0);
             return prod.quantity - returnedQuantity > 0;
         });
@@ -80,10 +82,14 @@ export default function Component() {
         }
 
         const unreturnedCount = rental.borrowedProducts.reduce((count, prod) => {
-            const returnedQuantity = rental.returnedProducts
-                .filter(rp => rp.product === prod.product._id)
-                .reduce((sum, rp) => sum + rp.quantity, 0);
-            return count + (prod.quantity - returnedQuantity);
+            if (!prod.product?._id) return count;
+            
+            const returnedQuantity = (rental.returnedProducts || [])
+                .filter(rp => rp.product?._id?.toString() === prod.product._id.toString())
+                .reduce((sum, rp) => sum + (rp.quantity || 0), 0);
+
+            const unreturned = prod.quantity - returnedQuantity;
+            return count + (unreturned > 0 ? unreturned : 0);
         }, 0);
 
         acc[customerId].rentals.push(rental);
@@ -99,12 +105,6 @@ export default function Component() {
                item.customer?.phone.toLowerCase().includes(searchLower);
     });
 
-    const calculateRentalDays = (startDate, discountDays = 0) => {
-        const start = new Date(startDate);
-        const now = new Date();
-        const totalDays = Math.ceil((now - start) / (1000 * 60 * 60 * 24));
-        return Math.max(0, totalDays - discountDays);
-    };
 
     const calculateProductCost = (product, days, quantity) => {
         return (product.dailyRate || 0) * days * quantity;
@@ -122,12 +122,12 @@ export default function Component() {
     };
 
     const handleReturnQuantityChange = (rentalId, productId, quantity, maxQuantity) => {
-        if (quantity > maxQuantity) quantity = maxQuantity;
-        if (quantity < 0) quantity = 0;
+        // Yangi miqdorni qoldiq miqdor bilan cheklash
+        const newQuantity = Math.min(Math.max(0, quantity), maxQuantity);
 
         setReturnQuantities(prev => ({
             ...prev,
-            [`${rentalId}-${productId}`]: quantity
+            [`${rentalId}-${productId}`]: newQuantity
         }));
     };
 
@@ -270,18 +270,12 @@ export default function Component() {
                 customer: selectedCustomer.customer._id,
                 rental: rental._id,
                 amount: finalAmount,
-                discount: Number(totalDiscount) || 0,
+                discount: Number(totalDiscount),
                 paymentType: 'cash',
                 description: `Qaytarish to'lovi: ${productsSummary} - Chegirma: ${totalDiscount} so'm - ${new Date().toLocaleDateString()}`
             };
 
-            console.log('To\'lov ma\'lumotlari:', {
-                customer: selectedCustomer.customer._id,
-                totalAmount,
-                discount: totalDiscount,
-                finalAmount,
-                products: returnedProducts.length
-            });
+            console.log('Sending payment data:', paymentData);
 
             // Create payment
             const response = await dispatch(createPayment(paymentData)).unwrap();
@@ -442,7 +436,7 @@ export default function Component() {
                                 <div>
                                     <Label>Hisoblangan summa</Label>
                                     <div className="text-lg font-semibold">
-                                        {returnedProducts.reduce((total, product) => total + product.totalCost, 0).toLocaleString()} so'm
+                                        {(returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0).toLocaleString()} so'm
                                     </div>
                                 </div>
 
@@ -460,7 +454,7 @@ export default function Component() {
                                 <div>
                                     <Label>To'lov miqdori</Label>
                                     <div className="text-xl font-bold text-primary">
-                                        {(returnedProducts.reduce((total, product) => total + product.totalCost, 0) - totalDiscount).toLocaleString()} so'm
+                                        {((returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0) - (totalDiscount || 0)).toLocaleString()} so'm
                                     </div>
                                 </div>
 
@@ -481,18 +475,18 @@ export default function Component() {
                                                     <div>
                                                         <div className="font-medium">{product.product.name}</div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            {product.quantity} dona • {product.days} kun
+                                                            {(product.quantity || 0)} dona • {(product.days || 0)} kun
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="font-semibold">
-                                                            {product.totalCost.toLocaleString()} so'm
+                                                            {(product.totalCost || 0).toLocaleString()} so'm
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            ({product.days} kun × {product.quantity} dona × {product.dailyRate?.toLocaleString()} so'm)
+                                                            ({(product.days || 0)} kun × {(product.quantity || 0)} dona × {((product.dailyRate || 0) || 0).toLocaleString()} so'm)
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            Chegirma: {product.discount.toLocaleString()} so'm
+                                                            Chegirma: {((product.discount || 0) || 0).toLocaleString()} so'm
                                                         </div>
                                                     </div>
                                                 </div>
@@ -502,13 +496,13 @@ export default function Component() {
                                 )}
                                 {calculateAllCurrentReturnTotal(localRentals) > 0 && (
                                     <div className="text-base text-muted-foreground">
-                                        Joriy qaytarish: {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
+                                        Joriy qaytarish: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} so'm
                                     </div>
                                 )}
                             </div>
                             {calculateAllCurrentReturnTotal(localRentals) > 0 && (
                                 <div className="text-base text-muted-foreground">
-                                    Joriy qaytarish: {calculateAllCurrentReturnTotal(localRentals).toLocaleString()} so'm
+                                    Joriy qaytarish: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} so'm
                                 </div>
                             )}
                         </div>
@@ -525,7 +519,7 @@ export default function Component() {
                             <p className="text-muted-foreground">{selectedCustomer.customer.phone}</p>
                             <div className="flex items-center gap-4">
                                 <Badge variant={calculateCustomerBalance(selectedCustomer.rentals) > 0 ? "destructive" : "success"}>
-                                    Balans: {selectedCustomer.customer.balance?.toLocaleString()} so'm
+                                    Balans: {(selectedCustomer.customer.balance || 0).toLocaleString()} so'm
                                 </Badge>
                                 <Badge variant="outline">
                                     Faol ijaralar: {selectedCustomer.totalRentals}
@@ -597,11 +591,7 @@ export default function Component() {
                                             </Button>
                                         </div>
                                     </div>
-                                    <Badge>
-                                        {rental.workStartDate&& (
-                                            `${calculateRentalDays(rental.workStartDate, discountDays[rental._id] || 0)} kun`
-                                        )}
-                                    </Badge>
+                    
                                 </div>
                             </div>
 
@@ -624,13 +614,24 @@ export default function Component() {
                                 </TableHeader>
                                 <TableBody>
                                     {rental.borrowedProducts.map((prod) => {
-                                        const returnedQuantity = rental.returnedProducts
-                                            .filter(rp => rp.product === prod.product._id)
-                                            .reduce((sum, rp) => sum + rp.quantity, 0);
+                                        if (!prod.product?._id) return null;
+                                        
+                                        // Get all returned quantities for this product
+                                        const returnedQuantity = (selectedCustomer?.rentals || [])
+                                            .flatMap(r => r.returnedProducts || [])
+                                            .filter(rp => rp.product?._id?.toString() === prod.product._id.toString())
+                                            .reduce((sum, rp) => sum + (rp.quantity || 0), 0);
 
-                                        if (returnedQuantity >= prod.quantity) return null;
+                                        // Joriy qaytarish miqdorini hisoblash
+                                        const currentReturnQuantity = Number(returnQuantities[`${rental._id}-${prod.product._id}`]) || 0;
 
-                                        const remainingQuantity = prod.quantity - returnedQuantity;
+                                        // Natijani ko'rsatish
+                                        const totalReturnedQuantity = returnedQuantity + currentReturnQuantity;
+
+                                        // Hide if all items are returned
+                                        if (totalReturnedQuantity >= prod.quantity) return null;
+
+                                        const remainingQuantity = Math.max(0, prod.quantity - totalReturnedQuantity );
                                         const key = `${rental._id}-${prod.product._id}`;
                                         
                                         // Calculate days
@@ -642,25 +643,24 @@ export default function Component() {
                                         );
 
                                         // Calculate total cost
-                                        const returnQuantity = returnQuantities[key] || 0;
                                         const totalCost = calculateProductCost(
                                             prod,
                                             totalDays,
-                                            returnQuantity
+                                            currentReturnQuantity
                                         );
 
                                         return (
                                             <TableRow key={prod.product._id}>
                                                 <TableCell>
                                                     <div>
-                                                        <p className="font-medium">
+                                                        <span className="font-medium">
                                                             {prod.product.name}
                                                             {prod.product.type === 'combo' && (
                                                                 <Badge variant="secondary" className="ml-2">
                                                                     Kombinatsiya
                                                                 </Badge>
                                                             )}
-                                                        </p>
+                                                        </span>
                                                         <p className="text-sm text-muted-foreground">
                                                             {prod.product.code}
                                                         </p>
@@ -670,7 +670,7 @@ export default function Component() {
                                                                 {prod.product.parts.map((part, index) => (
                                                                     <div key={index} className="ml-4 text-sm text-muted-foreground flex justify-between">
                                                                         <span>{part.product.name}</span>
-                                                                        <span>{part.quantity} dona × {part.dailyRate.toLocaleString()} so'm</span>
+                                                                        <span>{(part.quantity || 0)} dona × {(part.dailyRate || 0).toLocaleString()} so'm</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -694,7 +694,7 @@ export default function Component() {
                                                     />
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    {days}
+                                                    {(days || 0)}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
@@ -713,19 +713,36 @@ export default function Component() {
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    {totalDays}
+                                                    {(totalDays || 0)}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {prod.dailyRate.toLocaleString()} so'm
+                                                    {((prod.dailyRate || 0) || 0).toLocaleString()} so'm
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    {prod.quantity}
+                                                    {(prod.quantity || 0)}
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    {returnedQuantity}
+                                                    {(() => {
+                                                        // Qaytarilgan miqdorni hisoblash
+                                                        const returnedQuantity = (selectedCustomer?.rentals || [])
+                                                            .flatMap(r => r.returnedProducts || [])
+                                                            .filter(rp => rp.product?._id?.toString() === prod.product._id.toString())
+                                                            .reduce((sum, rp) => sum + (rp.quantity || 0), 0);
+
+                                                        // Joriy qaytarish miqdorini hisoblash
+                                                        const currentReturnQuantity = Number(returnQuantities[`${rental._id}-${prod.product._id}`]) || 0;
+
+                                                        // Natijani ko'rsatish
+                                                        return (
+                                                            <>
+                                                                {returnedQuantity || 0}
+                                                                {currentReturnQuantity > 0 && ` (+${currentReturnQuantity})`}
+                                                            </>
+                                                        );
+                                                    })()}
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    {remainingQuantity}
+                                                    {(remainingQuantity )}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
@@ -743,20 +760,23 @@ export default function Component() {
                                                                     );
                                                                 }
                                                             }}
-                                                            disabled={!returnQuantities[key]}
+                                                            disabled={!(returnQuantities[key] > 0)}
                                                         >
                                                             -
                                                         </Button>
                                                         <Input
                                                             type="number"
-                                                            value={returnQuantities[key] || ''}
-                                                            onChange={(e) => handleReturnQuantityChange(
-                                                                rental._id,
-                                                                prod.product._id,
-                                                                parseInt(e.target.value),
-                                                                remainingQuantity
-                                                            )}
-                                                            min="1"
+                                                            value={returnQuantities[key] || 0}
+                                                            onChange={(e) => {
+                                                                const newValue = Math.max(0, parseInt(e.target.value) || 0);
+                                                                handleReturnQuantityChange(
+                                                                    rental._id,
+                                                                    prod.product._id,
+                                                                    newValue,
+                                                                    remainingQuantity
+                                                                );
+                                                            }}
+                                                            min="0"
                                                             max={remainingQuantity}
                                                             className="w-20 text-center"
                                                         />
@@ -790,10 +810,10 @@ export default function Component() {
                                                 <TableCell>
                                                     <div className="flex flex-col">
                                                         <span className="font-medium">
-                                                            {totalCost.toLocaleString()} so'm
+                                                            {(totalCost || 0).toLocaleString()} so'm
                                                         </span>
                                                         <span className="text-sm text-muted-foreground">
-                                                            ({totalDays} kun × {returnQuantity} dona × {prod.dailyRate?.toLocaleString()} so'm)
+                                                            ({(totalDays || 0)} kun × {(currentReturnQuantity || 0)} dona × {((prod.dailyRate || 0) || 0).toLocaleString()} so'm)
                                                         </span>
 
                                                     

@@ -220,9 +220,7 @@ export default function AddRentalPage() {
             if (!product.quantity || product.quantity < 1) {
                 errors[`borrowedProducts.${index}.quantity`] = 'Miqdor 1 dan kam bo\'lmasligi kerak';
             }
-            if (!product.dailyRate || product.dailyRate < 0) {
-                errors[`borrowedProducts.${index}.dailyRate`] = 'Kunlik narx 0 dan kam bo\'lmasligi kerak';
-            }
+           
         });
 
         setValidationErrors(errors);
@@ -255,7 +253,7 @@ export default function AddRentalPage() {
 
         try {
             const response = await dispatch(createRental(formData)).unwrap();
-            generatePDF(response, customers.find(customer => customer._id === rentalForm.customer));
+            // generatePDF(response, customers.find(customer => customer._id === rentalForm.customer));
             toast.success('Ijara muvaffaqiyatli yaratildi');
             router.push('/ijara');
         } catch (error) {
