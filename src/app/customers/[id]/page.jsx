@@ -23,11 +23,13 @@ import {
     fetchRentalsByCustomerId, 
     addReturnedProduct,
     clearReturnStatus,
+    fetchRentals,
 } from "@/lib/features/rentals/rentalsSlice";
 import { 
     fetchPaymentsByCustomerId,
     selectPayments,
-    selectPaymentsStatus 
+    selectPaymentsStatus,
+    getAllPaymentsByCustomerId
 } from "@/lib/features/payments/paymentSlice";
 import { toast } from "sonner";
 
@@ -50,12 +52,23 @@ export default function CustomerDetailsPage() {
 
     useEffect(() => {
         if (id) {
+            console.log('Fetching data for customer ID:', id);
             // Fetch all required data at once
-            dispatch(fetchCustomers());
+            dispatch(fetchRentals());
             dispatch(fetchPaymentsByCustomerId(id));
+            dispatch(fetchCustomers());
             dispatch(fetchRentalsByCustomerId(id));
         }
     }, [dispatch, id]);
+
+    // Debug payments
+    useEffect(() => {
+        console.log('Redux Payments State:', payments);
+        console.log('Redux Payments Status:', paymentsStatus);
+        if (payments.length === 0) {
+            console.log('No payments found in Redux store');
+        }
+    }, [payments, paymentsStatus]);
 
     // Debug: rentals ma'lumotlarini konsolga chiqarish
     useEffect(() => {
@@ -109,15 +122,6 @@ export default function CustomerDetailsPage() {
         });
     };
 
-    // Kunlarni hisoblash
-    const calculateDays = (startDate, endDate) => {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const diffTime = Math.abs(end - start);
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return diffDays || 1; // Kamida 1 kun
-    };
-
     // Qaytarish tarixi
     const getReturnHistory = () => {
         return rentals.flatMap(rental => {
@@ -161,12 +165,7 @@ export default function CustomerDetailsPage() {
         }, 0);
     };
 
-    const openReturnDialog = (rental, product) => {
-        setSelectedRental(rental);
-        setSelectedProduct(product);
-        setReturnDialogOpen(true);
-    };
-
+  
     const handleReturn = async () => {
         if (!returnQuantity || returnQuantity <= 0) {
             toast.error("Қайтариш миқдорини киритинг!");
@@ -249,8 +248,8 @@ export default function CustomerDetailsPage() {
                                 <div className="space-y-2">
                                     <p className="text-gray-700 dark:text-gray-300">
                                         <span className="font-medium">Баланс:</span> 
-                                        <span className={customer.balance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                                            {customer.balance?.toLocaleString()} сўм
+                                        <span className={(totalPayments - getReturnHistory().reduce((total, item) => total + (item.totalCost || 0), 0)) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
+                                            {((totalPayments)-getReturnHistory().reduce((total, item) => total + (item.totalCost || 0), 0)).toLocaleString()} сўм
                                         </span>
                                     </p>
                                     <p className="text-gray-700 dark:text-gray-300">
@@ -262,7 +261,8 @@ export default function CustomerDetailsPage() {
                                         <span className="text-blue-600 dark:text-blue-400">   {getReturnHistory().reduce((total, item) => 
                                                     total + (item.totalCost || 0), 0).toLocaleString()} сўм</span>
                                         <span className="ml-2 text-orange-600">
-                                            (Чегирма: {getTotalDiscounts().toLocaleString()} сўм)
+                                            (Чегирма: {payments.reduce((total, payment) => 
+                                                    total + (payment.discount || 0), 0).toLocaleString()} сўм)
                                         </span>
                                     </p>
                                 </div>
@@ -322,7 +322,7 @@ export default function CustomerDetailsPage() {
                                                     ))}
                                                 </TableCell>
                                                 <TableCell className="dark:text-gray-300">{rental.totalCost?.toLocaleString()} сўм</TableCell>
-                                               
+                                              
                                             </TableRow>
                                         ))}
                                     </TableBody>
@@ -417,44 +417,14 @@ export default function CustomerDetailsPage() {
                                     </TableBody>
                                 </Table>
                                 {/* Add total amount summary */}
-                                <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-600 font-medium">Жами ижара суммаси:</span>
-                                                <span className="text-lg font-semibold text-green-600">
-                                                    {(customer?.rentals || []).reduce((total, rental) => 
-                                                        total + (rental?.summAmount || 0), 0).toLocaleString()} сўм
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-600 font-medium">Жами чегирма:</span>
-                                                <span className="text-lg font-semibold text-orange-600">
-                                                    {(customer?.rentals || []).reduce((total, rental) => 
-                                                        total + (rental?.totalDiscount || 0), 0).toLocaleString()} сўм
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-gray-600 font-medium">Жами тўланган:</span>
-                                                <span className="text-lg font-semibold text-blue-600">
-                                                    {(customer?.rentals || []).reduce((total, rental) => 
-                                                        total + ((rental?.payments || []).reduce((sum, payment) => 
-                                                            sum + (payment?.amount || 0), 0) || 0), 0).toLocaleString()} сўм
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                
                                 {/* Add returned products total */}
                                 <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
                                     <div className="flex justify-between items-center">
                                         <span className="text-gray-700 font-medium">Қайтаришлар учун ижара суммаси:</span>
                                         <span className="text-lg font-semibold text-green-600">
-                                            {(customer?.rentals || []).reduce((total, rental) => {
-                                                const returnedTotal = (rental?.returnedProducts || []).reduce((sum, product) => 
-                                                    sum + (product?.totalCost || 0), 0);
-                                                return total + returnedTotal;
-                                            }, 0).toLocaleString()} сўм
+                                        {rentals.reduce((total, rental) => 
+                                                        total + (rental?.totalCost || 0), 0).toLocaleString()} сўм
                                         </span>
                                     </div>
                                 </div>
@@ -483,17 +453,31 @@ export default function CustomerDetailsPage() {
                                             <TableHead className="dark:text-gray-300">Тўлов тури</TableHead>
                                             <TableHead className="dark:text-gray-300">Тўлов суммаси</TableHead>
                                             <TableHead className="dark:text-gray-300">Чегирма</TableHead>
+                                            <TableHead className="dark:text-gray-300">Изоҳ</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {payments.map((payment, index) => (
-                                            <TableRow key={index} className="dark:border-gray-700">
-                                                <TableCell className="dark:text-gray-300">{new Date(payment.paymentDate).toLocaleDateString()}</TableCell>
-                                                <TableCell className="dark:text-gray-300">{payment.rental?.rentalNumber}</TableCell>
-                                                <TableCell className="dark:text-gray-300">{payment.paymentType}</TableCell>
-                                                <TableCell className="dark:text-gray-300">{payment.amount?.toLocaleString()} сўм</TableCell>
+                                        {payments.map((payment) => (
+                                            <TableRow key={payment._id} className="dark:border-gray-700">
+                                                <TableCell className="dark:text-gray-300">
+                                                    {new Date(payment.paymentDate).toLocaleDateString()}
+                                                </TableCell>
+                                                <TableCell className="dark:text-gray-300">
+                                                    {payment.rental?.rentalNumber || '-'}
+                                                </TableCell>
+                                                <TableCell className="dark:text-gray-300">
+                                                    {payment.paymentType === 'cash' ? 'Нақд' : 
+                                                     payment.paymentType === 'card' ? 'Пластик' : 
+                                                     payment.paymentType === 'transfer' ? 'Ўтказма' : '-'}
+                                                </TableCell>
+                                                <TableCell className="dark:text-gray-300">
+                                                    {payment.amount?.toLocaleString()} сўм
+                                                </TableCell>
                                                 <TableCell className="text-orange-600">
                                                     {payment.discount > 0 ? `${payment.discount?.toLocaleString()} сўм` : '-'}
+                                                </TableCell>
+                                                <TableCell className="dark:text-gray-300">
+                                                    {payment.description || '-'}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
@@ -634,7 +618,7 @@ export default function CustomerDetailsPage() {
                         {selectedRental && selectedProduct && (
                             <div className="space-y-4 pt-4">
                                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                                    <Label className="text-gray-600 dark:text-gray-300">Иjarа рақами</Label>
+                                    <Label className="text-gray-600 dark:text-gray-300">Ижара рақами</Label>
                                     <p className="text-lg font-medium text-gray-900 dark:text-gray-100">{selectedRental.rentalNumber}</p>
                                 </div>
                                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">

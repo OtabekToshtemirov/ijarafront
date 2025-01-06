@@ -283,25 +283,6 @@ export default function ProductsPage() {
                             </Select>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Minimal narx</label>
-                            <Input
-                                type="number"
-                                placeholder="Minimal narx"
-                                value={filters.minPrice}
-                                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Maksimal narx</label>
-                            <Input
-                                type="number"
-                                placeholder="Maksimal narx"
-                                value={filters.maxPrice}
-                                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                            />
-                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -325,7 +306,7 @@ export default function ProductsPage() {
                             {filteredProducts.map((product) => (
                                 <TableRow key={product._id}>
                                     <TableCell className="font-medium">{product.name}</TableCell>
-                                    <TableCell>{product.type}</TableCell>
+                                    <TableCell>{product.type == 'combo' ? 'Komplekt' : 'Yakka'}</TableCell>
                                     <TableCell>{product.dailyRate} so'm</TableCell>
                                     <TableCell>{product.quantity}</TableCell>
                                     <TableCell>{product.category}</TableCell>

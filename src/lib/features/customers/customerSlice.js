@@ -12,6 +12,15 @@ export const fetchCustomers = createAsyncThunk(
     }
 );
 
+// get customer by id
+export const fetchCustomerById = createAsyncThunk(
+    'customers/fetchCustomerById',
+    async (id) => {
+        const response = await axios.get(`${BASE_URL}/${id}`);
+        return response.data;
+    }
+);
+
 // Async thunk for creating a customer
 export const createCustomer = createAsyncThunk(
     'customers/createCustomer',

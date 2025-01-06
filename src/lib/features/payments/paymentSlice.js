@@ -15,7 +15,10 @@ export const fetchPayments = createAsyncThunk(
 export const fetchPaymentsByCustomerId = createAsyncThunk(
     'payments/fetchPaymentsByCustomerId',
     async (customerId) => {
+        console.log('Fetching payments for customer:', customerId);
+        console.log('API URL:', `${BASE_URL}/payments/customer/${customerId}`);
         const response = await axios.get(`${BASE_URL}/payments/customer/${customerId}`);
+        console.log('API Response:', response.data);
         // Sort payments by date in descending order (newest first)
         return response.data.sort((a, b) => new Date(b.paymentDate) - new Date(a.paymentDate));
     }
@@ -59,26 +62,30 @@ export const deletePayment = createAsyncThunk(
     }
 );
 
+
+
+const initialState = {
+    payments: [],
+    status: 'idle',
+    error: null,
+    addStatus: 'idle',
+    addError: null,
+    deleteStatus: 'idle',
+    deleteError: null
+};
+
 const paymentSlice = createSlice({
     name: 'payments',
-    initialState: {
-        payments: [],
-        status: 'idle',
-        error: null,
-        addStatus: 'idle',
-        addError: null,
-        deleteStatus: 'idle',
-        deleteError: null,
-    },
+    initialState,
     reducers: {
         clearAddStatus: (state) => {
             state.addStatus = 'idle';
             state.addError = null;
-        },
+        }
     },
     extraReducers: (builder) => {
         builder
-            // Handle fetchPayments
+            // Fetch all payments
             .addCase(fetchPayments.pending, (state) => {
                 state.status = 'loading';
             })
@@ -90,8 +97,7 @@ const paymentSlice = createSlice({
                 state.status = 'failed';
                 state.error = action.error.message;
             })
-            
-            // Handle fetchPaymentsByCustomerId
+            // Fetch payments by customer ID
             .addCase(fetchPaymentsByCustomerId.pending, (state) => {
                 state.status = 'loading';
             })

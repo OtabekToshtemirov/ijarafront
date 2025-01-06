@@ -469,7 +469,7 @@ export default function PaymentManagement() {
                         <TableCell>{(payment.amount || 0).toLocaleString()} so'm</TableCell>
                         <TableCell>{formatDate(payment.paymentDate)}</TableCell>
                         <TableCell>{payment.paymentType === "cash" ? "Naqd" : "Karta"}</TableCell>
-                        <TableCell>{payment.memo || "-"}</TableCell>
+                        <TableCell>{payment.description || "-"}</TableCell>
                         <TableCell>{payment.isPrepaid ? "Ha" : "Yo'q"}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">

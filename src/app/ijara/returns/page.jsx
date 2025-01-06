@@ -130,6 +130,7 @@ export default function Component() {
             [`${rentalId}-${productId}`]: newQuantity
         }));
     };
+ 
 
     const handleDiscountDaysChange = (rentalId, days) => {
         if (days < 0) days = 0;
@@ -785,7 +786,7 @@ export default function Component() {
                                                             size="icon"
                                                             onClick={() => {
                                                                 const currentValue = returnQuantities[key] || 0;
-                                                                if (currentValue < remainingQuantity) {
+                                                                if (currentValue <= remainingQuantity) {
                                                                     handleReturnQuantityChange(
                                                                         rental._id,
                                                                         prod.product._id,
