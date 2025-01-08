@@ -10,7 +10,8 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import  { ModeToggle} from "@/components/theme-toggle"
+import { ModeToggle } from "@/components/theme-toggle"
+import InteractiveCalendar from "./Calendar/Calendar"
 
 // Menu items.
 const items = [
@@ -59,10 +60,9 @@ const items = [
 export function AppSidebar() {
     return (
         <Sidebar>
-            <SidebarContent>
+            <SidebarContent className="flex flex-col h-full">
                 <SidebarGroup>
-                    <SidebarGroupLabel>Ижара маҳсулотлари
-                    </SidebarGroupLabel>
+                    <SidebarGroupLabel>Ижара маҳсулотлари</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <ModeToggle />
                         <SidebarMenu>
@@ -79,6 +79,9 @@ export function AppSidebar() {
                         </SidebarMenu>
                     </SidebarGroupContent>
                 </SidebarGroup>
+                <div className="mt-auto px-4 pb-4">
+                    <InteractiveCalendar />
+                </div>
             </SidebarContent>
         </Sidebar>
     )

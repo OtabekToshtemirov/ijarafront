@@ -572,130 +572,134 @@ export default function RentalsPage() {
             </div>
 
             {/* View Rental Dialog */}
+           
             <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-                <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                        <DialogTitle>Ижара маълумотлари</DialogTitle>
-                    </DialogHeader>
-                    {selectedRental && (
-                        <div className="grid gap-6">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <Label>Рақам</Label>
-                                    <p className="text-lg">{selectedRental.rentalNumber}</p>
-                                    <p className="text-sm text-muted-foreground">
-                                        {new Date(selectedRental.createdAt).toLocaleDateString()}
-                                    </p>
-                                </div>
-                                <div>
-                                    <Label>Статус</Label>
-                                    <p className="text-lg">
-                                        {selectedRental.status === 'active' ? 'Фаол' :
-                                         selectedRental.status === 'completed' ? 'Якунланган' :
-                                         'Бекор қилинган'}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div>
-                                <Label>Мижоз</Label>
-                                <p className="text-lg">{selectedRental.customer?.name}</p>
-                                <p className="text-sm text-muted-foreground">{selectedRental.customer?.phone}</p>
-                            </div>
-
-                            <div>
-                                <Label>Машина</Label>
-                                <p className="text-lg">{selectedRental.car?.carNumber || '-'}</p>
-                                <p className="text-sm text-muted-foreground">{selectedRental.car?.driverName || '-'}</p>
-                            </div>
-
-                            <div>
-                                <Label>Молиявий маълумотлар</Label>
-                                <div className="grid grid-cols-2 gap-4 mt-2">
-                                    <div>
-                                        <p className="text-lg font-medium">{selectedRental.totalCost?.toLocaleString()} сўм</p>
-                                        <p className="text-sm text-muted-foreground">Умумий сумма</p>
-                                    </div>
-                                    {selectedRental.payments?.length > 0 && (
-                                        <div>
-                                            <p className="text-lg font-medium text-green-600">
-                                                {selectedRental.totalPayments?.toLocaleString()} сўм
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">Тўланган</p>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="col-span-4 space-y-4">
-                                {selectedRental.borrowedProducts.map((item, index) => {
-                                    const product = products.find(p => p._id === item.product);
-                                    if (!product) return null;
-                                    
-                                    return (
-                                        <div 
-                                            key={index} 
-                                            className="flex items-center justify-between space-x-4 p-2 rounded border"
-                                        >
-                                            <div className="flex-1 space-y-1">
-                                                <div className="flex items-center">
-                                                    <span>{product.name}</span>
-                                                </div>
-                                                <div className="flex items-center space-x-4">
-                                                    <div className="flex items-center space-x-2">
-                                                        <Label>Soni:</Label>
-                                                        <Input
-                                                            type="number"
-                                                            value={item.quantity}
-                                                            onChange={(e) => handleProductChange(index, 'quantity', e.target.value)}
-                                                            className="w-20"
-                                                            min="1"
-                                                        />
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <Label>Kun:</Label>
-                                                        <Input
-                                                            type="number"
-                                                            value={item.days}
-                                                            onChange={(e) => handleProductChange(index, 'days', e.target.value)}
-                                                            className="w-20"
-                                                            min="1"
-                                                        />
-                                                    </div>
-                                                    <div className="flex items-center space-x-2">
-                                                        <Label>Kunlik narx:</Label>
-                                                        <Input
-                                                            type="number"
-                                                            value={item.dailyRate}
-                                                            onChange={(e) => handleProductChange(index, 'dailyRate', e.target.value)}
-                                                            className="w-32"
-                                                            min="0"
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleRemoveProduct(index)}
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    );
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Ижара маълумотлари</DialogTitle>
+            </DialogHeader>
+            {selectedRental && (
+                <div className="grid gap-6">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <Label>Рақам</Label>
+                            <p className="text-lg">{selectedRental.rentalNumber}</p>
+                            <p className="text-sm text-muted-foreground">
+                                {new Date(selectedRental.createdAt).toLocaleString('uz-UZ', { 
+                                    year: 'numeric',
+                                    month: '2-digit',
+                                    day: '2-digit',
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: false
                                 })}
-                            </div>
+                            </p>
+                        </div>
+                        <div>
+                            <Label>Статус</Label>
+                            <p className="text-lg">
+                                {selectedRental.status === 'active' ? 'Фаол' :
+                                 selectedRental.status === 'completed' ? 'Якунланган' :
+                                 'Бекор қилинган'}
+                            </p>
+                        </div>
+                    </div>
 
+                    <div>
+                        <Label>Мижоз</Label>
+                        <p className="text-lg">{selectedRental.customer?.name}</p>
+                        <p className="text-sm text-muted-foreground">{selectedRental.customer?.phone}</p>
+                    </div>
+
+                    <div>
+                        <Label>Машина</Label>
+                        <p className="text-lg">{selectedRental.car?.carNumber || '-'}</p>
+                        <p className="text-sm text-muted-foreground">{selectedRental.car?.driverName || '-'}</p>
+                    </div>
+
+                    <div>
+                        <Label>Молиявий маълумотлар</Label>
+                        <div className="grid grid-cols-2 gap-4 mt-2">
                             <div>
-                                <Label>Изоҳ</Label>
-                                <p className="text-lg">{selectedRental.description == '' ? 'Изоҳ мавжуд эмас' : selectedRental.description}</p>
+                                <p className="text-lg font-medium">{selectedRental.totalCost?.toLocaleString()} сўм</p>
+                                <p className="text-sm text-muted-foreground">Умумий сумма</p>
                             </div>
+                            <div>
+                                <p className="text-lg font-medium text-green-600">
+                                    {selectedRental.paidAmount?.toLocaleString()} сўм
+                                </p>
+                                <p className="text-sm text-muted-foreground">Тўланган</p>
+                            </div>
+                        </div>
+                    </div>
 
-                            {/* Mahsulotlar ro'yxati */}
+                    <div>
+                        <Label>Олинган маҳсулотлар</Label>
+                        {selectedRental.borrowedProducts.map((item, index) => (
+                            <div key={index} className="flex items-center justify-between space-x-4 p-2 rounded border mt-2">
+                                <div className="flex-1 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <span>{item.product?.name || 'Номаълум маҳсулот'}</span>
+                                        <span>{item.quantity} дона</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                        <span>Кунлик нарх: {item.dailyRate?.toLocaleString()} сўм</span>
+                                        <span>Олинган сана: {new Date(item.rentDate).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span>Бошланғич сана: {new Date(item.startDate).toLocaleDateString()}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div>
+                        <Label>Қайтарилган маҳсулотлар</Label>
+                        {selectedRental.returnedProducts.map((item, index) => (
+                            <div key={index} className="flex items-center justify-between space-x-4 p-2 rounded border mt-2">
+                                <div className="flex-1 space-y-1">
+                                    <div className="flex items-center justify-between">
+                                        <span>{item.product?.name || 'Номаълум маҳсулот'}</span>
+                                        <span>{item.quantity} дона</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm text-muted-foreground">
+                                        <span>Кунлик нарх: {item.dailyRate?.toLocaleString()} сўм</span>
+                                        <span>Қайтарилган сана: {new Date(item.returnDate).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span>Бошланғич сана: {new Date(item.startDate).toLocaleDateString()}</span>
+                                        <span>Кунлар сони: {item.days}</span>
+                                        <span>Жами: {item.totalCost?.toLocaleString()} сўм</span>
+                                    </div>
+                                    <div className="flex items-center justify-between text-sm">
+                                        <span>Чегирма: {item.discount?.toLocaleString()} сўм</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div>
+                        <Label>Изоҳ</Label>
+                        <p className="text-lg">{selectedRental.description || 'Изоҳ мавжуд эмас'}</p>
+                    </div>
+
+                    <div>
+                        <Label>Бошланиш санаси</Label>
+                        <p className="text-lg">{new Date(selectedRental.workStartDate).toLocaleDateString()}</p>
+                    </div>
+
+                    {selectedRental.endDate && (
+                        <div>
+                            <Label>Тугаш санаси</Label>
+                            <p className="text-lg">{new Date(selectedRental.endDate).toLocaleDateString()}</p>
                         </div>
                     )}
-                </DialogContent>
-            </Dialog>
+                </div>
+            )}
+          </DialogContent>
+        </Dialog>
 
             {/* Yashirin print komponenti */}
             <div style={{ display: "none" }}>
