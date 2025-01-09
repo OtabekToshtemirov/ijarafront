@@ -249,8 +249,8 @@ export default function CustomerDetailsPage() {
                                     <p className="text-gray-700 dark:text-gray-300">
                                         <span className="font-medium">Баланс:</span> 
                                         <span className={(totalPayments - getReturnHistory().reduce((total, item) => total + (item.totalCost || 0), 0)) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}>
-                                            {((totalPayments)-getReturnHistory().reduce((total, item) => total + (item.totalCost || 0), 0)-payments.reduce((total, payment) => 
-                                                    total + (payment.discount || 0), 0)).toLocaleString()} сўм
+                                            {((totalPayments)-getReturnHistory().reduce((total, item) => total + (item.totalCost || 0), 0))+payments.reduce((total, payment) => 
+                                                    total + (payment.discount || 0), 0)} сўм
                                         </span>
                                     </p>
                                     <p className="text-gray-700 dark:text-gray-300">

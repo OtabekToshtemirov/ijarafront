@@ -283,6 +283,25 @@ export default function ProductsPage() {
                             </Select>
                         </div>
 
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Minimal narx</label>
+                            <Input
+                                type="number"
+                                placeholder="Minimal narx"
+                                value={filters.minPrice}
+                                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium">Maksimal narx</label>
+                            <Input
+                                type="number"
+                                placeholder="Maksimal narx"
+                                value={filters.maxPrice}
+                                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                            />
+                        </div>
                     </div>
                 </CardContent>
             </Card>
@@ -305,10 +324,39 @@ export default function ProductsPage() {
                         <TableBody>
                             {filteredProducts.map((product) => (
                                 <TableRow key={product._id}>
-                                    <TableCell className="font-medium">{product.name}</TableCell>
-                                    <TableCell>{product.type == 'combo' ? 'Komplekt' : 'Yakka'}</TableCell>
-                                    <TableCell>{product.dailyRate} so'm</TableCell>
-                                    <TableCell>{product.quantity}</TableCell>
+                                    <TableCell className="font-medium">
+                                        {editingProduct?._id === product._id ? (
+                                            <Input
+                                                value={editedValues.name}
+                                                onChange={(e) => handleInputChange(e, 'name')}
+                                            />
+                                        ) : (
+                                            product.name
+                                        )}
+                                    </TableCell>
+                                    <TableCell>{product.type == 'single' ? 'Yakka' : 'Komplekt'}</TableCell>
+                                    <TableCell>
+                                        {editingProduct?._id === product._id ? (
+                                            <Input
+                                                type="number"
+                                                value={editedValues.dailyRate}
+                                                onChange={(e) => handleInputChange(e, 'dailyRate')}
+                                            />
+                                        ) : (
+                                            `${product.dailyRate} so'm`
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {editingProduct?._id === product._id ? (
+                                            <Input
+                                                type="number"
+                                                value={editedValues.quantity}
+                                                onChange={(e) => handleInputChange(e, 'quantity')}
+                                            />
+                                        ) : (
+                                            product.quantity
+                                        )}
+                                    </TableCell>
                                     <TableCell>{product.category}</TableCell>
                                     <TableCell>
                                         <Badge 
@@ -332,13 +380,32 @@ export default function ProductsPage() {
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleEditProduct(product)}
-                                            >
-                                                <Edit2 className="h-4 w-4" />
-                                            </Button>
+                                            {editingProduct?._id === product._id ? (
+                                                <>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={handleSaveEdit}
+                                                    >
+                                                        <Check className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        onClick={handleCancelEdit}
+                                                    >
+                                                        <X className="h-4 w-4" />
+                                                    </Button>
+                                                </>
+                                            ) : (
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleEditProduct(product)}
+                                                >
+                                                    <Edit2 className="h-4 w-4" />
+                                                </Button>
+                                            )}
                                             <Button
                                                 variant="ghost"
                                                 size="icon"

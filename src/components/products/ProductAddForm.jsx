@@ -114,6 +114,7 @@ export default function ProductAddForm() {
                 ...newProduct,
                 dailyRate: Number(newProduct.dailyRate),
                 quantity: Number(newProduct.quantity),
+                dailyRate: Number(newProduct.dailyRate),
                 parts: newProduct.type === 'combo' 
                     ? newProduct.parts.map(part => ({
                         product: part.productId,
@@ -328,6 +329,21 @@ export default function ProductAddForm() {
                                 </div>
                             </div>
                         )}
+                        {/* kunlik narx */}
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="dailyRate" className="text-right">
+                                Kunlik narx
+                            </Label>
+                            <Input
+                                id="dailyRate"
+                                type="number"
+                                value={newProduct.dailyRate || ''}
+                                onChange={(e) => handleInputChange('dailyRate', e.target.value)}
+                                className="col-span-3"
+                                min="0"
+                                required
+                            />
+                        </div>
 
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="quantity" className="text-right">
