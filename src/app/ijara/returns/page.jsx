@@ -158,7 +158,7 @@ export default function Component() {
 
         // Qaytarish sanasi ish boshlash sanasidan oldin bo'lmasligi kerak
         if (returnDate < new Date(rental.workStartDate)) {
-            toast.error("Qaytarish sanasi ish boshlash sanasidan oldin bo'lishi mumkin emas");
+            toast.error("Қайтариш санаси иш бошлаш санасидан олдин бўлиши мумкин эмас");
             return;
         }
 
@@ -221,11 +221,11 @@ export default function Component() {
                     [key]: ''
                 }));
 
-                toast.success("Mahsulot muvaffaqiyatli qaytarildi");
+                toast.success("Маҳсулот муваффақиятли қайтарилди");
             }
         } catch (error) {
             console.error('Return error:', error);
-            toast.error(error.message || "Xatolik yuz berdi");
+            toast.error(error.message || "Хатолик юз берди");
         }
     };
 
@@ -239,7 +239,7 @@ export default function Component() {
         try {
             // Validate rental exists
             if (!selectedCustomer?.rentals?.[0]) {
-                toast.error("Ijara ma'lumotlari topilmadi");
+                toast.error("Ижара маълумотлари топилмади");
                 return;
             }
 
@@ -254,7 +254,7 @@ export default function Component() {
 
             // Validate amount
             if (totalAmount <= 0) {
-                toast.error("To'lov summasi noto'g'ri");
+                toast.error("Тўлов суммаси нотўғри");
                 return;
             }
 
@@ -263,7 +263,7 @@ export default function Component() {
             
             // Prepare returned products summary for description
             const productsSummary = returnedProducts.map(p => 
-                `${p.product?.name} (${p.quantity} dona)`
+                `${p.product?.name} (${p.quantity} дона)`
             ).join(', ');
 
             // Prepare payment data
@@ -273,17 +273,17 @@ export default function Component() {
                 amount: finalAmount,
                 discount: Number(totalDiscount),
                 paymentType: 'cash',
-                description: `Qaytarish to'lovi: ${productsSummary} - Chegirma: ${totalDiscount} so'm - ${new Date().toLocaleDateString()}`
+                description: `Қайтариш тўлови: ${productsSummary} - Чегирма: ${totalDiscount} сўм - ${new Date().toLocaleDateString()}`
             };
 
             console.log('Sending payment data:', paymentData);
 
             // Create payment
             const response = await dispatch(createPayment(paymentData)).unwrap();
-            console.log('To\'lov natijasi:', response);
+            console.log('Тўлов натижаси:', response);
 
             if (response.success) {
-                toast.success("To'lov muvaffaqiyatli saqlandi");
+                toast.success("Тўлов муваффақиятли сақланди");
                 
                 // Update data
                 await Promise.all([
@@ -301,11 +301,11 @@ export default function Component() {
                     window.location.reload();
                 }, 1000);
             } else {
-                toast.error(response.message || "To'lov saqlashda xatolik yuz berdi");
+                toast.error(response.message || "Тўлов сақлашда хатолик юз берди");
             }
         } catch (error) {
-            console.error('To\'lov xatosi:', error);
-            toast.error(error.message || "To'lov saqlashda xatolik yuz berdi");
+            console.error('Тўлов хатоси:', error);
+            toast.error(error.message || "Тўлов сақлашда хатолик юз берди");
         }
     };
 
@@ -359,7 +359,7 @@ export default function Component() {
     return (
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold">Maxsulotlarni qaytarish</h1>
+                <h1 className="text-4xl font-bold">Маҳсулотларни қайтариш</h1>
             </div>
 
             <div className="flex gap-4 mb-6">
@@ -367,7 +367,7 @@ export default function Component() {
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Mijoz ismi yoki telefon raqami bo'yicha qidirish"
+                            placeholder="Мижоз исми ёки телефон рақами бўйича қидириш"
                             className="pl-8"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
@@ -382,10 +382,10 @@ export default function Component() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Mijoz</TableHead>
-                                <TableHead>Telefon</TableHead>
-                                <TableHead>Faol ijaralar</TableHead>
-                                <TableHead>Qaytarilmagan tovarlar</TableHead>
+                                <TableHead>Мижоз</TableHead>
+                                <TableHead>Телефон</TableHead>
+                                <TableHead>Фаол ижаралар</TableHead>
+                                <TableHead>Қайтарилмаган товарлар</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -397,7 +397,7 @@ export default function Component() {
                                     <TableCell>{item.totalRentals}</TableCell>
                                     <TableCell>
                                         <Badge variant="secondary">
-                                            {item.unreturnedProducts} dona
+                                            {item.unreturnedProducts} дона
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -405,7 +405,7 @@ export default function Component() {
                                             variant="outline"
                                             onClick={() => setSelectedCustomer(item)}
                                         >
-                                            Qaytarish
+                                            Қайтариш
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -413,7 +413,7 @@ export default function Component() {
                             {filteredCustomers.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-4">
-                                        Qaytarilmagan mahsulotlari bor mijozlar topilmadi
+                                    Қайтарилмаган маҳсулотлари бор мижозлар топилмади
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -426,36 +426,36 @@ export default function Component() {
                     <div className="flex items-center justify-between border-b pb-4">
                         <div className="space-y-1">
                             <h2 className="text-2xl font-semibold tracking-tight">
-                                Qaytarilgan mahsulotlar hisoboti
+                            Қайтарилган маҳсулотлар ҳисоботи
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Barcha ijara qaytarishlari bo'yicha umumiy hisob
+                            Барча ижара қайтаришлари бўйича умумий ҳисоб
                             </p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
                             <div className="space-y-2 border rounded-md p-4 bg-white">
                                 <div>
-                                    <Label>Hisoblangan summa</Label>
+                                    <Label>Ҳисобланган сумма</Label>
                                     <div className="text-lg font-semibold">
-                                        {(returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0).toLocaleString()} so'm
+                                        {(returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0).toLocaleString()} сум
                                     </div>
                                 </div>
 
                                 <div>
-                                    <Label>Chegirma summasi</Label>
+                                    <Label>Чегирма суммаси</Label>
                                     <Input
                                         type="number"
                                         value={totalDiscount}
                                         onChange={(e) => handleDiscountChange(e.target.value)}
-                                        placeholder="Chegirma summasi"
+                                        placeholder="Чегирма суммаси"
                                         className="mt-1"
                                     />
                                 </div>
 
                                 <div>
-                                    <Label>To'lov miqdori</Label>
+                                    <Label>Тўлов миқдори</Label>
                                     <div className="text-xl font-bold text-primary">
-                                        {((returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0) - (totalDiscount || 0)).toLocaleString()} so'm
+                                        {((returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0) - (totalDiscount || 0)).toLocaleString()} сум
                                     </div>
                                 </div>
 
@@ -463,12 +463,12 @@ export default function Component() {
                                     className="w-full"
                                     onClick={handlePayment}
                                 >
-                                    To'lovni saqlash
+                                    Тўловни сақлаш
                                 </Button>
 
                                 {returnedProducts.length > 0 && (
                                     <div className="w-full border rounded-md p-4 bg-white mb-4">
-                                        <h3 className="text-lg font-semibold mb-3">Qaytarilgan tovarlar</h3>
+                                        <h3 className="text-lg font-semibold mb-3">Қайтарилган мулклар</h3>
                                         <div className="space-y-2">
                                             {returnedProducts.map((product, index) => (
                                                 <div key={index} 
@@ -476,18 +476,18 @@ export default function Component() {
                                                     <div>
                                                         <div className="font-medium">{product.product.name}</div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            {(product.quantity || 0)} dona • {(product.days || 0)} kun
+                                                            {(product.quantity || 0)} дона • {(product.days || 0)} кун
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="font-semibold">
-                                                            {(product.totalCost || 0).toLocaleString()} so'm
+                                                            {(product.totalCost || 0).toLocaleString()} сум
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            ({(product.days || 0)} kun × {(product.quantity || 0)} dona × {((product.dailyRate || 0) || 0).toLocaleString()} so'm)
+                                                            ({(product.days || 0)} кун × {(product.quantity || 0)} дона × {((product.dailyRate || 0) || 0).toLocaleString()} сум)
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            Chegirma: {((product.discount || 0) || 0).toLocaleString()} so'm
+                                                        Чегирма: {((product.discount || 0) || 0).toLocaleString()} сум
                                                         </div>
                                                     </div>
                                                 </div>
@@ -497,13 +497,13 @@ export default function Component() {
                                 )}
                                 {calculateAllCurrentReturnTotal(localRentals) > 0 && (
                                     <div className="text-base text-muted-foreground">
-                                        Joriy qaytarish: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} so'm
+                                        Жорий қайтариш: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} so'm
                                     </div>
                                 )}
                             </div>
                             {calculateAllCurrentReturnTotal(localRentals) > 0 && (
                                 <div className="text-base text-muted-foreground">
-                                    Joriy qaytarish: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} so'm
+                                    Жорий қайтариш: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} so'm
                                 </div>
                             )}
                         </div>
@@ -520,13 +520,13 @@ export default function Component() {
                             <p className="text-muted-foreground">{selectedCustomer.customer.phone}</p>
                             <div className="flex items-center gap-4">
                                 <Badge variant={calculateCustomerBalance(selectedCustomer.rentals) > 0 ? "destructive" : "success"}>
-                                    Balans: {(selectedCustomer.customer.balance || 0).toLocaleString()} so'm
+                                    Баланс: {(selectedCustomer.customer.balance || 0).toLocaleString()} so'm
                                 </Badge>
                                 <Badge variant="outline">
-                                    Faol ijaralar: {selectedCustomer.totalRentals}
+                                    Фаол ижаралар: {selectedCustomer.totalRentals}
                                 </Badge>
                                 <Badge variant="outline">
-                                    Qaytarilmagan: {selectedCustomer.unreturnedProducts} dona
+                                Қайтарилмаган: {selectedCustomer.unreturnedProducts} дона
                                 </Badge>
                             </div>
                         </div>
@@ -535,7 +535,7 @@ export default function Component() {
                             variant="outline"
                             onClick={() => setSelectedCustomer(null)}
                         >
-                            Orqaga
+                            Орқага
                         </Button>
                     </div>
 
@@ -544,18 +544,18 @@ export default function Component() {
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <h3 className="text-lg font-semibold">
-                                        Ijara #{rental.rentalNumber}
+                                        Ижара #{rental.rentalNumber}
                                     </h3>
                                     <h2>
-                                        Olish sanasi: {new Date(rental.createdAt).toLocaleDateString()}
+                                    Олиш санаси: {new Date(rental.createdAt).toLocaleDateString()}
                                     </h2>
                                     <p className="text-sm text-muted-foreground">
-                                        Ish boshlanish sanasi: {new Date(rental.workStartDate).toLocaleDateString()}
+                                        Иш бошлаш санаси: {new Date(rental.workStartDate).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
-                                        <Label>Chegirma kunlar:</Label>
+                                        <Label>Чегирма кунлар:</Label>
                                         <div className="flex items-center gap-2">
                                             <Button
                                                 variant="outline"
@@ -599,18 +599,18 @@ export default function Component() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Mahsulot</TableHead>
-                                        <TableHead>Ish boshlash sanasi</TableHead>
-                                        <TableHead>Qaytarish sanasi</TableHead>
-                                        <TableHead>Jami kunlar</TableHead>
-                                        <TableHead>Chegirma kunlar</TableHead>
-                                        <TableHead>Hisoblanadigan kunlar</TableHead>
-                                        <TableHead>Kunlik narx</TableHead>
-                                        <TableHead>Miqdor</TableHead>
-                                        <TableHead>Qaytarilgan</TableHead>
-                                        <TableHead>Qoldiq</TableHead>
-                                        <TableHead>Qaytarish</TableHead>
-                                        <TableHead>Summa</TableHead>
+                                        <TableHead>Махсулот</TableHead>
+                                        <TableHead>Иш бошлаш санаси</TableHead>
+                                        <TableHead>Қайтариш санаси</TableHead>
+                                        <TableHead>Жами кунлар</TableHead>
+                                        <TableHead>Чегирма кунлар</TableHead>
+                                        <TableHead>Хисобланадиган кунлар</TableHead>
+                                        <TableHead>Кунлик нарх</TableHead>
+                                        <TableHead>Микдор</TableHead>
+                                        <TableHead>Қайтариш</TableHead>
+                                        <TableHead>Қолдиқ</TableHead>
+                                        <TableHead>Қайтариш</TableHead>
+                                        <TableHead>Сумма</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -622,19 +622,25 @@ export default function Component() {
                                             .flatMap(r => r.returnedProducts || [])
                                             .filter(rp => rp.product?._id?.toString() === prod.product._id.toString())
                                             .reduce((sum, rp) => sum + (rp.quantity || 0), 0);
+                                            console.log(returnedQuantity + 'returnedQuantity');
 
                                         // Joriy qaytarish miqdorini hisoblash
                                         const currentReturnQuantity = Number(returnQuantities[`${rental._id}-${prod.product._id}`]) || 0;
+                                        console.log(currentReturnQuantity + 'currentReturnQuantity');
 
                                         // Natijani ko'rsatish
                                         const totalReturnedQuantity = returnedQuantity + currentReturnQuantity;
+                                        console.log(totalReturnedQuantity + 'totalReturnedQuantity');
 
                                         // Hide if all items are returned
                                         if (totalReturnedQuantity >= prod.quantity) return null;
 
                                         const remainingQuantity = Math.max(0, prod.quantity - totalReturnedQuantity );
+                                        console.log(remainingQuantity + 'remainingQuantity');
+
                                         const key = `${rental._id}-${prod.product._id}`;
-                                        
+                                        console.log(returnQuantities[key] + 'returnQuantities key');
+
                                         // Calculate days
                                         const returnDate = returnDates[key] || new Date().toISOString().split('T')[0];
                                         const { days, totalDays } = calculateDays(
@@ -658,7 +664,7 @@ export default function Component() {
                                                             {prod.product.name}
                                                             {prod.product.type === 'combo' && (
                                                                 <Badge variant="secondary" className="ml-2">
-                                                                    Kombinatsiya
+                                                                    Комбинация
                                                                 </Badge>
                                                             )}
                                                         </span>
@@ -667,11 +673,11 @@ export default function Component() {
                                                         </p>
                                                         {prod.product.type === 'combo' && prod.product.parts && (
                                                             <div className="mt-2 space-y-1">
-                                                                <p className="text-sm font-medium text-muted-foreground">Qismlar:</p>
+                                                                <p className="text-sm font-medium text-muted-foreground">Қисмлар:</p>
                                                                 {prod.product.parts.map((part, index) => (
                                                                     <div key={index} className="ml-4 text-sm text-muted-foreground flex justify-between">
                                                                         <span>{part.product.name}</span>
-                                                                        <span>{(part.quantity || 0)} dona × {(part.dailyRate || 0).toLocaleString()} so'm</span>
+                                                                        <span>{(part.quantity || 0)} дона × {(part.dailyRate || 0).toLocaleString()} сум</span>
                                                                     </div>
                                                                 ))}
                                                             </div>
@@ -717,7 +723,7 @@ export default function Component() {
                                                     {(totalDays || 0)}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {((prod.dailyRate || 0) || 0).toLocaleString()} so'm
+                                                    {((prod.dailyRate || 0) || 0).toLocaleString()} сўм
                                                 </TableCell>
                                                 <TableCell className="text-center">
                                                     {(prod.quantity || 0)}
@@ -802,19 +808,19 @@ export default function Component() {
                                                         <Button 
                                                             variant="outline"
                                                             onClick={() => handleReturn(rental, prod)}
-                                                            disabled={!returnQuantities[key]}
+                                                            disabled={!returnQuantities[key] > remainingQuantity}
                                                         >
-                                                            Qaytarish
+                                                            Қайтариш
                                                         </Button>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
                                                         <span className="font-medium">
-                                                            {(totalCost || 0).toLocaleString()} so'm
+                                                            {(totalCost || 0).toLocaleString()} сум
                                                         </span>
                                                         <span className="text-sm text-muted-foreground">
-                                                            ({(totalDays || 0)} kun × {(currentReturnQuantity || 0)} dona × {((prod.dailyRate || 0) || 0).toLocaleString()} so'm)
+                                                            ({(totalDays || 0)} кун × {(currentReturnQuantity || 0)} dona × {((prod.dailyRate || 0) || 0).toLocaleString()} сум)
                                                         </span>
 
                                                     

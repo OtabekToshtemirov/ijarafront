@@ -31,12 +31,12 @@ const items = [
         icon: Inbox,
     },
     {
-        title: "Маҳсулотлар",
+        title: "Мулклар",
         url: "/products",
         icon: PackageSearch,
     },
     {
-        title: "Машиналар",
+        title: "Транспорт",
         url: "/cars",
         icon: Car,
     },
@@ -71,7 +71,7 @@ export function AppSidebar() {
                                     <SidebarMenuButton asChild>
                                         <Link href={item.url}>
                                             <item.icon />
-                                            <span>{item.title}</span>
+                                            <span className="ml-4 text-lg">{item.title}</span>
                                         </Link>
                                     </SidebarMenuButton>
                                 </SidebarMenuItem>

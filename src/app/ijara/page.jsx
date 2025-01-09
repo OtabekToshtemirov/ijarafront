@@ -177,7 +177,7 @@ export default function RentalsPage() {
             await dispatch(updateRental({ id: rental._id, data: updateData })).unwrap();
             toast.success(`Ижара ҳолати ${newStatus === 'active' ? 'Фаол' : 
                                        newStatus === 'completed' ? 'Якунланган' : 
-                                       'Бекор қилинди'} га ўзгартирildi`);
+                                       'Бекор қилинди'} га ўзгартирилди`);
             
             dispatch(fetchRentals());
         } catch (error) {

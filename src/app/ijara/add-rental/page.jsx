@@ -262,7 +262,7 @@ export default function AddRentalPage() {
     };
 
     const handleAddCustomer = async (e) => {
-        e.preventDefault();
+
         try {
             if (!newCustomer.name || !newCustomer.phone) {
                 toast.error("Iltimos, barcha maydonlarni to'ldiring");
@@ -290,7 +290,7 @@ export default function AddRentalPage() {
     };
 
     const handleAddCar = async (e) => {
-        e.preventDefault();
+        
         try {
             if (!newCar.carNumber || !newCar.driverName || !newCar.driverPhone) {
                 toast.error("Iltimos, barcha maydonlarni to'ldiring");
@@ -317,117 +317,117 @@ export default function AddRentalPage() {
         }
     };
 
-    const generatePDF = (rental, customer) => {
-        // 80mm = 226.772 points in PDF
-        const width = 226.772;
-        const height = 400; // Uzunlikni kontentga qarab avtomatik sozlanadi
+    // const generatePDF = (rental, customer) => {
+    //     // 80mm = 226.772 points in PDF
+    //     const width = 226.772;
+    //     const height = 400; // Uzunlikni kontentga qarab avtomatik sozlanadi
         
-        const doc = new jsPDF({
-            unit: 'pt',
-            format: [width, height],
-            orientation: 'portrait'
-        });
+    //     const doc = new jsPDF({
+    //         unit: 'pt',
+    //         format: [width, height],
+    //         orientation: 'portrait'
+    //     });
 
-        // Sahifa kengligi
-        const pageWidth = doc.internal.pageSize.width;
-        const margin = 20;
-        const contentWidth = pageWidth - (margin * 2);
+    //     // Sahifa kengligi
+    //     const pageWidth = doc.internal.pageSize.width;
+    //     const margin = 20;
+    //     const contentWidth = pageWidth - (margin * 2);
         
-        // Shrift o'lchamlarini kichikroq qilish
-        doc.setFontSize(12);
-        doc.text("IJARA SHARTNOMASI", pageWidth / 2, margin, { align: "center" });
+    //     // Shrift o'lchamlarini kichikroq qilish
+    //     doc.setFontSize(12);
+    //     doc.text("IJARA SHARTNOMASI", pageWidth / 2, margin, { align: "center" });
         
-        let yPos = margin + 20;
+    //     let yPos = margin + 20;
         
-        // Asosiy ma'lumotlar
-        doc.setFontSize(8);
-        doc.text(`№ ${rental.rentalNumber}`, margin, yPos);
-        doc.text(`Sana: ${new Date().toLocaleDateString()}`, margin, yPos + 10);
+    //     // Asosiy ma'lumotlar
+    //     doc.setFontSize(8);
+    //     doc.text(`№ ${rental.rentalNumber}`, margin, yPos);
+    //     doc.text(`Sana: ${new Date().toLocaleDateString()}`, margin, yPos + 10);
         
-        yPos += 30;
+    //     yPos += 30;
         
-        // Mijoz ma'lumotlari
-        doc.text("MIJOZ MA'LUMOTLARI:", margin, yPos);
-        yPos += 12;
-        doc.text(`Ism: ${customer.name}`, margin, yPos);
-        yPos += 10;
-        doc.text(`Tel: ${customer.phone}`, margin, yPos);
-        yPos += 10;
-        doc.text(`Manzil: ${customer.address}`, margin, yPos);
+    //     // Mijoz ma'lumotlari
+    //     doc.text("MIJOZ MA'LUMOTLARI:", margin, yPos);
+    //     yPos += 12;
+    //     doc.text(`Ism: ${customer.name}`, margin, yPos);
+    //     yPos += 10;
+    //     doc.text(`Tel: ${customer.phone}`, margin, yPos);
+    //     yPos += 10;
+    //     doc.text(`Manzil: ${customer.address}`, margin, yPos);
         
-        yPos += 20;
+    //     yPos += 20;
         
-        // Ijara ma'lumotlari
-        doc.text("IJARA MA'LUMOTLARI:", margin, yPos);
-        yPos += 12;
-        doc.text(`Boshlanish: ${new Date(rentalForm.workStartDate).toLocaleDateString()}`, margin, yPos);
-        yPos += 10;
-        doc.text(`Oldindan to'lov: ${rentalForm.prepaidAmount?.toLocaleString()} so'm`, margin, yPos);
-        yPos += 10;
-        doc.text(`Umumiy narx: ${rentalForm.totalCost?.toLocaleString()} so'm`, margin, yPos);
+    //     // Ijara ma'lumotlari
+    //     doc.text("IJARA MA'LUMOTLARI:", margin, yPos);
+    //     yPos += 12;
+    //     doc.text(`Boshlanish: ${new Date(rentalForm.workStartDate).toLocaleDateString()}`, margin, yPos);
+    //     yPos += 10;
+    //     doc.text(`Oldindan to'lov: ${rentalForm.prepaidAmount?.toLocaleString()} so'm`, margin, yPos);
+    //     yPos += 10;
+    //     doc.text(`Umumiy narx: ${rentalForm.totalCost?.toLocaleString()} so'm`, margin, yPos);
         
-        yPos += 20;
+    //     yPos += 20;
         
-        // Mahsulotlar jadvali
-        const tableData = rentalForm.borrowedProducts.map(product => [
-            products.find(p => p._id === product.product).name,
-            product.quantity.toString(),
-            `${product.dailyRate?.toLocaleString()}`,
-            `${(product.quantity * product.dailyRate)?.toLocaleString()}`
-        ]);
+    //     // Mahsulotlar jadvali
+    //     const tableData = rentalForm.borrowedProducts.map(product => [
+    //         products.find(p => p._id === product.product).name,
+    //         product.quantity.toString(),
+    //         `${product.dailyRate?.toLocaleString()}`,
+    //         `${(product.quantity * product.dailyRate)?.toLocaleString()}`
+    //     ]);
         
-        doc.autoTable({
-            startY: yPos,
-            head: [['Mahsulot', 'Soni', 'Narx', 'Jami']],
-            body: tableData,
-            theme: 'plain',
-            styles: { 
-                fontSize: 8,
-                cellPadding: 3,
-                overflow: 'linebreak',
-                cellWidth: 'wrap'
-            },
-            columnStyles: {
-                0: { cellWidth: 80 },
-                1: { cellWidth: 30 },
-                2: { cellWidth: 40 },
-                3: { cellWidth: 40 }
-            },
-            margin: { left: margin, right: margin },
-            tableWidth: contentWidth
-        });
+    //     doc.autoTable({
+    //         startY: yPos,
+    //         head: [['Mahsulot', 'Soni', 'Narx', 'Jami']],
+    //         body: tableData,
+    //         theme: 'plain',
+    //         styles: { 
+    //             fontSize: 8,
+    //             cellPadding: 3,
+    //             overflow: 'linebreak',
+    //             cellWidth: 'wrap'
+    //         },
+    //         columnStyles: {
+    //             0: { cellWidth: 80 },
+    //             1: { cellWidth: 30 },
+    //             2: { cellWidth: 40 },
+    //             3: { cellWidth: 40 }
+    //         },
+    //         margin: { left: margin, right: margin },
+    //         tableWidth: contentWidth
+    //     });
         
-        // Izoh qo'shish
-        if (rentalForm.description) {
-            yPos = doc.previousAutoTable.finalY + 10;
-            doc.text("Izoh:", margin, yPos);
-            doc.text(rentalForm.description, margin, yPos + 10, {
-                maxWidth: contentWidth,
-                lineHeightFactor: 1.2
-            });
-        }
+    //     // Izoh qo'shish
+    //     if (rentalForm.description) {
+    //         yPos = doc.previousAutoTable.finalY + 10;
+    //         doc.text("Izoh:", margin, yPos);
+    //         doc.text(rentalForm.description, margin, yPos + 10, {
+    //             maxWidth: contentWidth,
+    //             lineHeightFactor: 1.2
+    //         });
+    //     }
 
-        // Chop etish
-        doc.autoPrint();
-        doc.output('dataurlnewwindow');
-    };
+    //     // Chop etish
+    //     doc.autoPrint();
+    //     doc.output('dataurlnewwindow');
+    // };
 
-    return (
+    return (    
         <div className="container mx-auto py-10">
             {/* Customer Modal */}
             <Dialog open={customerModalOpen} onOpenChange={setCustomerModalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Yangi mijoz qo'shish</DialogTitle>
+                        <DialogTitle>Янги мижоз қўшиш</DialogTitle>
                         <DialogDescription>
-                            Yangi mijoz ma'lumotlarini kiriting
+                        Янги мижоз маълумотларини киритинг
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleAddCustomer}>
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="customerName" className="text-right">
-                                    Ism
+                                Исм
                                 </Label>
                                 <Input
                                     id="customerName"
@@ -439,7 +439,7 @@ export default function AddRentalPage() {
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="customerPhone" className="text-right">
-                                    Telefon
+                                    Телефон
                                 </Label>
                                 <Input
                                     id="customerPhone"
@@ -451,7 +451,7 @@ export default function AddRentalPage() {
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="customerAddress" className="text-right">
-                                    Manzil
+                                    Манзил
                                 </Label>
                                 <Input
                                     id="customerAddress"
@@ -462,7 +462,7 @@ export default function AddRentalPage() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button type="submit">Saqlash</Button>
+                            <Button type="submit">Сақлаш</Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
@@ -472,16 +472,16 @@ export default function AddRentalPage() {
             <Dialog open={carModalOpen} onOpenChange={setCarModalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Yangi mashina qo'shish</DialogTitle>
+                        <DialogTitle>Янги машина қўшиш</DialogTitle>
                         <DialogDescription>
-                            Yangi mashina ma'lumotlarini kiriting
+                        Янги машина маълумотларини киритинг
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleAddCar}>
                         <div className="grid gap-4 py-4">
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="carNumber" className="text-right">
-                                    Mashina raqami
+                                Транспорт рақами
                                 </Label>
                                 <Input
                                     id="carNumber"
@@ -493,7 +493,7 @@ export default function AddRentalPage() {
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="driverName" className="text-right">
-                                    Haydovchi
+                                Ҳайдовчи
                                 </Label>
                                 <Input
                                     id="driverName"
@@ -505,7 +505,7 @@ export default function AddRentalPage() {
                             </div>
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <Label htmlFor="driverPhone" className="text-right">
-                                    Telefon
+                                Ҳайдовчи телефон
                                 </Label>
                                 <Input
                                     id="driverPhone"
@@ -526,30 +526,73 @@ export default function AddRentalPage() {
             <div className="mb-6">
                 <Link href="/ijara" className="flex w-20 items-center text-sm text-muted-foreground hover:text-primary">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Orqaga
+                    Орқага
                 </Link>
             </div>
 
             <Card>
-                <CardHeader>
-                    <CardTitle>Yangi ijara</CardTitle>
-                </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSubmit} className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div className="space-y-2">
+                            {/* Mijoz formasi */}
+                            <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <label>Mijoz</label>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        className="flex items-center text-sm text-muted-foreground hover:text-primary"
-                                        onClick={() => setCustomerModalOpen(true)}
-                                    >
-                                        <UserPlus className="h-4 w-4 mr-1" />
-                                        Yangi mijoz
-                                    </Button>
+                                    <label>Янги мижоз</label>
                                 </div>
+                                <div className="grid gap-4">
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="customerName" className="text-right">
+                                            Исм
+                                        </Label>
+                                        <Input
+                                            id="customerName"
+                                            value={newCustomer.name}
+                                            onChange={(e) => setNewCustomer(prev => ({ ...prev, name: e.target.value }))}
+                                            className="col-span-3"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="customerPhone" className="text-right">
+                                            Телефон
+                                        </Label>
+                                        <Input
+                                            id="customerPhone"
+                                            value={newCustomer.phone}
+                                            onChange={(e) => setNewCustomer(prev => ({ ...prev, phone: e.target.value }))}
+                                            className="col-span-3"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="customerAddress" className="text-right">
+                                            Манзил
+                                        </Label>
+                                        <Input
+                                            id="customerAddress"
+                                            value={newCustomer.address}
+                                            onChange={(e) => setNewCustomer(prev => ({ ...prev, address: e.target.value }))}
+                                            className="col-span-3"
+                                        />
+                                    </div>
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={() => handleAddCustomer()}
+                                    className="w-full"
+                                >
+                                    Сақлаш
+                                </Button>
+
+                                <div className="relative my-6">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase">
+                                        <span className="bg-background px-2 text-muted-foreground">
+                                            Ёки мавжуд мижозни танланг
+                                        </span>
+                                    </div>
+                                </div>
+
                                 <Select
                                     value={rentalForm.customer}
                                     onValueChange={(value) => {
@@ -560,13 +603,13 @@ export default function AddRentalPage() {
                                     }}
                                 >
                                     <SelectTrigger className={validationErrors.customer ? 'border-red-500' : ''}>
-                                        <SelectValue placeholder="Mijozni tanlang" />
+                                        <SelectValue placeholder="Мижозни танланг" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <div className="px-3 pb-2">
                                             <Input
                                                 type="text"
-                                                placeholder="Mijozni qidirish..."
+                                                placeholder="Мижозни қидириш..."
                                                 value={customerSearch}
                                                 onChange={(e) => setCustomerSearch(e.target.value)}
                                             />
@@ -579,29 +622,72 @@ export default function AddRentalPage() {
                                             ))
                                         ) : (
                                             <div className="px-3 py-2 text-sm text-muted-foreground">
-                                                Mijoz topilmadi
+                                                Мижоз топилмади
                                             </div>
                                         )}
                                     </SelectContent>
                                 </Select>
-                                {validationErrors.customer && (
-                                    <p className="text-sm text-red-500">{validationErrors.customer}</p>
-                                )}
                             </div>
 
-                            <div className="space-y-2">
+                            {/* Mashina formasi */}
+                            <div className="space-y-4">
                                 <div className="flex justify-between items-center">
-                                    <label>Mashina</label>
-                                    <Button
-                                        type="button"
-                                        variant="ghost"
-                                        className="flex items-center text-sm text-muted-foreground hover:text-primary"
-                                        onClick={() => setCarModalOpen(true)}
-                                    >
-                                        <Car className="h-4 w-4 mr-1" />
-                                        Yangi mashina
-                                    </Button>
+                                    <label>Янги транспорт</label>
                                 </div>
+                                <div className="grid gap-4">
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="carNumber" className="text-right">
+                                            Рақами
+                                        </Label>
+                                        <Input
+                                            id="carNumber"
+                                            value={newCar.carNumber}
+                                            onChange={(e) => setNewCar(prev => ({ ...prev, carNumber: e.target.value }))}
+                                            className="col-span-3"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="driverName" className="text-right">
+                                            Ҳайдовчи
+                                        </Label>
+                                        <Input
+                                            id="driverName"
+                                            value={newCar.driverName}
+                                            onChange={(e) => setNewCar(prev => ({ ...prev, driverName: e.target.value }))}
+                                            className="col-span-3"
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="driverPhone" className="text-right">
+                                            Телефон
+                                        </Label>
+                                        <Input
+                                            id="driverPhone"
+                                            value={newCar.driverPhone}
+                                            onChange={(e) => setNewCar(prev => ({ ...prev, driverPhone: e.target.value }))}
+                                            className="col-span-3"
+                                        />
+                                    </div>
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={() => handleAddCar()}
+                                    className="w-full"
+                                >
+                                    Сақлаш
+                                </Button>
+
+                                <div className="relative my-6">
+                                    <div className="absolute inset-0 flex items-center">
+                                        <span className="w-full border-t" />
+                                    </div>
+                                    <div className="relative flex justify-center text-xs uppercase">
+                                        <span className="bg-background px-2 text-muted-foreground">
+                                            Ёки мавжуд транспортни танланг
+                                        </span>
+                                    </div>
+                                </div>
+
                                 <Select
                                     onValueChange={(value) => {
                                         setRentalForm(prev => ({
@@ -610,16 +696,15 @@ export default function AddRentalPage() {
                                         }));
                                     }}
                                     value={rentalForm.car}
-                                    disabled={!cars || cars.length === 0}
                                 >
                                     <SelectTrigger className={validationErrors.car ? 'border-red-500' : ''}>
-                                        <SelectValue placeholder="Mashinani tanlang" />
+                                        <SelectValue placeholder="Транспортни танланг" />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <div className="px-3 pb-2">
                                             <Input
                                                 type="text"
-                                                placeholder="Mashinani qidirish..."
+                                                placeholder="Транспортни қидириш..."
                                                 value={carSearch}
                                                 onChange={(e) => setCarSearch(e.target.value)}
                                             />
@@ -632,57 +717,55 @@ export default function AddRentalPage() {
                                             ))
                                         ) : (
                                             <div className="px-3 py-2 text-sm text-muted-foreground">
-                                                Mashina topilmadi
+                                                Транспорт топилмади
                                             </div>
                                         )}
                                     </SelectContent>
                                 </Select>
-                                {validationErrors.car && (
-                                    <p className="text-sm text-red-500">{validationErrors.car}</p>
-                                )}
                             </div>
+                        </div>
 
-                            <div className="grid gap-4 py-3">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <label htmlFor="workStartDate" className="text-right">
-                                        Ish boshlanish sanasi
-                                    </label>
-                                    <Input
-                                        id="workStartDate"
-                                        type="date"
-                                        value={rentalForm.workStartDate}
-                                        className="col-span-3"
-                                        onChange={(e) => {
-                                            setRentalForm(prev => ({
-                                                ...prev,
-                                                workStartDate: e.target.value
-                                            }));
-                                        }}
-                                    />
-                                </div>
-                            </div>
-
-                            <div className="space-y-2">
-                                <label>Oldindan to'lov</label>
+                        <div className="grid gap-4 py-3">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <label htmlFor="workStartDate" className="text-right">
+                                    Иш бошлаш санаси
+                                </label>
                                 <Input
-                                    type="number"
-                                    name="prepaidAmount"
-                                    value={rentalForm.prepaidAmount}
+                                    id="workStartDate"
+                                    type="date"
+                                    value={rentalForm.workStartDate}
+                                    className="col-span-3"
                                     onChange={(e) => {
                                         setRentalForm(prev => ({
                                             ...prev,
-                                            prepaidAmount: e.target.value
+                                            workStartDate: e.target.value
                                         }));
                                     }}
-                                    min="0"
-                                    placeholder="Oldindan to'lov summasi"
                                 />
                             </div>
                         </div>
 
+                        <div className="space-y-2">
+                            <label>Олдиндан тўлов</label>
+                            <Input
+                                type="number"
+                                name="prepaidAmount"
+                                value={rentalForm.prepaidAmount}
+                                onChange={(e) => {
+                                    setRentalForm(prev => ({
+                                        ...prev,
+                                        prepaidAmount: e.target.value
+                                    }));
+                                }}
+                                min="0"
+                                placeholder="Олдиндан тўлов"
+                            />
+                        </div>
+                        
+
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <h3 className="text-lg font-medium">Mulklar</h3>
+                                <h3 className="text-lg font-medium">Мулклар</h3>
                                 <Button type="button" variant="outline" size="sm" onClick={() => {
                                     setRentalForm(prev => ({
                                         ...prev,
@@ -699,7 +782,7 @@ export default function AddRentalPage() {
                                     }));
                                 }}>
                                     <Plus className="h-4 w-4 mr-2" />
-                                    Mulklar qo'shish
+                                    Мулклар қўшиш
                                 </Button>
                             </div>
 
@@ -864,7 +947,7 @@ export default function AddRentalPage() {
                                     ))}
                                     {products.product && products.find(p => p._id === product.product)?.type === 'combo' && (
                                                <div className="ml-8 space-y-4 mt-2 border-l-2 border-blue-200 pl-4">
-                                                <p className="text-sm font-medium text-gray-500">Qismlar:</p>
+                                                <p className="text-sm font-medium text-gray-500">Қисмлар:</p>
                                                 {products.find(p => p._id === product.product)?.parts?.map((part, partIndex) => {
                                                     const partProduct = products.find(p => p._id === part.product);
                                                     return (
@@ -873,11 +956,11 @@ export default function AddRentalPage() {
                                                                 <span className="text-sm text-gray-600">{partProduct?.name}</span>
                                                             </div>
                                                             <div>
-                                                                <span className="text-sm text-gray-600">Miqdor: {part.quantity}</span>
+                                                                <span className="text-sm text-gray-600">Миқдор: {part.quantity}</span>
                                                             </div>
                                                             <div>
                                                                 <span className="text-sm text-gray-600">
-                                                                    Kunlik narx: {part.dailyRate?.toLocaleString()} so'm
+                                                                Кунлик нарх: {part.dailyRate?.toLocaleString()} сўм
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -895,19 +978,19 @@ export default function AddRentalPage() {
                             {/* Total Amount */}
                             <div className="mt-4 p-4 bg-gray-50 rounded-lg">
                                 <div className="flex justify-between items-center">
-                                    <h3 className="text-lg font-medium">Umumiy summa:</h3>
-                                    <p className="text-xl font-bold">{rentalForm.totalCost.toLocaleString()} so'm</p>
+                                    <h3 className="text-lg font-medium">Умумий сумма:</h3>
+                                    <p className="text-xl font-bold">{rentalForm.totalCost.toLocaleString()} сўм</p>
                                 </div>
                             </div>
 
                             {/* Description */}
                             <div className="mt-4">
-                                <Label htmlFor="description">Izoh</Label>
+                                <Label htmlFor="description">Изоҳ</Label>
                                 <Textarea
                                     id="description"
                                     value={rentalForm.description || ''}
                                     onChange={(e) => setRentalForm(prev => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Ijaraga izoh qo'shish..."
+                                    placeholder="Ижарага изоҳ қўшиш..."
                                     className="mt-1"
                                 />
                             </div>
@@ -917,10 +1000,10 @@ export default function AddRentalPage() {
                                     {addStatus === 'loading' ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Saqlanmoqda...
+                                            Сақланмоқда...
                                         </>
                                     ) : (
-                                        'Saqlash'
+                                        'Сақлаш'
                                     )}
                                 </Button>
                             </div>
