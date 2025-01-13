@@ -298,10 +298,10 @@ export default function RentalsPage() {
                 </table>
 
                 <div style={{ marginTop: '15px', fontSize: '14px' }}>
-                    <div style={{ marginBottom: '5px', fontWeight: 'bold' }}>Олдиндан тўлов: {} сўм</div>
+        
                     <div style={{ marginBottom: '10px' }}>Ижарага олувчи: {rental.customer.name}</div>
                     <div style={{ fontWeight: 'bold', marginBottom: '5px', fontSize: '20px' }}>КУНЛИК ИЖАРА ҲАҚИ : <span style={{fontSize:'20px', color:'red'}}></span> {rental.totalCost} сўм</div>
-                    <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold',fontSize :'30px'}}>(99890) 222 80 86</div>
+                    <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold',fontSize :'30px'}}>(90) 222 80 86</div>
                 </div>
             </div>
         );
@@ -468,11 +468,7 @@ export default function RentalsPage() {
                                 <TableCell>
                                     <div className="flex flex-col">
                                         <span>{rental.totalCost?.toLocaleString()} сўм</span>
-                                        {rental.payments?.length > 0 && (
-                                            <span className="text-sm text-green-600">
-                                                Олдиндан тўлов: {rental.totalPayments?.toLocaleString()} сўм
-                                            </span>
-                                        )}
+                                      
                                     </div>
                                 </TableCell>
                                 <TableCell>
@@ -491,7 +487,7 @@ export default function RentalsPage() {
                                         {rental.borrowedProducts.map((item, index) => (
                                             <div key={index} className="text-sm flex items-center justify-between">
                                                 <div>
-                                                    <span>{item.product?.name || 'Noma\'lum mahsulot'} </span>
+                                                    <span>{item.product?.name || 'Noma\'lum mahsulot'} {item.quantity} dona</span>
                                                     {item.product?.type === 'combo' && item.product.parts?.length > 0 && (
                                                         <div className="ml-4 text-xs text-muted-foreground">
                                                             {item.product.parts.map((part, idx) => (

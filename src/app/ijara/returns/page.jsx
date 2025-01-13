@@ -627,7 +627,7 @@ export default function Component() {
                                         const currentReturnQuantity = Number(returnQuantities[`${rental._id}-${prod.product._id}`]) || 0;
 
                                         // Natijani ko'rsatish
-                                        const totalReturnedQuantity = returnedQuantity + currentReturnQuantity;
+                                        const totalReturnedQuantity = returnedQuantity
 
                                         // Hide if all items are returned
                                         if (totalReturnedQuantity >= prod.quantity) return null;
