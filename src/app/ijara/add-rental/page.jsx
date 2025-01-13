@@ -198,66 +198,33 @@ export default function AddRentalPage() {
         console.log('Filtered Products:', filteredProducts);
     }, [products, filteredProducts]);
 
-    const validateForm = () => {
-        const errors = {};
-        
-        if (!rentalForm.customer) {
-            errors.customer = 'Iltimos, mijozni tanlang';
-        }
-
-        if (!rentalForm.workStartDate) {
-            errors.workStartDate = 'Iltimos, ish boshlash sanasini kiriting';
-        }
-
-        if (!rentalForm.borrowedProducts || rentalForm.borrowedProducts.length === 0) {
-            errors.borrowedProducts = 'Kamida bitta mahsulot tanlash kerak';
-        }
-
-        rentalForm.borrowedProducts.forEach((product, index) => {
-            if (!product.product) {
-                errors[`borrowedProducts.${index}.product`] = 'Mahsulotni tanlang';
-            }
-            if (!product.quantity || product.quantity < 1) {
-                errors[`borrowedProducts.${index}.quantity`] = 'Miqdor 1 dan kam bo\'lmasligi kerak';
-            }
-           
-        });
-
-        setValidationErrors(errors);
-        return Object.keys(errors).length === 0;
-    };
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!validateForm()) return;
-
-        const totalCost = rentalForm.borrowedProducts.reduce((sum, product) => {
-            return sum + (Number(product.quantity) * Number(product.dailyRate || 0));
-        }, 0);
-
-        const formData = {
-            customer: rentalForm.customer,
-            ...(rentalForm.car && { car: rentalForm.car }),
-            borrowedProducts: rentalForm.borrowedProducts.map(product => ({
-                product: product.product,
-                quantity: Number(product.quantity),
-                dailyRate: Number(product.dailyRate || 0),
-                startDate: product.startDate
-            })),
-            workStartDate: rentalForm.workStartDate,
-            totalCost: totalCost,
-            debt: Number(rentalForm.prepaidAmount),
-            prepaidAmount: Number(rentalForm.prepaidAmount || 0),
-            description: rentalForm.description
-        };
+        setIsSubmitting(true);
+        
+        // Validatsiya
+        const errors = {};
+        if (!rentalForm.customer) errors.customer = "Mijozni tanlash majburiy";
+        if (!rentalForm.car) errors.car = "Mashinani tanlash majburiy";
+        if (rentalForm.borrowedProducts.length === 0) errors.products = "Kamida bitta mahsulot tanlash kerak";
+        
+        if (Object.keys(errors).length > 0) {
+            setValidationErrors(errors);
+            setIsSubmitting(false);
+            toast.error("Iltimos, barcha majburiy maydonlarni to'ldiring");
+            return;
+        }
 
         try {
-            const response = await dispatch(createRental(formData)).unwrap();
-            // generatePDF(response, customers.find(customer => customer._id === rentalForm.customer));
-            toast.success('Ijara muvaffaqiyatli yaratildi');
+            await dispatch(createRental(rentalForm));
+            toast.success("Ijara muvaffaqiyatli yaratildi");
             router.push('/ijara');
         } catch (error) {
-            toast.error(error.message || 'Xatolik yuz berdi');
+            toast.error(error.message || "Xatolik yuz berdi");
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -316,101 +283,6 @@ export default function AddRentalPage() {
             toast.error(error.message || "Xatolik yuz berdi");
         }
     };
-
-    // const generatePDF = (rental, customer) => {
-    //     // 80mm = 226.772 points in PDF
-    //     const width = 226.772;
-    //     const height = 400; // Uzunlikni kontentga qarab avtomatik sozlanadi
-        
-    //     const doc = new jsPDF({
-    //         unit: 'pt',
-    //         format: [width, height],
-    //         orientation: 'portrait'
-    //     });
-
-    //     // Sahifa kengligi
-    //     const pageWidth = doc.internal.pageSize.width;
-    //     const margin = 20;
-    //     const contentWidth = pageWidth - (margin * 2);
-        
-    //     // Shrift o'lchamlarini kichikroq qilish
-    //     doc.setFontSize(12);
-    //     doc.text("IJARA SHARTNOMASI", pageWidth / 2, margin, { align: "center" });
-        
-    //     let yPos = margin + 20;
-        
-    //     // Asosiy ma'lumotlar
-    //     doc.setFontSize(8);
-    //     doc.text(`№ ${rental.rentalNumber}`, margin, yPos);
-    //     doc.text(`Sana: ${new Date().toLocaleDateString()}`, margin, yPos + 10);
-        
-    //     yPos += 30;
-        
-    //     // Mijoz ma'lumotlari
-    //     doc.text("MIJOZ MA'LUMOTLARI:", margin, yPos);
-    //     yPos += 12;
-    //     doc.text(`Ism: ${customer.name}`, margin, yPos);
-    //     yPos += 10;
-    //     doc.text(`Tel: ${customer.phone}`, margin, yPos);
-    //     yPos += 10;
-    //     doc.text(`Manzil: ${customer.address}`, margin, yPos);
-        
-    //     yPos += 20;
-        
-    //     // Ijara ma'lumotlari
-    //     doc.text("IJARA MA'LUMOTLARI:", margin, yPos);
-    //     yPos += 12;
-    //     doc.text(`Boshlanish: ${new Date(rentalForm.workStartDate).toLocaleDateString()}`, margin, yPos);
-    //     yPos += 10;
-    //     doc.text(`Oldindan to'lov: ${rentalForm.prepaidAmount?.toLocaleString()} so'm`, margin, yPos);
-    //     yPos += 10;
-    //     doc.text(`Umumiy narx: ${rentalForm.totalCost?.toLocaleString()} so'm`, margin, yPos);
-        
-    //     yPos += 20;
-        
-    //     // Mahsulotlar jadvali
-    //     const tableData = rentalForm.borrowedProducts.map(product => [
-    //         products.find(p => p._id === product.product).name,
-    //         product.quantity.toString(),
-    //         `${product.dailyRate?.toLocaleString()}`,
-    //         `${(product.quantity * product.dailyRate)?.toLocaleString()}`
-    //     ]);
-        
-    //     doc.autoTable({
-    //         startY: yPos,
-    //         head: [['Mahsulot', 'Soni', 'Narx', 'Jami']],
-    //         body: tableData,
-    //         theme: 'plain',
-    //         styles: { 
-    //             fontSize: 8,
-    //             cellPadding: 3,
-    //             overflow: 'linebreak',
-    //             cellWidth: 'wrap'
-    //         },
-    //         columnStyles: {
-    //             0: { cellWidth: 80 },
-    //             1: { cellWidth: 30 },
-    //             2: { cellWidth: 40 },
-    //             3: { cellWidth: 40 }
-    //         },
-    //         margin: { left: margin, right: margin },
-    //         tableWidth: contentWidth
-    //     });
-        
-    //     // Izoh qo'shish
-    //     if (rentalForm.description) {
-    //         yPos = doc.previousAutoTable.finalY + 10;
-    //         doc.text("Izoh:", margin, yPos);
-    //         doc.text(rentalForm.description, margin, yPos + 10, {
-    //             maxWidth: contentWidth,
-    //             lineHeightFactor: 1.2
-    //         });
-    //     }
-
-    //     // Chop etish
-    //     doc.autoPrint();
-    //     doc.output('dataurlnewwindow');
-    // };
 
     return (    
         <div className="container mx-auto py-10">
@@ -996,8 +868,8 @@ export default function AddRentalPage() {
                             </div>
 
                             <div className="flex justify-end mt-4">
-                                <Button type="submit" disabled={addStatus === 'loading'}>
-                                    {addStatus === 'loading' ? (
+                                <Button type="submit" disabled={isSubmitting}>
+                                    {isSubmitting ? (
                                         <>
                                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                             Сақланмоқда...

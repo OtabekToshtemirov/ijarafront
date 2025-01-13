@@ -121,16 +121,16 @@ export default function Component() {
         };
     };
 
-    const handleReturnQuantityChange = (rentalId, productId, quantity, maxQuantity) => {
-        // Yangi miqdorni qoldiq miqdor bilan cheklash
-        const newQuantity = Math.min(Math.max(0, quantity), maxQuantity);
-
+    const handleReturnQuantityChange = (rentalId, productId, newValue, maxQuantity) => {
+        if (newValue < 0 || newValue > maxQuantity) {
+            toast.error(`Qaytarish miqdori 0 dan ${maxQuantity} gacha bo'lishi kerak`);
+            return;
+        }
         setReturnQuantities(prev => ({
             ...prev,
-            [`${rentalId}-${productId}`]: newQuantity
+            [`${rentalId}-${productId}`]: newValue
         }));
     };
- 
 
     const handleDiscountDaysChange = (rentalId, days) => {
         if (days < 0) days = 0;
@@ -752,67 +752,71 @@ export default function Component() {
                                                     {(remainingQuantity )}
                                                 </TableCell>
                                                 <TableCell>
-                                                    <div className="flex items-center gap-2">
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            onClick={() => {
-                                                                const currentValue = returnQuantities[key] || 0;
-                                                                if (currentValue > 0) {
-                                                                    handleReturnQuantityChange(
-                                                                        rental._id,
-                                                                        prod.product._id,
-                                                                        currentValue - 1,
-                                                                        remainingQuantity
-                                                                    );
-                                                                }
-                                                            }}
-                                                            disabled={!(returnQuantities[key] > 0)}
-                                                        >
-                                                            -
-                                                        </Button>
-                                                        <Input
-                                                            type="number"
-                                                            value={returnQuantities[key] || 0}
-                                                            onChange={(e) => {
-                                                                const newValue = Math.max(0, parseInt(e.target.value) || 0);
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            const key = `${rental._id}-${prod.product._id}`;
+                                                            const currentValue = returnQuantities[key] || 0;
+                                                            if (currentValue > 0) {
                                                                 handleReturnQuantityChange(
                                                                     rental._id,
                                                                     prod.product._id,
-                                                                    newValue,
+                                                                    currentValue - 1,
                                                                     remainingQuantity
                                                                 );
-                                                            }}
-                                                            min="0"
-                                                            max={remainingQuantity}
-                                                            className="w-20 text-center"
-                                                        />
-                                                        <Button
-                                                            variant="outline"
-                                                            size="icon"
-                                                            onClick={() => {
-                                                                const currentValue = returnQuantities[key] || 0;
-                                                                if (currentValue <= remainingQuantity) {
-                                                                    handleReturnQuantityChange(
-                                                                        rental._id,
-                                                                        prod.product._id,
-                                                                        currentValue + 1,
-                                                                        remainingQuantity
-                                                                    );
-                                                                }
-                                                            }}
-                                                            disabled={returnQuantities[key] >= remainingQuantity}
-                                                        >
-                                                            +
-                                                        </Button>
-                                                        <Button 
-                                                            variant="outline"
-                                                            onClick={() => handleReturn(rental, prod)}
-                                                            disabled={!returnQuantities[key] > remainingQuantity}
-                                                        >
-                                                            Қайтариш
-                                                        </Button>
-                                                    </div>
+                                                            }
+                                                        }}
+                                                        disabled={!(returnQuantities[`${rental._id}-${prod.product._id}`] > 0)}
+                                                    >
+                                                        <Minus className="h-4 w-4" />
+                                                    </Button>
+                                                    <Input
+                                                        type="number"
+                                                        value={returnQuantities[`${rental._id}-${prod.product._id}`] || 0}
+                                                        onChange={(e) => {
+                                                            const newValue = Math.max(0, parseInt(e.target.value) || 0);
+                                                            handleReturnQuantityChange(
+                                                                rental._id,
+                                                                prod.product._id,
+                                                                newValue,
+                                                                remainingQuantity
+                                                            );
+                                                        }}
+                                                        min="0"
+                                                        max={remainingQuantity}
+                                                        className="w-20 text-center"
+                                                    />
+                                                    <Button
+                                                        variant="outline"
+                                                        size="icon"
+                                                        onClick={() => {
+                                                            const key = `${rental._id}-${prod.product._id}`;
+                                                            const currentValue = returnQuantities[key] || 0;
+                                                            if (currentValue < remainingQuantity) {
+                                                                handleReturnQuantityChange(
+                                                                    rental._id,
+                                                                    prod.product._id,
+                                                                    currentValue + 1,
+                                                                    remainingQuantity
+                                                                );
+                                                            }
+                                                        }}
+                                                        disabled={returnQuantities[`${rental._id}-${prod.product._id}`] >= remainingQuantity}
+                                                    >
+                                                        <Plus className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button 
+                                                        variant="outline"
+                                                        onClick={() => handleReturn(rental, prod)}
+                                                        disabled={!returnQuantities[`${rental._id}-${prod.product._id}`] || 
+                                                                !returnDates[`${rental._id}-${prod.product._id}`] ||
+                                                                returnQuantities[`${rental._id}-${prod.product._id}`] > remainingQuantity}
+                                                    >
+                                                        Қайтариш
+                                                    </Button>
+                                                </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
