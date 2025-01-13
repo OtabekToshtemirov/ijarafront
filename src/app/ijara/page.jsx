@@ -298,10 +298,14 @@ export default function RentalsPage() {
                 </table>
 
                 <div style={{ marginTop: '15px', fontSize: '14px' }}>
-        
                     <div style={{ marginBottom: '10px' }}>Ижарага олувчи: {rental.customer.name}</div>
                     <div style={{ fontWeight: 'bold', marginBottom: '5px', fontSize: '20px' }}>КУНЛИК ИЖАРА ҲАҚИ : <span style={{fontSize:'20px', color:'red'}}></span> {rental.totalCost} сўм</div>
                     <div style={{ textAlign: 'center', marginTop: '10px', fontWeight: 'bold',fontSize :'30px'}}>(90) 222 80 86</div>
+                </div>
+                {/* izoh ham qo'shish */}
+                <div style={{ marginTop: '15px', fontSize: '14px' }}>
+                    <h3 style={{ margin: '5px 0', fontSize: '12px' }}>ИЗОХ:</h3>
+                    <div>{rental.description}</div>
                 </div>
             </div>
         );

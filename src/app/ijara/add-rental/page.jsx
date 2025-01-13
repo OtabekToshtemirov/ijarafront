@@ -198,6 +198,28 @@ export default function AddRentalPage() {
         console.log('Filtered Products:', filteredProducts);
     }, [products, filteredProducts]);
 
+    useEffect(() => {
+        if (!rentalForm.description) {
+            const comboDescription = rentalForm.borrowedProducts
+                .filter((product) => products.find((p) => p._id === product.product)?.type === 'combo')
+                .map((product) => {
+                    const productDetails = products.find((p) => p._id === product.product);
+                    const partsDescription = productDetails.parts
+                        .map(part => `${part.product?.name || 'Noma\'lum qism'} x ${part.quantity}`)
+                        .join(', ');
+                    return `${productDetails.name} x ${product.quantity} (${partsDescription})`;
+                })
+                .join('\n');
+            
+            if (comboDescription) {
+                setRentalForm(prev => ({
+                    ...prev,
+                    description: comboDescription
+                }));
+            }
+        }
+    }, [rentalForm.borrowedProducts, products]);
+
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
@@ -855,14 +877,21 @@ export default function AddRentalPage() {
                                 </div>
                             </div>
 
-                            {/* Description */}
-                            <div className="mt-4">
-                                <Label htmlFor="description">Изоҳ</Label>
+                            <div className="space-y-2">
+                                
+
+                                <Label htmlFor="description">Қўшимча изоҳ</Label>
                                 <Textarea
                                     id="description"
                                     value={rentalForm.description || ''}
-                                    onChange={(e) => setRentalForm(prev => ({ ...prev, description: e.target.value }))}
-                                    placeholder="Ижарага изоҳ қўшиш..."
+                                    onChange={(e) => {
+                                        const newDescription = e.target.value;
+                                        setRentalForm(prev => ({
+                                            ...prev,
+                                            description: newDescription
+                                        }));
+                                    }}
+                                    placeholder="Ижара ҳақида қўшимча маълумотлар..."
                                     className="mt-1"
                                 />
                             </div>

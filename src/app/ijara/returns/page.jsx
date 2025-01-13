@@ -359,7 +359,7 @@ export default function Component() {
     return (
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold">Maxsulotlarni qaytarish</h1>
+                <h1 className="text-4xl font-bold">Махсулотларни қайтариш</h1>
             </div>
 
             <div className="flex gap-4 mb-6">
@@ -382,10 +382,10 @@ export default function Component() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Mijoz</TableHead>
-                                <TableHead>Telefon</TableHead>
-                                <TableHead>Faol ijaralar</TableHead>
-                                <TableHead>Qaytarilmagan tovarlar</TableHead>
+                                <TableHead>Мижоз</TableHead>
+                                <TableHead>Телефон</TableHead>
+                                <TableHead>Фаол ижаралар</TableHead>
+                                <TableHead>Қайтарилмаган махсулотлар</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -397,7 +397,7 @@ export default function Component() {
                                     <TableCell>{item.totalRentals}</TableCell>
                                     <TableCell>
                                         <Badge variant="secondary">
-                                            {item.unreturnedProducts} dona
+                                            {item.unreturnedProducts} дона
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
@@ -405,7 +405,7 @@ export default function Component() {
                                             variant="outline"
                                             onClick={() => setSelectedCustomer(item)}
                                         >
-                                            Qaytarish
+                                            Қайтариш
                                         </Button>
                                     </TableCell>
                                 </TableRow>
@@ -413,7 +413,7 @@ export default function Component() {
                             {filteredCustomers.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-4">
-                                        Qaytarilmagan mahsulotlari bor mijozlar topilmadi
+                                    Қайтарилмаган маҳсулотлари бор мижозлар топилмади
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -426,36 +426,36 @@ export default function Component() {
                     <div className="flex items-center justify-between border-b pb-4">
                         <div className="space-y-1">
                             <h2 className="text-2xl font-semibold tracking-tight">
-                                Qaytarilgan mahsulotlar hisoboti
+                            Қайтарилган маҳсулотлар ҳисоботи
                             </h2>
                             <p className="text-sm text-muted-foreground">
-                                Barcha ijara qaytarishlari bo'yicha umumiy hisob
+                                Барча ижара қайтаришлари бўйича умумий ҳисоб
                             </p>
                         </div>
                         <div className="flex flex-col items-end gap-1">
                             <div className="space-y-2 border rounded-md p-4 bg-white">
                                 <div>
-                                    <Label>Hisoblangan summa</Label>
+                                    <Label>Ҳисобланган сумма</Label>
                                     <div className="text-lg font-semibold">
-                                        {(returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0).toLocaleString()} so'm
+                                        {(returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0).toLocaleString()} сум
                                     </div>
                                 </div>
 
                                 <div>
-                                    <Label>Chegirma summasi</Label>
+                                    <Label>Чегирма суммаси</Label>
                                     <Input
                                         type="number"
                                         value={totalDiscount}
                                         onChange={(e) => handleDiscountChange(e.target.value)}
-                                        placeholder="Chegirma summasi"
+                                        placeholder="Чегирма суммаси"
                                         className="mt-1"
                                     />
                                 </div>
 
                                 <div>
-                                    <Label>To'lov miqdori</Label>
+                                    <Label>Тўлов миқдори</Label>
                                     <div className="text-xl font-bold text-primary">
-                                        {((returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0) - (totalDiscount || 0)).toLocaleString()} so'm
+                                        {((returnedProducts.reduce((total, product) => total + product.totalCost, 0) || 0) - (totalDiscount || 0)).toLocaleString()} сум
                                     </div>
                                 </div>
 
@@ -463,12 +463,12 @@ export default function Component() {
                                     className="w-full"
                                     onClick={handlePayment}
                                 >
-                                    To'lovni saqlash
+                                    Тўланган суммани сақлаш
                                 </Button>
 
                                 {returnedProducts.length > 0 && (
                                     <div className="w-full border rounded-md p-4 bg-white mb-4">
-                                        <h3 className="text-lg font-semibold mb-3">Qaytarilgan tovarlar</h3>
+                                        <h3 className="text-lg font-semibold mb-3">Қайтарилган маҳсулотлар</h3>
                                         <div className="space-y-2">
                                             {returnedProducts.map((product, index) => (
                                                 <div key={index} 
@@ -476,18 +476,18 @@ export default function Component() {
                                                     <div>
                                                         <div className="font-medium">{product.product.name}</div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            {(product.quantity || 0)} dona • {(product.days || 0)} kun
+                                                            {(product.quantity || 0)} dona • {(product.days || 0)} кун
                                                         </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="font-semibold">
-                                                            {(product.totalCost || 0).toLocaleString()} so'm
+                                                            {(product.totalCost || 0).toLocaleString()} сум
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            ({(product.days || 0)} kun × {(product.quantity || 0)} dona × {((product.dailyRate || 0) || 0).toLocaleString()} so'm)
+                                                            ({(product.days || 0)} кун × {(product.quantity || 0)} дона × {((product.dailyRate || 0) || 0).toLocaleString()} сум)
                                                         </div>
                                                         <div className="text-sm text-muted-foreground">
-                                                            Chegirma: {((product.discount || 0) || 0).toLocaleString()} so'm
+                                                            Чегирма: {((product.discount || 0) || 0).toLocaleString()} сум
                                                         </div>
                                                     </div>
                                                 </div>
@@ -497,13 +497,13 @@ export default function Component() {
                                 )}
                                 {calculateAllCurrentReturnTotal(localRentals) > 0 && (
                                     <div className="text-base text-muted-foreground">
-                                        Joriy qaytarish: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} so'm
+                                        Жорий қайтариш: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} сум
                                     </div>
                                 )}
                             </div>
                             {calculateAllCurrentReturnTotal(localRentals) > 0 && (
                                 <div className="text-base text-muted-foreground">
-                                    Joriy qaytarish: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} so'm
+                                    Жорий қайтариш: {(calculateAllCurrentReturnTotal(localRentals) || 0).toLocaleString()} сум
                                 </div>
                             )}
                         </div>
@@ -520,13 +520,13 @@ export default function Component() {
                             <p className="text-muted-foreground">{selectedCustomer.customer.phone}</p>
                             <div className="flex items-center gap-4">
                                 <Badge variant={calculateCustomerBalance(selectedCustomer.rentals) > 0 ? "destructive" : "success"}>
-                                    Balans: {(selectedCustomer.customer.balance || 0).toLocaleString()} so'm
+                                    Баланс: {(selectedCustomer.customer.balance || 0).toLocaleString()} сум
                                 </Badge>
                                 <Badge variant="outline">
-                                    Faol ijaralar: {selectedCustomer.totalRentals}
+                                    Фаол ижара: {selectedCustomer.totalRentals}
                                 </Badge>
                                 <Badge variant="outline">
-                                    Qaytarilmagan: {selectedCustomer.unreturnedProducts} dona
+                                    Жорий қайтариш: {selectedCustomer.unreturnedProducts} дона
                                 </Badge>
                             </div>
                         </div>
@@ -535,7 +535,7 @@ export default function Component() {
                             variant="outline"
                             onClick={() => setSelectedCustomer(null)}
                         >
-                            Orqaga
+                            Орқага
                         </Button>
                     </div>
 
@@ -544,18 +544,18 @@ export default function Component() {
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <h3 className="text-lg font-semibold">
-                                        Ijara #{rental.rentalNumber}
+                                        Ижара #{rental.rentalNumber}
                                     </h3>
                                     <h2>
-                                        Olish sanasi: {new Date(rental.createdAt).toLocaleDateString()}
+                                    Олиш санаси: {new Date(rental.createdAt).toLocaleDateString()}
                                     </h2>
                                     <p className="text-sm text-muted-foreground">
-                                        Ish boshlanish sanasi: {new Date(rental.workStartDate).toLocaleDateString()}
+                                    Иш бошланиш санаси: {new Date(rental.workStartDate).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-2">
-                                        <Label>Chegirma kunlar:</Label>
+                                        <Label>Чегирма кунлар:</Label>
                                         <div className="flex items-center gap-2">
                                             <Button
                                                 variant="outline"
@@ -599,18 +599,18 @@ export default function Component() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Mahsulot</TableHead>
-                                        <TableHead>Ish boshlash sanasi</TableHead>
-                                        <TableHead>Qaytarish sanasi</TableHead>
-                                        <TableHead>Jami kunlar</TableHead>
-                                        <TableHead>Chegirma kunlar</TableHead>
-                                        <TableHead>Hisoblanadigan kunlar</TableHead>
-                                        <TableHead>Kunlik narx</TableHead>
-                                        <TableHead>Miqdor</TableHead>
-                                        <TableHead>Qaytarilgan</TableHead>
-                                        <TableHead>Qoldiq</TableHead>
-                                        <TableHead>Qaytarish</TableHead>
-                                        <TableHead>Summa</TableHead>
+                                        <TableHead>Махсулот</TableHead>
+                                        <TableHead>Иш бошлаш санаси</TableHead>
+                                        <TableHead>Қайтариш санаси</TableHead>
+                                        <TableHead>Жами кунлар</TableHead>
+                                        <TableHead>Чегирма кунлар</TableHead>
+                                        <TableHead>Ҳисобланадиган кунлар</TableHead>
+                                        <TableHead>Кунлик нарх</TableHead>
+                                        <TableHead>Микдор</TableHead>
+                                        <TableHead>Қайтариш</TableHead>
+                                        <TableHead>Қолдиқ</TableHead>
+                                        <TableHead>Қайтариш</TableHead>
+                                        <TableHead>Сумма</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -658,24 +658,10 @@ export default function Component() {
                                                             {prod.product.name}
                                                             {prod.product.type === 'combo' && (
                                                                 <Badge variant="secondary" className="ml-2">
-                                                                    Kombinatsiya
+                                                                    Тўплам
                                                                 </Badge>
                                                             )}
                                                         </span>
-                                                        <p className="text-sm text-muted-foreground">
-                                                            {prod.product.code}
-                                                        </p>
-                                                        {prod.product.type === 'combo' && prod.product.parts && (
-                                                            <div className="mt-2 space-y-1">
-                                                                <p className="text-sm font-medium text-muted-foreground">Qismlar:</p>
-                                                                {prod.product.parts.map((part, index) => (
-                                                                    <div key={index} className="ml-4 text-sm text-muted-foreground flex justify-between">
-                                                                        <span>{part.product.name}</span>
-                                                                        <span>{(part.quantity || 0)} dona × {(part.dailyRate || 0).toLocaleString()} so'm</span>
-                                                                    </div>
-                                                                ))}
-                                                            </div>
-                                                        )}
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
@@ -717,7 +703,7 @@ export default function Component() {
                                                     {(totalDays || 0)}
                                                 </TableCell>
                                                 <TableCell>
-                                                    {((prod.dailyRate || 0) || 0).toLocaleString()} so'm
+                                                    {((prod.dailyRate || 0) || 0).toLocaleString()} сум
                                                 </TableCell>
                                                 <TableCell className="text-center">
                                                     {(prod.quantity || 0)}
@@ -804,27 +790,33 @@ export default function Component() {
                                                             onClick={() => handleReturn(rental, prod)}
                                                             disabled={!returnQuantities[key]}
                                                         >
-                                                            Qaytarish
+                                                            Қайтариш
                                                         </Button>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex flex-col">
                                                         <span className="font-medium">
-                                                            {(totalCost || 0).toLocaleString()} so'm
+                                                            {(totalCost || 0).toLocaleString()} сум
                                                         </span>
                                                         <span className="text-sm text-muted-foreground">
-                                                            ({(totalDays || 0)} kun × {(currentReturnQuantity || 0)} dona × {((prod.dailyRate || 0) || 0).toLocaleString()} so'm)
+                                                            ({(totalDays || 0)} kun × {(currentReturnQuantity || 0)} дона × {((prod.dailyRate || 0) || 0).toLocaleString()} сўм)
                                                         </span>
-
-                                                    
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
+                                            
                                         );
                                     })}
                                 </TableBody>
+                                
                             </Table>
+                            {rental.description && (
+                                <div className="mt-4 bg-yellow-200 rounded-lg p-4">
+                                    <p className="font-medium">Қўшимча маълумот</p>
+                                    <p>{rental.description}</p>
+                                </div>
+                            )}
                         </Card>
                     ))}
                 </div>
