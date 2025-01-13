@@ -117,21 +117,14 @@ export const returnProduct = createAsyncThunk(
     'rentals/returnProduct',
     async (returnData, { rejectWithValue }) => {
         try {
-            const { rentalId, productId, quantity, returnDate, discountDays } = returnData;
+            const { rentalId, ...data } = returnData;
             const response = await axios.post(`${BASE_URL}/rentals/${rentalId}/return`, {
-                productId,
-                quantity,
-                returnDate,
-                discountDays
+                products: data.products,
             });
             return response.data;
         } catch (error) {
             console.error('Return error:', error);
-            return rejectWithValue(
-                error.response?.data?.message || 
-                error.message || 
-                'Mahsulotni qaytarishda xatolik yuz berdi'
-            );
+            return rejectWithValue(error.response?.data?.message || 'Failed to process return');
         }
     }
 );
