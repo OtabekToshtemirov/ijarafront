@@ -97,7 +97,7 @@ export default function StatisticsPage() {
                 </div>
             </div>
             <div className="text-right">
-                <p className="font-semibold text-primary">{car.rentalCount} та ижара</p>
+                <p className="font-semibold text-primary">{car.rentalCount} ta ijara</p>
             </div>
         </div>
     );
