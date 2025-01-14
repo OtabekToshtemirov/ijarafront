@@ -55,12 +55,12 @@ export default function StatisticsPage() {
                         <Loader2 className="h-6 w-6 animate-spin" />
                     </div>
                 ) : error ? (
-                    <p className="text-red-500">Ma'lumotlarni yuklashda xatolik</p>
+                    <p className="text-red-500">Маълумотларни юклашда хатолик</p>
                 ) : (
                     <div className="text-2xl font-bold">
                         {data?.stats?.totalAmount
                             ? formatCurrency(data.stats.totalAmount)
-                            : "Ma'lumot yo'q"}
+                            : "Маълумот йўқ"}
                     </div>
                 )}
             </CardContent>
@@ -80,7 +80,7 @@ export default function StatisticsPage() {
             </div>
             <div className="text-right">
                 <p className="font-semibold">{formatCurrency(customer.totalAmount)}</p>
-                <p className="text-sm text-gray-500">{customer.paymentCount} ta to'lov</p>
+                <p className="text-sm text-gray-500">{customer.paymentCount} та тўлов</p>
             </div>
         </div>
     );
@@ -92,42 +92,42 @@ export default function StatisticsPage() {
                     {index + 1}
                 </div>
                 <div className="flex flex-col">
-                    <p className="text-primary">Haydovchi: {car.driverName}</p>
-                    <p className="text-primary">Mashina: {car.carNumber}</p>
+                    <p className="text-primary">Ҳайдовчи: {car.driverName}</p>
+                    <p className="text-primary">Машина: {car.carNumber}</p>
                 </div>
             </div>
             <div className="text-right">
-                <p className="font-semibold text-primary">{car.rentalCount} ta ijara</p>
+                <p className="font-semibold text-primary">{car.rentalCount} та ижарага берилган</p>
             </div>
         </div>
     );
 
     return (
         <div className="container mx-auto p-6 space-y-6">
-            <h1 className="text-3xl font-bold mb-8">Statistika</h1>
+            <h1 className="text-3xl font-bold mb-8">Статистика</h1>
 
             {/* Revenue Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
-                    title="Kunlik daromad"
+                    title="Кунлик даромад"
                     data={dailyRevenue.data}
                     loading={dailyRevenue.loading}
                     error={dailyRevenue.error}
                 />
                 <StatCard
-                    title="Haftalik daromad"
+                    title="Ҳафталик даромад"
                     data={weeklyRevenue.data}
                     loading={weeklyRevenue.loading}
                     error={weeklyRevenue.error}
                 />
                 <StatCard
-                    title="Oylik daromad"
+                    title="Ойлик даромад"
                     data={monthlyRevenue.data}
                     loading={monthlyRevenue.loading}
                     error={monthlyRevenue.error}
                 />
                 <StatCard
-                    title="Yillik daromad"
+                    title="Йиллик даромад"
                     data={yearlyRevenue.data}
                     loading={yearlyRevenue.loading}
                     error={yearlyRevenue.error}
@@ -138,7 +138,7 @@ export default function StatisticsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Top 5 mijozlar</CardTitle>
+                        <CardTitle>Топ 5 мижозлар</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {topCustomers.loading ? (
@@ -146,7 +146,7 @@ export default function StatisticsPage() {
                                 <Loader2 className="h-6 w-6 animate-spin" />
                             </div>
                         ) : topCustomers.error ? (
-                            <p className="text-red-500">Mijozlarni yuklashda xatolik</p>
+                            <p className="text-red-500">Мижозларни юклашда хатолик</p>
                         ) : (
                             <div className="space-y-2">
                                 {topCustomers.data?.map((customer, index) => (
@@ -163,7 +163,7 @@ export default function StatisticsPage() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Ko'p ijaraga berilgan mashinalar</CardTitle>
+                        <CardTitle>Кўп ижарага берилган машиналар</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {mostRentedCars.loading ? (
@@ -171,7 +171,7 @@ export default function StatisticsPage() {
                                 <Loader2 className="h-6 w-6 animate-spin" />
                             </div>
                         ) : mostRentedCars.error ? (
-                            <p className="text-red-500">Mashinalarni yuklashda xatolik</p>
+                            <p className="text-red-500">Машиналарни юклашда хатолик</p>
                         ) : (
                             <div className="space-y-2">
                                 {mostRentedCars.data?.map((car, index) => (
