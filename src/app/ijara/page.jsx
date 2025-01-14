@@ -424,7 +424,7 @@ export default function RentalsPage() {
             <div className="mb-6">
                 <Input
                     className="max-w-md"
-                    placeholder="Мижоз, машина ёки маҳсулот бўйича қидириш"
+                    placeholder="Мижоз, Транспорт ёки мулк бўйича қидириш"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -436,7 +436,7 @@ export default function RentalsPage() {
                         <TableRow>
                             <TableHead>Рақами</TableHead>
                             <TableHead>Мижоз</TableHead>
-                            <TableHead>Машина</TableHead>
+                            <TableHead>Транспорт</TableHead>
                             <TableHead>Кунлик нархи</TableHead>
                             <TableHead>Кун</TableHead>
                             <TableHead>Олинган мулклар</TableHead>

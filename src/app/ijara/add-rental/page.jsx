@@ -100,7 +100,7 @@ export default function AddRentalPage() {
 
     // Filter products based on search
     const filteredProducts = products?.filter(product => 
-        product.quantity > 0 && // Only show products with available quantity
+        product.quantity > 0 && // Faqat mavjud miqdordagi mahsulotlarni ko'rsatish
         (!productSearch || 
         product.name?.toLowerCase().includes(productSearch.toLowerCase()) ||
         product.code?.toLowerCase().includes(productSearch.toLowerCase()))
@@ -366,9 +366,9 @@ export default function AddRentalPage() {
             <Dialog open={carModalOpen} onOpenChange={setCarModalOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Янги машина қўшиш</DialogTitle>
+                        <DialogTitle>Янги транспорт қўшиш</DialogTitle>
                         <DialogDescription>
-                        Янги машина маълумотларини киритинг
+                        Янги транспорт маълумотларини киритинг
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleAddCar}>
@@ -689,7 +689,7 @@ export default function AddRentalPage() {
                                     {rentalForm.borrowedProducts.map((product, index) => (
                                         <div key={index} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 border rounded-lg">
                                             <div className="space-y-2">
-                                                <label>Mulklar</label>
+                                                <label>Мулклар</label>
                                                 <Select
                                                     value={product.product}
                                                     onValueChange={(value) => {
@@ -707,15 +707,15 @@ export default function AddRentalPage() {
                                                     }}
                                                 >
                                                     <SelectTrigger className={validationErrors[`borrowedProducts.${index}.product`] ? 'border-red-500' : ''}>
-                                                        <SelectValue placeholder="Mulkni tanlang">
-                                                            {product.product ? products.find(p => p._id === product.product)?.name : "Mahsulotni tanlang"}
+                                                        <SelectValue placeholder="Мулкни танланг">
+                                                            {product.product ? products.find(p => p._id === product.product)?.name : "Мулкни танланг"}
                                                         </SelectValue>
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         <div className="px-3 pb-2">
                                                             <Input
                                                                 type="text"
-                                                                placeholder="Mulkni qidirish..."
+                                                                placeholder="Мулкни қидириш..."
                                                                 value={productSearch}
                                                                 onChange={(e) => setProductSearch(e.target.value)}
                                                             />
@@ -772,7 +772,7 @@ export default function AddRentalPage() {
                                                             }));
                                                         }}
                                                         min="1"
-                                                        placeholder="Miqdor"
+                                                        placeholder="Миқдор"
                                                         className="w-20 text-center"
                                                     />
                                                     <Button
@@ -800,7 +800,7 @@ export default function AddRentalPage() {
                                             </div>
 
                                             <div className="space-y-2">
-                                                <label>Kunlik narx</label>
+                                                <label>Кунлик нарх</label>
                                                 <Input
                                                     type="number"
                                                     name="dailyRate"
@@ -814,7 +814,7 @@ export default function AddRentalPage() {
                                                         }));
                                                     }}
                                                     min="0"
-                                                    placeholder="Kunlik narx"
+                                                    placeholder="Кунлик нарх"
                                                 />
                                                 {validationErrors[`borrowedProducts.${index}.dailyRate`] && (
                                                     <p className="text-sm text-red-500">{validationErrors[`borrowedProducts.${index}.dailyRate`]}</p>

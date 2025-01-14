@@ -188,17 +188,17 @@ export default function ProductsPage() {
     }
 
     const handleDelete = async (productId) => {
-        if (window.confirm('Маҳсулотни ўчиришни тасдиқлайсизми?')) {
+        if (window.confirm('Мулкни ўчиришни тасдиқлайсизми?')) {
             try {
                 await dispatch(deleteProduct(productId)).unwrap()
                 toast({
                     title: 'Муваффақият',
-                    description: 'Маҳсулот муваффақиятли ўчирилди',
+                    description: 'Мулк муваффақиятли ўчирилди',
                 })
             } catch (error) {
                 toast({
                     title: 'Хатолик',
-                    description: error.message || 'Маҳсулотни ўчиришда хатолик юз берди',
+                    description: error.message || 'Мулкни ўчиришда хатолик юз берди',
                     variant: 'destructive',
                 })
             }
@@ -216,7 +216,7 @@ export default function ProductsPage() {
     return (
         <div className="container mx-auto py-10 space-y-8">
             <div className="flex justify-between items-center">
-                <h1 className="text-4xl font-bold">Маҳсулотлар</h1>
+                <h1 className="text-4xl font-bold">Мулклар</h1>
                 <ProductAddForm />
             </div>
 
@@ -232,7 +232,7 @@ export default function ProductsPage() {
                             <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Маҳсулот қидириш..."
+                                    placeholder="Мулк қидириш..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="pl-8"

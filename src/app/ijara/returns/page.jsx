@@ -185,11 +185,9 @@ export default function Component() {
                 }]
             };
 
-            console.log('Return data:', returnData);
 
             // Qaytarish so'rovini yuborish
             const response = await dispatch(returnProduct(returnData)).unwrap();
-            console.log('Return response:', response);
 
             if (response.rental) {
                 // Add returned product to the list
@@ -221,17 +219,15 @@ export default function Component() {
                     [key]: ''
                 }));
 
-                toast.success("Mahsulot muvaffaqiyatli qaytarildi");
+                toast.success("Маҳсулот муваффақиятли қайтарилди");
             }
         } catch (error) {
-            console.error('Return error:', error);
-            toast.error(error.message || "Xatolik yuz berdi");
+            toast.error(error.message || "Хатолик юз берди");
         }
     };
 
     const handleDiscountChange = (value) => {
         const discount = Number(value) || 0;
-        console.log('Setting discount:', discount);
         setTotalDiscount(discount);
     };
 
@@ -239,7 +235,7 @@ export default function Component() {
         try {
             // Validate rental exists
             if (!selectedCustomer?.rentals?.[0]) {
-                toast.error("Ijara ma'lumotlari topilmadi");
+                toast.error("Ижара маълумотлари топилмади");
                 return;
             }
 
@@ -248,13 +244,12 @@ export default function Component() {
             // Calculate total cost from returned products
             const totalAmount = returnedProducts.reduce((total, product) => {
                 const productTotal = product.totalCost || 0;
-                console.log(`Product ${product.product?.name}: ${productTotal}`);
                 return total + productTotal;
             }, 0);
 
             // Validate amount
             if (totalAmount <= 0) {
-                toast.error("To'lov summasi noto'g'ri");
+                toast.error("Тўлов суммаси нотўғри");
                 return;
             }
 
@@ -273,17 +268,15 @@ export default function Component() {
                 amount: finalAmount,
                 discount: Number(totalDiscount),
                 paymentType: 'cash',
-                description: `Qaytarish to'lovi: ${productsSummary} - Chegirma: ${totalDiscount} so'm - ${new Date().toLocaleDateString()}`
+                description: `Қайтариш тўлови: ${productsSummary} - Чегирма: ${totalDiscount} so'm - ${new Date().toLocaleDateString()}`
             };
 
-            console.log('Sending payment data:', paymentData);
 
             // Create payment
             const response = await dispatch(createPayment(paymentData)).unwrap();
-            console.log('To\'lov natijasi:', response);
 
             if (response.success) {
-                toast.success("To'lov muvaffaqiyatli saqlandi");
+                toast.success("Тўлов муваффақиятли сақланди");
                 
                 // Update data
                 await Promise.all([
@@ -301,11 +294,10 @@ export default function Component() {
                     window.location.reload();
                 }, 1000);
             } else {
-                toast.error(response.message || "To'lov saqlashda xatolik yuz berdi");
+                toast.error(response.message || "Тўлов сақлашда хатолик юз берди");
             }
         } catch (error) {
-            console.error('To\'lov xatosi:', error);
-            toast.error(error.message || "To'lov saqlashda xatolik yuz berdi");
+            toast.error(error.message || "Тўлов сақлашда хатолик юз берди");
         }
     };
 
@@ -349,17 +341,17 @@ export default function Component() {
     };
 
     if (status === 'loading') {
-        return <div>Loading...</div>;
+        return <div>Юкланмоқда...</div>;
     }
 
     if (status === 'failed') {
-        return <div>Error loading rentals</div>;
+        return <div>Хатолик юз берди</div>;
     }
 
     return (
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-8">
-                <h1 className="text-4xl font-bold">Махсулотларни қайтариш</h1>
+                <h1 className="text-4xl font-bold">Мулкни қайтариш</h1>
             </div>
 
             <div className="flex gap-4 mb-6">
@@ -367,7 +359,7 @@ export default function Component() {
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
-                            placeholder="Mijoz ismi yoki telefon raqami bo'yicha qidirish"
+                            placeholder="Мижоз исми ёки телефон рақами бўйича қидириш"
                             className="pl-8"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}

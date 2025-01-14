@@ -40,7 +40,7 @@ const CarForm = ({ onSubmit, formData, onChange, isEdit, isLoading, onClose }) =
         e.preventDefault();
         const success = await onSubmit(e);
         if (success) {
-            toast.success(isEdit ? 'Машина муваффақиятли янгиланди' : 'Машина муваффақиятли қўшилди');
+            toast.success(isEdit ? 'Транспорт муваффақиятли янгиланди' : 'Транспорт муваффақиятли қўшилди');
             onClose();
         }
     };
@@ -48,7 +48,7 @@ const CarForm = ({ onSubmit, formData, onChange, isEdit, isLoading, onClose }) =
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="carNumber">Машина рақами</Label>
+                <Label htmlFor="carNumber">Транспорт рақами</Label>
                 <Input
                     id="carNumber"
                     name="carNumber"
@@ -180,7 +180,7 @@ export default function CarsPage() {
             try {
                 await dispatch(deleteCar(selectedCar._id)).unwrap();
                 setIsDeleteDialogOpen(false);
-                toast.success('Машина муваффақиятли ўчирилди');
+                toast.success('Транспорт муваффақиятли ўчирилди');
             } catch (error) {
                 toast.error('Хатолик юз берди');
             }
@@ -205,17 +205,17 @@ export default function CarsPage() {
     return (
         <div className="container mx-auto py-10">
             <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold">Машиналар</h1>
+                <h1 className="text-3xl font-bold">Транспорт</h1>
                 <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                     <DialogTrigger asChild>
                         <Button>
                             <Plus className="mr-2 h-4 w-4" />
-                            Машина қўшиш
+                            Транспорт қўшиш
                         </Button>
                     </DialogTrigger>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Янги машина қўшиш</DialogTitle>
+                            <DialogTitle>Янги Транспорт қўшиш</DialogTitle>
                         </DialogHeader>
                         <CarForm 
                             onSubmit={handleAddCar}
@@ -232,7 +232,7 @@ export default function CarsPage() {
             {/* Search input */}
             <div className="mb-4">
                 <Input
-                    placeholder="Машина рақами, ҳайдовчи ёки телефон рақами бўйича қидириш..."
+                    placeholder="Транспорт рақами, ҳайдовчи ёки телефон рақами бўйича қидириш..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="max-w-md"
@@ -252,7 +252,7 @@ export default function CarsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Машина рақами</TableHead>
+                                <TableHead>Транспорт рақами</TableHead>
                                 <TableHead>Ҳайдовчи</TableHead>
                                 <TableHead>Телефон</TableHead>
                                 <TableHead>Ижаралар сони</TableHead>
@@ -263,7 +263,7 @@ export default function CarsPage() {
                             {filteredCars.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-4">
-                                        Машиналар топилмади
+                                    Транспорт топилмади
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -300,7 +300,7 @@ export default function CarsPage() {
             <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Машинани таҳрирлаш</DialogTitle>
+                        <DialogTitle>Транспорт таҳрирлаш</DialogTitle>
                     </DialogHeader>
                     <CarForm 
                         onSubmit={handleEditCar}
@@ -316,9 +316,9 @@ export default function CarsPage() {
             <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Машинани ўчириш</DialogTitle>
+                        <DialogTitle>Транспорт ўчириш</DialogTitle>
                     </DialogHeader>
-                    <p>Ҳақиқатан ҳам бу машинани ўчирмоқчимисиз?</p>
+                    <p>Ҳақиқатан ҳам бу транспортни ўчирмоқчимисиз?</p>
                     <DialogFooter>
                         <Button
                             variant="ghost"
