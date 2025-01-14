@@ -128,7 +128,7 @@ const productSlice = createSlice({
 });
 
 export const selectPartProducts = (state) => 
-    state.products.products.filter(product => product.category === 'Қисм')
+    state.products.products.filter(product => product.category === 'qism')
 
 export const { clearError } = productSlice.actions;
 export default productSlice.reducer;

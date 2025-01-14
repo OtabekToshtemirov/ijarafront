@@ -33,7 +33,8 @@ const initialProductState = {
     parts: [],
     availability: true,
     description: '',
-    category: ''
+    category: '',
+    manualPrice: false
 }
 
 export default function ProductAddForm() {
@@ -114,7 +115,6 @@ export default function ProductAddForm() {
                 ...newProduct,
                 dailyRate: Number(newProduct.dailyRate),
                 quantity: Number(newProduct.quantity),
-                dailyRate: Number(newProduct.dailyRate),
                 parts: newProduct.type === 'combo' 
                     ? newProduct.parts.map(part => ({
                         product: part.productId,
