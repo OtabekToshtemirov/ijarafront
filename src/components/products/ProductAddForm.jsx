@@ -59,8 +59,8 @@ export default function ProductAddForm() {
     const validateProduct = () => {
         const errors = []
         const requiredFields = {
-            name: 'Маҳсулот номи',
-            category: 'Маҳсулот категорияси'
+            name: 'Мулк номи',
+            category: 'Мулк категорияси'
         }
 
         Object.entries(requiredFields).forEach(([field, label]) => {
@@ -70,12 +70,12 @@ export default function ProductAddForm() {
         })
 
         if (newProduct.quantity < 1) {
-            errors.push('Маҳсулот сони 1 дан катта бўлиши керак')
+            errors.push('Мулк сони 1 дан катта бўлиши керак')
         }
 
         if (newProduct.type === 'combo') {
             if (!newProduct.parts?.length) {
-                errors.push('Комбинация маҳсулоти учун камида битта қисм киритилиши керак')
+                errors.push('Комбинация мулк учун камида битта қисм киритилиши керак')
             }
             newProduct.parts.forEach((part, index) => {
                 if (!part.productId) {
@@ -128,16 +128,16 @@ export default function ProductAddForm() {
             
             toast({
                 title: 'Муваффақият',
-                description: 'Маҳсулот муваффақиятли қўшилди',
+                description: 'Мулк муваффақиятли қўшилди',
             })
             
             setNewProduct(initialProductState)
             setIsDialogOpen(false)
         } catch (error) {
-            console.error('Маҳсулот қўшишда хатолик:', error)
+            console.error('Мулк қўшишда хатолик:', error)
             toast({
                 title: 'Хатолик',
-                description: error.message || 'Маҳсулот қўшишда хатолик юз берди',
+                description: error.message || 'Мулк қўшишда хатолик юз берди',
                 variant: 'destructive',
             })
         } finally {
@@ -191,14 +191,14 @@ export default function ProductAddForm() {
             <DialogTrigger asChild>
                 <Button>
                     <Plus className="w-4 h-4 mr-2" />
-                    Янги маҳсулот
+                    Янги мулк
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Янги Маҳсулот Қўшиш</DialogTitle>
+                    <DialogTitle>Янги мулк қўшиш</DialogTitle>
                     <DialogDescription>
-                        Янги маҳсулот қўшиш учун қуйидаги майдонларни тўлдиринг
+                        Янги мулк қўшиш учун қуйидаги майдонларни тўлдиринг
                     </DialogDescription>
                 </DialogHeader>
 
