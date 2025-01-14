@@ -15,11 +15,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 
 const formSchema = z.object({
-    title: z.string().min(1, "Title is required"),
+    title: z.string().min(1, "Сарлавҳа талаб қилинади"),
     description: z.string().optional(),
-    amount: z.number().min(0.01, "Amount must be greater than 0"),
-    category: z.string().min(1, "Category is required"),
-    paymentMethod: z.string().min(1, "Payment method is required"),
+    amount: z.number().min(0.01, "Сумма 0 дан катта бўлиши керак"),
+    category: z.string().min(1, "Категория талаб қилинади"),
+    paymentMethod: z.string().min(1, "Тўлов усули талаб қилинади"),
     notes: z.string().optional(),
     date: z.date()
 });
@@ -58,7 +58,7 @@ export default function AddExpensePage() {
         <div className="container mx-auto py-10">
             <Card>
                 <CardHeader>
-                    <CardTitle>Add New Expense</CardTitle>
+                    <CardTitle>Янги харажат қўшиш</CardTitle>
                 </CardHeader>
                 <CardContent>                                                                                           
                     <Form {...form}>
@@ -69,9 +69,9 @@ export default function AddExpensePage() {
                                     name="title"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Title</FormLabel>
+                                            <FormLabel>Сарлавҳа</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Expense Title" {...field} />
+                                                <Input placeholder="Харажат сарлавҳаси" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -82,9 +82,9 @@ export default function AddExpensePage() {
                                     name="amount"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Amount</FormLabel>
+                                            <FormLabel>Сумма</FormLabel>
                                             <FormControl>
-                                                <Input type="number" placeholder="Amount" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
+                                                <Input type="number" placeholder="Сумма" {...field} onChange={e => field.onChange(parseFloat(e.target.value))} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -95,11 +95,11 @@ export default function AddExpensePage() {
                                     name="category"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Category</FormLabel>
+                                            <FormLabel>Категория</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select Category" />
+                                                        <SelectValue placeholder="Категорияни танланг" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -117,11 +117,11 @@ export default function AddExpensePage() {
                                     name="paymentMethod"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Payment Method</FormLabel>
+                                            <FormLabel>Тўлов усули</FormLabel>
                                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select Payment Method" />
+                                                        <SelectValue placeholder="Тўлов усулини танланг" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -139,7 +139,7 @@ export default function AddExpensePage() {
                                     name="date"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Date</FormLabel>
+                                            <FormLabel>Сана</FormLabel>
                                             <FormControl>
                                                 <Input type="date" {...field} value={field.value.toISOString().split('T')[0]} onChange={e => field.onChange(new Date(e.target.value))} />
                                             </FormControl>
@@ -153,9 +153,9 @@ export default function AddExpensePage() {
                                 name="description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Description</FormLabel>
+                                        <FormLabel>Тавсиф</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Description" {...field} />
+                                            <Textarea placeholder="Тавсиф" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -166,9 +166,9 @@ export default function AddExpensePage() {
                                 name="notes"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Additional Notes</FormLabel>
+                                        <FormLabel>Қўшимча изоҳлар</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Additional Notes" {...field} />
+                                            <Textarea placeholder="Қўшимча изоҳлар" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -176,9 +176,9 @@ export default function AddExpensePage() {
                             />
                             <div className="flex justify-end space-x-4">
                                 <Button variant="outline" onClick={() => router.push('/expenses')}>
-                                    Cancel
+                                    Бекор қилиш
                                 </Button>
-                                <Button type="submit">Add Expense</Button>
+                                <Button type="submit">Харажат қўшиш</Button>
                             </div>
                         </form>
                     </Form>

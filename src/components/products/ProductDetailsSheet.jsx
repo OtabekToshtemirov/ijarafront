@@ -75,42 +75,42 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                 <SheetHeader className="mb-6">
                     <SheetTitle>{product?.name}</SheetTitle>
                     <SheetDescription>
-                        Mahsulot ma'lumotlari va ijaralar tarixi
+                    Мулк маълумотлари ва ижаралар тарихи
                     </SheetDescription>
                 </SheetHeader>
 
                 {/* Product Details */}
                 <Card className="mb-6">
                     <CardHeader>
-                        <CardTitle>Mahsulot ma'lumotlari</CardTitle>
+                        <CardTitle>Мулк маълумотлари</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <p className="text-sm font-medium">Kategoriya:</p>
+                                <p className="text-sm font-medium">Категория:</p>
                                 <p>{product?.category || '-'}</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium">Kunlik narx:</p>
-                                <p>{product?.dailyRate?.toLocaleString()} so'm</p>
+                                <p className="text-sm font-medium">Кунлик нарх:</p>
+                                <p>{product?.dailyRate?.toLocaleString()} сўм</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium">Umumiy soni:</p>
-                                <p>{product?.quantity} dona</p>
+                                <p className="text-sm font-medium">Умумий сони:</p>
+                                <p>{product?.quantity} дона</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium">Marta ijaraga berilgan:</p>
+                                <p className="text-sm font-medium">Марта ижарага берилган:</p>
                                 <p>{product?.rentalCount}</p>
                             </div>
                             <div>
-                                <p className="text-sm font-medium">Holati:</p>
+                                <p className="text-sm font-medium">Ҳолати:</p>
                                 <Badge variant={product?.isAvailable ? "default" : "secondary"}>
-                                    {product?.isAvailable ? 'Mavjud' : 'Mavjud emas'}
+                                    {product?.isAvailable ? 'Мавжуд' : 'Мавжуд эмас'}
                                 </Badge>
                             </div>
                             {product?.description && (
                                 <div className="col-span-2">
-                                    <p className="text-sm font-medium">Izoh:</p>
+                                    <p className="text-sm font-medium">Изоҳ:</p>
                                     <p>{product.description}</p>
                                 </div>
                             )}
@@ -121,7 +121,7 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                 {/* Active Rentals */}
                 <Card className="mb-6">
                     <CardHeader>
-                        <CardTitle>Faol ijaralar</CardTitle>
+                        <CardTitle>Фаол ижаралар</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {status === 'loading' ? (
@@ -130,7 +130,7 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                             </div>
                         ) : getActiveRentals().length === 0 ? (
                             <p className="text-center text-muted-foreground py-4">
-                                Faol ijaralar mavjud emas
+                                Фаол ижаралар мавжуд эмас
                             </p>
                         ) : (
                             <div className="space-y-4">
@@ -148,15 +148,15 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                                             </div>
                                             <div className="text-right">
                                                 <p className="font-medium">
-                                                    {getBorrowedQuantity(rental)} dona
+                                                    {getBorrowedQuantity(rental)} дона
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    Qoldi: {getRemainingQuantity(rental)} dona
+                                                    Қолди: {getRemainingQuantity(rental)} дона
                                                 </p>
                                             </div>
                                         </div>
                                         <div className="text-sm text-muted-foreground">
-                                            Sana: {formatDate(rental.startDate)}
+                                            Сана: {formatDate(rental.startDate)}
                                         </div>
                                     </div>
                                 ))}
@@ -168,7 +168,7 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                 {/* Rental History */}
                 <Card>
                     <CardHeader>
-                        <CardTitle>Ijaralar tarixi</CardTitle>
+                        <CardTitle>Ижаралар тарихи</CardTitle>
                     </CardHeader>
                     <CardContent>
                         {status === 'loading' ? (
@@ -177,17 +177,17 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                             </div>
                         ) : rentals.length === 0 ? (
                             <p className="text-center text-muted-foreground py-4">
-                                Ijaralar tarixi mavjud emas
+                                Ижаралар тарихи мавжуд эмас
                             </p>
                         ) : (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Sana</TableHead>
-                                        <TableHead>Mijoz</TableHead>
-                                        <TableHead>Ijara raqami</TableHead>
-                                        <TableHead>Soni</TableHead>
-                                        <TableHead>Status</TableHead>
+                                        <TableHead>Сана</TableHead>
+                                        <TableHead>Мижоз</TableHead>
+                                        <TableHead>Ижара рақами</TableHead>
+                                        <TableHead>Сони</TableHead>
+                                        <TableHead>Ҳолати</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -200,17 +200,17 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                                             <TableCell>{rental.rentalNumber}</TableCell>
                                             <TableCell>
                                                 <div className="space-y-1">
-                                                    <p>{getBorrowedQuantity(rental)} dona</p>
+                                                    <p>{getBorrowedQuantity(rental)} дона</p>
                                                     {rental.status === 'active' && (
                                                         <p className="text-sm text-muted-foreground">
-                                                            Qoldi: {getRemainingQuantity(rental)} dona
+                                                            Қолди: {getRemainingQuantity(rental)} дона
                                                         </p>
                                                     )}
                                                 </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant={rental.status === 'active' ? "default" : "secondary"}>
-                                                    {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
+                                                    {rental.status === 'active' ? 'Фаол' : 'Якунланган'}
                                                 </Badge>
                                             </TableCell>
                                         </TableRow>

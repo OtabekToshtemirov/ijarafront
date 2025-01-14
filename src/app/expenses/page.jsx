@@ -60,19 +60,19 @@ import {
 } from '@/lib/features/expenses/expensesSlice';
 
 const EXPENSE_CATEGORIES = [
-    { value: 'maosh', label: 'Maosh' },
-    { value: 'elektr', label: 'Elektr' },
-    { value: 'suv', label: 'Suv' },
-    { value: 'transport', label: 'Transport' },
-    { value: 'boshqa', label: 'Boshqa' },
-    { value: 'soliq', label: 'Soliq' },
-    { value: 'xaridlar', label: 'Xaridlar' },
-    { value: 'tamir', label: 'Ta\'mir' }
+    { value: 'maosh', label: 'Маош' },
+    { value: 'elektr', label: 'Электр' },
+    { value: 'suv', label: 'Сув' },
+    { value: 'transport', label: 'Транспорт' },
+    { value: 'boshqa', label: 'Бошқа' },
+    { value: 'soliq', label: 'Солиқ' },
+    { value: 'xaridlar', label: 'Харидлар' },
+    { value: 'tamir', label: 'Таъмир' }
 ];
 
 const PAYMENT_METHODS = [
-    { value: 'karta', label: 'Karta' },
-    { value: 'naqd', label: 'Naqd' }
+    { value: 'karta', label: 'Карта' },
+    { value: 'naqd', label: 'Нақд' }
 ];
 
 const formSchema = z.object({
@@ -180,14 +180,14 @@ export default function ExpensesPage() {
                     data: expenseData 
                 })).unwrap();
                 toast({
-                    title: "Xarajat yangilandi",
-                    description: "Xarajat muvaffaqiyatli yangilandi",
+                    title: "Харажат янгиланди",
+                    description: "Харажат муваффақиятли янгиланди",
                 });
             } else {
                 await dispatch(createExpense(expenseData)).unwrap();
                 toast({
-                    title: "Xarajat qo'shildi",
-                    description: "Yangi xarajat muvaffaqiyatli qo'shildi",
+                    title: "Харажат қўшилди",
+                    description: "Янги харажат муваффақиятли қўшилди",
                 });
             }
             setIsAddDialogOpen(false);
@@ -195,7 +195,7 @@ export default function ExpensesPage() {
             form.reset();
         } catch (error) {
             toast({
-                title: "Xatolik yuz berdi",
+                title: "Хатолик юз берди",
                 description: error.message,
                 variant: "destructive",
             });
@@ -205,16 +205,16 @@ export default function ExpensesPage() {
     };
 
     const handleDeleteExpense = async (id) => {
-        if (window.confirm('Xarajatni o\'chirishni xohlaysizmi?')) {
+        if (window.confirm('Харажатни ўчиришни хоҳлайсизми?')) {
             try {
                 await dispatch(deleteExpense(id)).unwrap();
                 toast({
-                    title: "Xarajat o'chirildi",
-                    description: "Xarajat muvaffaqiyatli o'chirildi",
+                    title: "Харажат ўчирилди",
+                    description: "Харажат муваффақиятли ўчирилди",
                 });
             } catch (error) {
                 toast({
-                    title: "Xatolik yuz berdi",
+                    title: "Хатолик юз берди",
                     description: error.message,
                     variant: "destructive",
                 });
@@ -234,25 +234,25 @@ export default function ExpensesPage() {
         <div className="container mx-auto py-10">
             <div className="flex flex-col space-y-4">
                 <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold tracking-tight">Xarajatlar</h2>
+                    <h2 className="text-2xl font-bold tracking-tight">Харажатлар</h2>
                     <Button onClick={() => setIsAddDialogOpen(true)}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Yangi xarajat
+                        Янги харажат
                     </Button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                     <div>
-                        <Label>Kategoriya</Label>
+                        <Label>Категория</Label>
                         <Select
                             value={filters.category}
                             onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Barcha kategoriyalar" />
+                                <SelectValue placeholder="Барча категориялар" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Barchasi</SelectItem>
+                                <SelectItem value="all">Барчаси</SelectItem>
                                 {EXPENSE_CATEGORIES.map((category) => (
                                     <SelectItem 
                                         key={`filter-category-${category.value}`} 
@@ -266,16 +266,16 @@ export default function ExpensesPage() {
                     </div>
 
                     <div>
-                        <Label>To'lov turi</Label>
+                        <Label>Тўлов тури</Label>
                         <Select
                             value={filters.paymentMethod}
                             onValueChange={(value) => setFilters(prev => ({ ...prev, paymentMethod: value }))}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Barcha to'lov turlari" />
+                                <SelectValue placeholder="Барча тўлов турлари" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Barchasi</SelectItem>
+                                <SelectItem value="all">Барчаси</SelectItem>
                                 {PAYMENT_METHODS.map((method) => (
                                     <SelectItem 
                                         key={`filter-payment-${method.value}`} 
@@ -289,7 +289,7 @@ export default function ExpensesPage() {
                     </div>
 
                     <div>
-                        <Label>Boshlanish sana</Label>
+                        <Label>Бошланиш сана</Label>
                         <Input
                             type="date"
                             value={filters.startDate}
@@ -298,7 +298,7 @@ export default function ExpensesPage() {
                     </div>
 
                     <div>
-                        <Label>Tugash sana</Label>
+                        <Label>Тугаш сана</Label>
                         <Input
                             type="date"
                             value={filters.endDate}
@@ -311,13 +311,13 @@ export default function ExpensesPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Sana</TableHead>
-                                <TableHead>Kategoriya</TableHead>
-                                <TableHead>To'lov turi</TableHead>
-                                <TableHead>Summa</TableHead>
-                                <TableHead>Izoh</TableHead>
-                                <TableHead>Yaratilgan vaqt</TableHead>
-                                <TableHead className="text-right">Amallar</TableHead>
+                                <TableHead>Сана</TableHead>
+                                <TableHead>Категория</TableHead>
+                                <TableHead>Тўлов тури</TableHead>
+                                <TableHead>Сумма</TableHead>
+                                <TableHead>Изоҳ</TableHead>
+                                <TableHead>Яратилган вақт</TableHead>
+                                <TableHead className="text-right">Амaллар</TableHead>
                             </TableRow>
                         </TableHeader>
                         {loading ? (
@@ -334,7 +334,7 @@ export default function ExpensesPage() {
                             <TableBody>
                                 <TableRow>
                                     <TableCell colSpan={7} className="text-center py-10">
-                                        Harajatlar topilmadi
+                                        Харажатлар топилмади
                                     </TableCell>
                                 </TableRow>
                             </TableBody>
@@ -356,7 +356,7 @@ export default function ExpensesPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            {(parseFloat(expense.amount) || 0).toLocaleString()} so'm
+                                            {(parseFloat(expense.amount) || 0).toLocaleString()} сўм
                                         </TableCell>
                                         <TableCell>{expense.description}</TableCell>
                                         <TableCell>
@@ -399,7 +399,7 @@ export default function ExpensesPage() {
 
                 <div className="mt-4 flex items-center justify-between">
                     <div className="text-sm text-muted-foreground">
-                        Jami xarajatlar: <span className="font-medium">{(totalAmount || 0).toLocaleString()} so'm</span>
+                        Жами харажатлар: <span className="font-medium">{(totalAmount || 0).toLocaleString()} сўм</span>
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -409,10 +409,10 @@ export default function ExpensesPage() {
                             onClick={() => handlePageChange(currentPage - 1)}
                             disabled={loading || currentPage <= 1}
                         >
-                            Oldingi
+                            Олдинги
                         </Button>
                         <div className="text-sm text-muted-foreground">
-                            Sahifa {currentPage} / {Math.max(1, totalPages)}
+                            Саҳифа {currentPage} / {Math.max(1, totalPages)}
                         </div>
                         <Button
                             variant="outline"
@@ -420,7 +420,7 @@ export default function ExpensesPage() {
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={loading || currentPage >= totalPages}
                         >
-                            Keyingi
+                            Кейинги
                         </Button>
                     </div>
                 </div>
@@ -438,12 +438,12 @@ export default function ExpensesPage() {
                     <DialogContent>
                         <DialogHeader>
                             <DialogTitle>
-                                {editingExpense ? 'Xarajatni tahrirlash' : 'Yangi xarajat'}
+                                {editingExpense ? 'Харажатни таҳрирлаш' : 'Янги харажат'}
                             </DialogTitle>
                             <DialogDescription>
                                 {editingExpense ? 
-                                    'Xarajat ma\'lumotlarini tahrirlang' : 
-                                    'Yangi xarajat qo\'shish uchun formani to\'ldiring'
+                                    'Харажат маълумотларини таҳрирланг' : 
+                                    'Янги харажат қўшиш учун формани тўлдиринг'
                                 }
                             </DialogDescription>
                         </DialogHeader>
@@ -455,7 +455,7 @@ export default function ExpensesPage() {
                                     name="description"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Izoh</FormLabel>
+                                            <FormLabel>Изоҳ</FormLabel>
                                             <FormControl>
                                                 <Input {...field} />
                                             </FormControl>
@@ -469,11 +469,11 @@ export default function ExpensesPage() {
                                     name="amount"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Summa</FormLabel>
+                                            <FormLabel>Сумма</FormLabel>
                                             <FormControl>
                                                 <Input 
                                                     type="number" 
-                                                    placeholder="Xarajat summasini kiriting"
+                                                    placeholder="Харажат суммасини киритинг"
                                                     {...field} 
                                                 />
                                             </FormControl>
@@ -487,11 +487,11 @@ export default function ExpensesPage() {
                                     name="category"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Kategoriya</FormLabel>
+                                            <FormLabel>Категория</FormLabel>
                                             <FormControl>
                                                 <Select onValueChange={field.onChange} value={field.value}>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Kategoriyani tanlang" />
+                                                        <SelectValue placeholder="Категорияни танланг" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {EXPENSE_CATEGORIES.map((category) => (
@@ -514,11 +514,11 @@ export default function ExpensesPage() {
                                     name="paymentMethod"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>To'lov turi</FormLabel>
+                                            <FormLabel>Тўлов тури</FormLabel>
                                             <FormControl>
                                                 <Select onValueChange={field.onChange} value={field.value}>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="To'lov turini tanlang" />
+                                                        <SelectValue placeholder="Тўлов турини танланг" />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {PAYMENT_METHODS.map((method) => (
@@ -542,7 +542,7 @@ export default function ExpensesPage() {
                                     name="date"
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Sana</FormLabel>
+                                            <FormLabel>Сана</FormLabel>
                                             <FormControl>
                                                 <Input type="date" {...field} />
                                             </FormControl>
@@ -561,13 +561,13 @@ export default function ExpensesPage() {
                                             form.reset();
                                         }}
                                     >
-                                        Bekor qilish
+                                        Бекор қилиш
                                     </Button>
                                     <Button type="submit" disabled={isSubmitting}>
                                         {isSubmitting && (
                                             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                                         )}
-                                        {editingExpense ? 'Saqlash' : 'Qo\'shish'}
+                                        {editingExpense ? 'Сақлаш' : 'Қўшиш'}
                                     </Button>
                                 </div>
                             </form>

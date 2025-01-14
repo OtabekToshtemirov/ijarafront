@@ -59,14 +59,14 @@ export default function ExpenseEditPage({ params }) {
     };
 
     if (!expense) {
-        return <div>Loading...</div>;
+        return <div>Юкланмоқда...</div>;
     }
 
     return (
         <div className="container mx-auto py-10">
             <Card>
                 <CardHeader>
-                    <CardTitle>Edit Expense</CardTitle>
+                    <CardTitle>Харажатни таҳрирлаш</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
@@ -75,12 +75,12 @@ export default function ExpenseEditPage({ params }) {
                                 <FormField
                                     control={form.control}
                                     name="title"
-                                    rules={{ required: 'Title is required' }}
+                                    rules={{ required: 'Сарлавҳа талаб қилинади' }}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Title</FormLabel>
+                                            <FormLabel>Сарлавҳа</FormLabel>
                                             <FormControl>
-                                                <Input placeholder="Expense Title" {...field} />
+                                                <Input placeholder="Харажат сарлавҳаси" {...field} />
                                             </FormControl>
                                             <FormMessage />
                                         </FormItem>
@@ -90,16 +90,16 @@ export default function ExpenseEditPage({ params }) {
                                     control={form.control}
                                     name="amount"
                                     rules={{ 
-                                        required: 'Amount is required', 
-                                        min: { value: 0.01, message: 'Amount must be greater than 0' } 
+                                        required: 'Сумма талаб қилинади', 
+                                        min: { value: 0.01, message: 'Сумма 0 дан катта бўлиши керак' } 
                                     }}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Amount</FormLabel>
+                                            <FormLabel>Сумма</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="number"
-                                                    placeholder="Amount"
+                                                    placeholder="Сумма"
                                                     {...field}
                                                     onChange={(e) => field.onChange(parseFloat(e.target.value))}
                                                 />
@@ -111,14 +111,14 @@ export default function ExpenseEditPage({ params }) {
                                 <FormField
                                     control={form.control}
                                     name="category"
-                                    rules={{ required: 'Category is required' }}
+                                    rules={{ required: 'Категория талаб қилинади' }}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Category</FormLabel>
+                                            <FormLabel>Категория</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value || ''}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select Category" />
+                                                        <SelectValue placeholder="Категорияни танланг" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -136,14 +136,14 @@ export default function ExpenseEditPage({ params }) {
                                 <FormField
                                     control={form.control}
                                     name="paymentMethod"
-                                    rules={{ required: 'Payment method is required' }}
+                                    rules={{ required: 'Тўлов усули талаб қилинади' }}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Payment Method</FormLabel>
+                                            <FormLabel>Тўлов усули</FormLabel>
                                             <Select onValueChange={field.onChange} value={field.value || ''}>
                                                 <FormControl>
                                                     <SelectTrigger>
-                                                        <SelectValue placeholder="Select Payment Method" />
+                                                        <SelectValue placeholder="Тўлов усулини танланг" />
                                                     </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
@@ -161,10 +161,10 @@ export default function ExpenseEditPage({ params }) {
                                 <FormField
                                     control={form.control}
                                     name="date"
-                                    rules={{ required: 'Date is required' }}
+                                    rules={{ required: 'Сана талаб қилинади' }}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <FormLabel>Date</FormLabel>
+                                            <FormLabel>Сана</FormLabel>
                                             <FormControl>
                                                 <Input
                                                     type="date"
@@ -181,9 +181,9 @@ export default function ExpenseEditPage({ params }) {
                                 name="description"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Description</FormLabel>
+                                        <FormLabel>Тавсиф</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Description" {...field} />
+                                            <Textarea placeholder="Тавсиф" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -194,9 +194,9 @@ export default function ExpenseEditPage({ params }) {
                                 name="notes"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Additional Notes</FormLabel>
+                                        <FormLabel>Қўшимча изоҳлар</FormLabel>
                                         <FormControl>
-                                            <Textarea placeholder="Additional Notes" {...field} />
+                                            <Textarea placeholder="Қўшимча изоҳлар" {...field} />
                                         </FormControl>
                                         <FormMessage />
                                     </FormItem>
@@ -204,9 +204,9 @@ export default function ExpenseEditPage({ params }) {
                             />
                             <div className="flex justify-end space-x-4">
                                 <Button variant="outline" type="button" onClick={() => router.push('/expenses')}>
-                                    Cancel
+                                    Бекор қилиш
                                 </Button>
-                                <Button type="submit">Update Expense</Button>
+                                <Button type="submit">Харажатни янгилаш</Button>
                             </div>
                         </form>
                     </Form>

@@ -1,4 +1,4 @@
-'use client'
+  'use client'
 
 import { useEffect, useState } from "react"
 import { useDispatch, useSelector } from "react-redux"
@@ -77,7 +77,7 @@ export default function PaymentManagement() {
   useEffect(() => {
     if (addStatus === 'failed' && addError) {
       toast({ 
-        title: "To'lov qo'shishda xatolik", 
+        title: "Тўлов қўшишда хатолик", 
         description: addError,
         variant: "destructive" 
       })
@@ -99,14 +99,14 @@ export default function PaymentManagement() {
         
         // Refresh payments only after successful creation
         await dispatch(fetchPayments())
-        toast({ title: "To'lov muvaffaqiyatli qo'shildi!" })
+        toast({ title: "Тўлов муваффақиятли қўшилди!" })
         form.reset()
         setShowForm(false)
       }
     } catch (error) {
       toast({ 
-        title: "Xatolik", 
-        description: error.message || "To'lov qo'shishda xatolik", 
+        title: "Хатолик", 
+        description: error.message || "Тўлов қўшишда хатолик", 
         variant: "destructive" 
       })
     }
@@ -139,13 +139,13 @@ export default function PaymentManagement() {
     try {
       await dispatch(deletePayment(paymentToDelete)).unwrap()
       await dispatch(fetchPayments())
-      toast({ title: "To'lov muvaffaqiyatli o'chirildi" })
+      toast({ title: "Тўлов муваффақиятли ўчирилди" })
       setShowDeleteConfirm(false)
       setPaymentToDelete(null)
     } catch (error) {
       toast({ 
-        title: "Xatolik", 
-        description: error.message || "To'lovni o'chirishda xatolik yuz berdi", 
+        title: "Хатолик", 
+        description: error.message || "Тўловни ўчиришда хатолик юз берди", 
         variant: "destructive" 
       })
     }
@@ -180,14 +180,14 @@ export default function PaymentManagement() {
 
   return (
       <div className="container mx-auto p-6">
-        <h1 className="text-3xl font-bold mb-6">To'lovlar</h1>
+        <h1 className="text-3xl font-bold mb-6">Тўловлар</h1>
         <Button onClick={() => setShowForm(!showForm)} className="mb-6">
-          {showForm ? "Formani yopish" : "Yangi to'lov"}
+          {showForm ? "Формани ёпиш" : "Янги тўлов"}
         </Button>
 
         {showForm && (
             <div className="mb-8">
-              <h2 className="text-2xl font-bold mb-4">{editingPayment ? "To'lovni tahrirlash" : "To'lov kiritish"}</h2>
+              <h2 className="text-2xl font-bold mb-4">{editingPayment ? "Тўловни таҳрирлаш" : "Тўлов киритиш"}</h2>
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                   <FormField
@@ -195,18 +195,18 @@ export default function PaymentManagement() {
                       name="customer"
                       render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Mijozni tanlang</FormLabel>
+                            <FormLabel>Мижозни танланг</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="Mijozni tanlang" />
+                                  <SelectValue placeholder="Мижозни танланг" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
                                 <div className="p-2">
                                   <Input
                                     type="text"
-                                    placeholder="Mijozni qidirish..."
+                                    placeholder="Мижозни қидириш..."
                                     className="mb-2"
                                     onChange={(e) => {
                                       const searchTerm = e.target.value.toLowerCase();
@@ -241,7 +241,7 @@ export default function PaymentManagement() {
                       name="amount"
                       render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Summa</FormLabel>
+                            <FormLabel>Сумма</FormLabel>
                             <FormControl>
                               <Input placeholder="0" type="number" step="1" {...field} value={field.value || ''} onChange={(e) => field.onChange(parseFloat(e.target.value) || '')} />
                             </FormControl>
@@ -254,7 +254,7 @@ export default function PaymentManagement() {
                       name="paymentDate"
                       render={({ field }) => (
                           <FormItem className="flex flex-col">
-                            <FormLabel>To'lov sanasi</FormLabel>
+                            <FormLabel>Тўлов санаси</FormLabel>
                             <Popover>
                               <PopoverTrigger asChild>
                                 <FormControl>
@@ -262,7 +262,7 @@ export default function PaymentManagement() {
                                       variant={"outline"}
                                       className={`w-[240px] pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
                                   >
-                                    {field.value ? format(field.value, "PPP") : <span>Sanani tanlang</span>}
+                                    {field.value ? format(field.value, "PPP") : <span>Санани танланг</span>}
                                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                                   </Button>
                                 </FormControl>
@@ -286,16 +286,16 @@ export default function PaymentManagement() {
                       name="paymentType"
                       render={({ field }) => (
                           <FormItem>
-                            <FormLabel>To'lov turi</FormLabel>
+                            <FormLabel>Тўлов тури</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="To'lov turini tanlang" />
+                                  <SelectValue placeholder="Тўлов турини танланг" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="cash">Naqd</SelectItem>
-                                <SelectItem value="card">Karta</SelectItem>
+                                <SelectItem value="cash">Нақд</SelectItem>
+                                <SelectItem value="card">Карта</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -307,25 +307,25 @@ export default function PaymentManagement() {
                       name="memo"
                       render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Izoh (ixtiyoriy)</FormLabel>
+                            <FormLabel>Изоҳ (ихтиёрий)</FormLabel>
                             <FormControl>
                               <Input 
-                                placeholder="Qo'shimcha ma'lumot" 
+                                placeholder="Қўшимча маълумот" 
                                 {...field}
                                 value={field.value || ""} 
                               />
                             </FormControl>
-                            <FormDescription>To'lov haqida qo'shimcha ma'lumot</FormDescription>
+                            <FormDescription>Тўлов ҳақида қўшимча маълумот</FormDescription>
                             <FormMessage />
                           </FormItem>
                       )}
                   />
                   <Button type="submit" className="w-full">
-                    {editingPayment ? "To'lovni yangilash" : "To'lovni saqlash"}
+                    {editingPayment ? "Тўловни янгилаш" : "Тўловни сақлаш"}
                   </Button>
                   {editingPayment && (
                       <Button type="button" variant="outline" className="w-full mt-2" onClick={handleCancel}>
-                        Bekor qilish
+                        Бекор қилиш
                       </Button>
                   )}
                 </form>
@@ -334,7 +334,7 @@ export default function PaymentManagement() {
         )}
 
         <div>
-          <h2 className="text-2xl font-bold mb-4">Barcha to'lovlar</h2>
+          <h2 className="text-2xl font-bold mb-4">Барча тўловлар</h2>
           
           {/* Filters */}
           <div className="mb-6 space-y-4 sm:space-y-0 sm:flex sm:items-center sm:space-x-4">
@@ -344,12 +344,12 @@ export default function PaymentManagement() {
                 onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="To'lov turini tanlang" />
+                  <SelectValue placeholder="Тўлов турини танланг" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Barchasi</SelectItem>
-                  <SelectItem value="cash">Naqd</SelectItem>
-                  <SelectItem value="card">Karta</SelectItem>
+                  <SelectItem value="all">Барчаси</SelectItem>
+                  <SelectItem value="cash">Нақд</SelectItem>
+                  <SelectItem value="card">Карта</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -366,7 +366,7 @@ export default function PaymentManagement() {
                     {filters.startDate ? (
                       format(filters.startDate, "PPP")
                     ) : (
-                      <span>Boshlanish sanasi</span>
+                      <span>Бошланиш санаси</span>
                     )}
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
@@ -396,7 +396,7 @@ export default function PaymentManagement() {
                     {filters.endDate ? (
                       format(filters.endDate, "PPP")
                     ) : (
-                      <span>Tugash sanasi</span>
+                      <span>Тугаш санаси</span>
                     )}
                     <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                   </Button>
@@ -419,7 +419,7 @@ export default function PaymentManagement() {
               onClick={() => setFilters({ type: 'all', startDate: null, endDate: null })}
               className="w-full sm:w-auto"
             >
-              Filterni tozalash
+              Филтерни тозалаш
             </Button>
           </div>
 
@@ -431,13 +431,13 @@ export default function PaymentManagement() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Mijoz</TableHead>
-                    <TableHead>To'lov</TableHead>
-                    <TableHead>Sana</TableHead>
-                    <TableHead>Turi</TableHead>
-                    <TableHead>Izoh</TableHead>
-                    <TableHead>Oldindan to'lov</TableHead>
-                    <TableHead>Amallar</TableHead>
+                    <TableHead>Мижоз</TableHead>
+                    <TableHead>Тўлов</TableHead>
+                    <TableHead>Сана</TableHead>
+                    <TableHead>Тури</TableHead>
+                    <TableHead>Изоҳ</TableHead>
+                    <TableHead>Олдиндан тўлов</TableHead>
+                    <TableHead>Амaллар</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -465,12 +465,12 @@ export default function PaymentManagement() {
                     })
                     .map((payment, index) => (
                       <TableRow key={index}>
-                        <TableCell>{customers.find((customer) => customer._id === payment.customer)?.name || "Noma'lum"}</TableCell>
-                        <TableCell>{(payment.amount || 0).toLocaleString()} so'm</TableCell>
+                        <TableCell>{customers.find((customer) => customer._id === payment.customer)?.name || "Номаълум"}</TableCell>
+                        <TableCell>{(payment.amount || 0).toLocaleString()} сўм</TableCell>
                         <TableCell>{formatDate(payment.paymentDate)}</TableCell>
-                        <TableCell>{payment.paymentType === "cash" ? "Naqd" : "Karta"}</TableCell>
+                        <TableCell>{payment.paymentType === "cash" ? "Нақд" : "Карта"}</TableCell>
                         <TableCell>{payment.description || "-"}</TableCell>
-                        <TableCell>{payment.isPrepaid ? "Ha" : "Yo'q"}</TableCell>
+                        <TableCell>{payment.isPrepaid ? "Ҳа" : "Йўқ"}</TableCell>
                         <TableCell>
                           <div className="flex justify-end gap-2">
                             <Button 
@@ -496,14 +496,14 @@ export default function PaymentManagement() {
                 </TableBody>
               </Table>
           ) : (
-              <p>To'lovlar topilmadi.</p>
+              <p>Тўловлар топилмади.</p>
           )}
         </div>
 
         <div className="mt-8">
           <h2 className="text-xl font-bold">
             {filters.startDate || filters.endDate ? (
-              `Tanlangan davr uchun jami: ${(payments
+              `Танланган давр учун жами: ${(payments
                 .filter(payment => {
                   const paymentDate = new Date(payment.paymentDate);
                   if (filters.startDate && paymentDate < filters.startDate) {
@@ -519,9 +519,9 @@ export default function PaymentManagement() {
                   return true;
                 })
                 .reduce((total, payment) => total + (payment.amount || 0), 0)
-                ).toLocaleString()} so'm`
+                ).toLocaleString()} сўм`
             ) : (
-              `Ushbu oydagi jami: ${(totalForCurrentMonth || 0).toLocaleString()} so'm`
+              `Ушбу ойдаги жами: ${(totalForCurrentMonth || 0).toLocaleString()} сўм`
             )}
           </h2>
         </div>
@@ -530,22 +530,22 @@ export default function PaymentManagement() {
         {showDeleteConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
             <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-              <h3 className="text-lg font-semibold mb-2">To'lovni o'chirish</h3>
+              <h3 className="text-lg font-semibold mb-2">Тўловни ўчириш</h3>
               <p className="text-gray-600 mb-4">
-                Ushbu to'lovni o'chirmoqchimisiz? Bu amalni ortga qaytarib bo'lmaydi.
+                Ушбу тўловни ўчирмоқчимисиз? Бу амални ортга қайтариб бўлмайди.
               </p>
               <div className="flex justify-end gap-2">
                 <Button
                   variant="outline"
                   onClick={cancelDelete}
                 >
-                  Bekor qilish
+                  Бекор қилиш
                 </Button>
                 <Button
                   variant="destructive"
                   onClick={confirmDelete}
                 >
-                  O'chirish
+                  Ўчириш
                 </Button>
               </div>
             </div>

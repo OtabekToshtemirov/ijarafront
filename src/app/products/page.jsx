@@ -60,6 +60,12 @@ export default function ProductsPage() {
         }
     }, [dispatch, status])
 
+    useEffect(() => {
+        if (!isDetailsOpen) {
+            setSelectedProduct(null)
+        }
+    }, [isDetailsOpen])
+
     // Helper function to get product status
     const getProductStatus = (quantity) => {
         if (quantity === 0) return 'mavjud_emas'
@@ -96,10 +102,10 @@ export default function ProductsPage() {
     const types = ['all', ...new Set(products.map(p => p.type))]
     const categories = ['all', ...new Set(products.map(p => p.category))]
     const statuses = [
-        { value: 'all', label: 'Barchasi' },
-        { value: 'mavjud', label: 'Mavjud' },
-        { value: 'oz_qoldi', label: 'Oz qoldi' },
-        { value: 'mavjud_emas', label: 'Mavjud emas' }
+        { value: 'all', label: 'Барчаси' },
+        { value: 'mavjud', label: 'Мавжуд' },
+        { value: 'oz_qoldi', label: 'Оз қолди' },
+        { value: 'mavjud_emas', label: 'Мавжуд эмас' }
     ]
 
     const handleFilterChange = (field, value) => {
@@ -113,7 +119,6 @@ export default function ProductsPage() {
 
     const handleCloseDetails = () => {
         setIsDetailsOpen(false)
-        setSelectedProduct(null)
     }
 
     const handleEditProduct = (product) => {
@@ -152,13 +157,13 @@ export default function ProductsPage() {
             setEditedValues({})
             setEditingParts([])
             toast({
-                title: 'Muvaffaqiyat',
-                description: 'Mahsulot muvaffaqiyatli tahrirlandi',
+                title: 'Муваффақият',
+                description: 'Маҳсулот муваффақиятли таҳрирланди',
             })
         } catch (error) {
             toast({
-                title: 'Xato',
-                description: 'Mahsulotni tahrirlashda xatolik yuz berdi',
+                title: 'Хато',
+                description: 'Маҳсулотни таҳрирлашда хатолик юз берди',
                 variant: 'destructive',
             })
         }
@@ -183,17 +188,17 @@ export default function ProductsPage() {
     }
 
     const handleDelete = async (productId) => {
-        if (window.confirm('Mahsulotni o\'chirishni tasdiqlaysizmi?')) {
+        if (window.confirm('Маҳсулотни ўчиришни тасдиқлайсизми?')) {
             try {
                 await dispatch(deleteProduct(productId)).unwrap()
                 toast({
-                    title: 'Muvaffaqiyat',
-                    description: 'Mahsulot muvaffaqiyatli o\'chirildi',
+                    title: 'Муваффақият',
+                    description: 'Маҳсулот муваффақиятли ўчирилди',
                 })
             } catch (error) {
                 toast({
-                    title: 'Xatolik',
-                    description: error.message || 'Mahsulotni o\'chirishda xatolik yuz berdi',
+                    title: 'Хатолик',
+                    description: error.message || 'Маҳсулотни ўчиришда хатолик юз берди',
                     variant: 'destructive',
                 })
             }
@@ -201,33 +206,33 @@ export default function ProductsPage() {
     }
 
     if (status === 'loading') {
-        return <div className="flex items-center justify-center h-screen">Yuklanmoqda...</div>
+        return <div className="flex items-center justify-center h-screen">Юкланмоқда...</div>
     }
 
     if (status === 'failed') {
-        return <div className="text-red-500">Xatolik: {error}</div>
+        return <div className="text-red-500">Хатолик: {error}</div>
     }
 
     return (
         <div className="container mx-auto py-10 space-y-8">
             <div className="flex justify-between items-center">
-                <h1 className="text-4xl font-bold">Mahsulotlar</h1>
+                <h1 className="text-4xl font-bold">Маҳсулотлар</h1>
                 <ProductAddForm />
             </div>
 
             {/* Search and Filters */}
             <Card>
                 <CardHeader>
-                    <CardTitle>Qidiruv va Filterlar</CardTitle>
+                    <CardTitle>Қидирув ва Филтрлар</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Qidiruv</label>
+                            <label className="text-sm font-medium">Қидирув</label>
                             <div className="relative">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                                 <Input
-                                    placeholder="Mahsulot qidirish..."
+                                    placeholder="Маҳсулот қидириш..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="pl-8"
@@ -236,15 +241,15 @@ export default function ProductsPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Turi</label>
+                            <label className="text-sm font-medium">Тури</label>
                             <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Turini tanlang" />
+                                    <SelectValue placeholder="Турини танланг" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {types.map((type) => (
                                         <SelectItem key={type} value={type}>
-                                            {type === 'all' ? 'Barchasi' : type}
+                                            {type === 'all' ? 'Барчаси' : type}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -252,15 +257,15 @@ export default function ProductsPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Kategoriya</label>
+                            <label className="text-sm font-medium">Категория</label>
                             <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Kategoriyani tanlang" />
+                                    <SelectValue placeholder="Категорияни танланг" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {categories.map((category) => (
                                         <SelectItem key={category} value={category}>
-                                            {category === 'all' ? 'Barchasi' : category}
+                                            {category === 'all' ? 'Барчаси' : category}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -268,10 +273,10 @@ export default function ProductsPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-medium">Holati</label>
+                            <label className="text-sm font-medium">Ҳолати</label>
                             <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Holatini tanlang" />
+                                    <SelectValue placeholder="Ҳолатини танланг" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {statuses.map((status) => (
@@ -281,26 +286,6 @@ export default function ProductsPage() {
                                     ))}
                                 </SelectContent>
                             </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Minimal narx</label>
-                            <Input
-                                type="number"
-                                placeholder="Minimal narx"
-                                value={filters.minPrice}
-                                onChange={(e) => handleFilterChange('minPrice', e.target.value)}
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium">Maksimal narx</label>
-                            <Input
-                                type="number"
-                                placeholder="Maksimal narx"
-                                value={filters.maxPrice}
-                                onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-                            />
                         </div>
                     </div>
                 </CardContent>
@@ -312,13 +297,13 @@ export default function ProductsPage() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Nomi</TableHead>
-                                <TableHead>Turi</TableHead>
-                                <TableHead>Kunlik Narxi</TableHead>
-                                <TableHead>Soni</TableHead>
-                                <TableHead>Kategoriya</TableHead>
-                                <TableHead>Holati</TableHead>
-                                <TableHead>Amallar</TableHead>
+                                <TableHead>Номи</TableHead>
+                                <TableHead>Тури</TableHead>
+                                <TableHead>Кунлик Нархи</TableHead>
+                                <TableHead>Сони</TableHead>
+                                <TableHead>Категория</TableHead>
+                                <TableHead>Ҳолати</TableHead>
+                                <TableHead>Амaллар</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -334,7 +319,7 @@ export default function ProductsPage() {
                                             product.name
                                         )}
                                     </TableCell>
-                                    <TableCell>{product.type == 'single' ? 'Yakka' : 'Komplekt'}</TableCell>
+                                    <TableCell>{product.type == 'single' ? 'Якка' : 'Комплект'}</TableCell>
                                     <TableCell>
                                         {editingProduct?._id === product._id ? (
                                             <Input
@@ -343,7 +328,7 @@ export default function ProductsPage() {
                                                 onChange={(e) => handleInputChange(e, 'dailyRate')}
                                             />
                                         ) : (
-                                            `${product.dailyRate} so'm`
+                                            `${product.dailyRate} сўм`
                                         )}
                                     </TableCell>
                                     <TableCell>
@@ -366,9 +351,9 @@ export default function ProductsPage() {
                                                 'success'
                                             }
                                         >
-                                            {getProductStatus(product.quantity) === 'mavjud_emas' ? 'Mavjud emas' : 
-                                             getProductStatus(product.quantity) === 'oz_qoldi' ? 'Oz qoldi' : 
-                                             'Mavjud'}
+                                            {getProductStatus(product.quantity) === 'mavjud_emas' ? 'Мавжуд эмас' : 
+                                             getProductStatus(product.quantity) === 'oz_qoldi' ? 'Оз қолди' : 
+                                             'Мавжуд'}
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
