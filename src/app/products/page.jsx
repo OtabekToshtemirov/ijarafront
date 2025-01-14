@@ -408,10 +408,10 @@ export default function ProductsPage() {
             </Card>
 
             {/* Product Details Sheet */}
-            <ProductDetailsSheet
-                product={selectedProduct}
-                isOpen={isDetailsOpen}
-                onClose={handleCloseDetails}
+            <ProductDetailsSheet 
+                product={selectedProduct} 
+                isOpen={isDetailsOpen} 
+                onOpenChange={setIsDetailsOpen} 
             />
         </div>
     )

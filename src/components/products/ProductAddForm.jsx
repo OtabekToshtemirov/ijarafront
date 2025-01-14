@@ -59,33 +59,33 @@ export default function ProductAddForm() {
     const validateProduct = () => {
         const errors = []
         const requiredFields = {
-            name: 'Mahsulot nomi',
-            category: 'Mahsulot kategoriyasi'
+            name: 'Маҳсулот номи',
+            category: 'Маҳсулот категорияси'
         }
 
         Object.entries(requiredFields).forEach(([field, label]) => {
             if (!newProduct[field]?.trim()) {
-                errors.push(`${label} kiritilishi kerak`)
+                errors.push(`${label} киритилиши керак`)
             }
         })
 
         if (newProduct.quantity < 1) {
-            errors.push('Mahsulot soni 1 dan katta bo\'lishi kerak')
+            errors.push('Маҳсулот сони 1 дан катта бўлиши керак')
         }
 
         if (newProduct.type === 'combo') {
             if (!newProduct.parts?.length) {
-                errors.push('Kombinatsiya mahsuloti uchun kamida bitta qism kiritilishi kerak')
+                errors.push('Комбинация маҳсулоти учун камида битта қисм киритилиши керак')
             }
             newProduct.parts.forEach((part, index) => {
                 if (!part.productId) {
-                    errors.push(`${index + 1}-qism tanlanmagan`)
+                    errors.push(`${index + 1}-қисм танланмаган`)
                 }
                 if (!part.quantity || part.quantity < 1) {
-                    errors.push(`${index + 1}-qism soni noto'g'ri`)
+                    errors.push(`${index + 1}-қисм сони нотўғри`)
                 }
                 if (!part.dailyRate || part.dailyRate < 0) {
-                    errors.push(`${index + 1}-qism narxi noto'g'ri`)
+                    errors.push(`${index + 1}-қисм нархи нотўғри`)
                 }
             })
         }
@@ -100,7 +100,7 @@ export default function ProductAddForm() {
         if (validationErrors.length > 0) {
             validationErrors.forEach(error => {
                 toast({
-                    title: 'Xatolik',
+                    title: 'Хатолик',
                     description: error,
                     variant: 'destructive',
                 })
@@ -127,17 +127,17 @@ export default function ProductAddForm() {
             await dispatch(addProduct(formData)).unwrap()
             
             toast({
-                title: 'Muvaffaqiyat',
-                description: 'Mahsulot muvaffaqiyatli qo\'shildi',
+                title: 'Муваффақият',
+                description: 'Маҳсулот муваффақиятли қўшилди',
             })
             
             setNewProduct(initialProductState)
             setIsDialogOpen(false)
         } catch (error) {
-            console.error('Mahsulot qo\'shishda xatolik:', error)
+            console.error('Маҳсулот қўшишда хатолик:', error)
             toast({
-                title: 'Xatolik',
-                description: error.message || 'Mahsulot qo\'shishda xatolik yuz berdi',
+                title: 'Хатолик',
+                description: error.message || 'Маҳсулот қўшишда хатолик юз берди',
                 variant: 'destructive',
             })
         } finally {
@@ -191,194 +191,207 @@ export default function ProductAddForm() {
             <DialogTrigger asChild>
                 <Button>
                     <Plus className="w-4 h-4 mr-2" />
-                    Yangi mahsulot
+                    Янги маҳсулот
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>Yangi Mahsulot Qo'shish</DialogTitle>
+                    <DialogTitle>Янги Маҳсулот Қўшиш</DialogTitle>
                     <DialogDescription>
-                        Yangi mahsulot qo'shish uchun quyidagi maydonlarni to'ldiring
+                        Янги маҳсулот қўшиш учун қуйидаги майдонларни тўлдиринг
                     </DialogDescription>
                 </DialogHeader>
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">
-                                Nomi
-                            </Label>
-                            <Input
-                                id="name"
-                                value={newProduct.name}
-                                onChange={(e) => handleInputChange('name', e.target.value)}
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
 
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="type" className="text-right">
-                                Turi
-                            </Label>
-                            <select
-                                id="type"
-                                value={newProduct.type}
-                                onChange={(e) => handleInputChange('type', e.target.value)}
-                                className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
-                            >
-                                <option value="single">Oddiy</option>
-                                <option value="combo">Kombinatsiya</option>
-                            </select>
-                        </div>
+                <form onSubmit={handleSubmit} className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="name" className="text-right">
+                            Номи
+                        </Label>
+                        <Input
+                            id="name"
+                            value={newProduct.name}
+                            onChange={(e) => handleInputChange('name', e.target.value)}
+                            className="col-span-3"
+                            required
+                        />
+                    </div>
 
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="category" className="text-right">
-                                Kategoriya
-                            </Label>
-                            <Input
-                                id="category"
-                                value={newProduct.category}
-                                onChange={(e) => handleInputChange('category', e.target.value)}
-                                className="col-span-3"
-                                required
-                            />
-                        </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="type" className="text-right">
+                            Тури
+                        </Label>
+                        <Select
+                            value={newProduct.type}
+                            onValueChange={(value) => handleInputChange('type', value)}
+                        >
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="single">Якка</SelectItem>
+                                <SelectItem value="combo">Комбинация</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                        {newProduct.type === 'combo' && (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <Label>Qismlar</Label>
-                                    <Button 
-                                        type="button" 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={handleAddPart}
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="category" className="text-right">
+                            Категория
+                        </Label>
+                        <Select
+                            value={newProduct.category}
+                            onValueChange={(value) => handleInputChange('category', value)}
+                        >
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Категорияни танланг" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="apalovka">Апаловка</SelectItem>
+                                <SelectItem value="lesa">Леса</SelectItem>
+                                <SelectItem value="meshalka">Мешалка</SelectItem>
+                                <SelectItem value="bayog">Баёг</SelectItem>
+                                <SelectItem value="qism">Қисм</SelectItem>
+                                <SelectItem value="boshqa">Бошқа</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="quantity" className="text-right">
+                            Сони
+                        </Label>
+                        <Input
+                            id="quantity"
+                            type="number"
+                            min="1"
+                            value={newProduct.quantity}
+                            onChange={(e) => handleInputChange('quantity', e.target.value)}
+                            className="col-span-3"
+                            required
+                        />
+                    </div>
+
+                    {newProduct.type === 'combo' ? (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <Label>Қисмлар</Label>
+                                <Button type="button" variant="outline" size="sm" onClick={handleAddPart}>
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Қисм қўшиш
+                                </Button>
+                            </div>
+
+                            {newProduct.parts.map((part, index) => (
+                                <div key={index} className="space-y-2 p-4 border rounded-lg relative">
+                                    <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="absolute right-2 top-2"
+                                        onClick={() => handleRemovePart(index)}
                                     >
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Qism qo'shish
+                                        <X className="w-4 h-4" />
                                     </Button>
+
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label className="text-right">Маҳсулот</Label>
+                                        <Select
+                                            value={part.productId}
+                                            onValueChange={(value) => handlePartChange(index, 'productId', value)}
+                                        >
+                                            <SelectTrigger className="col-span-3">
+                                                <SelectValue placeholder="Маҳсулотни танланг" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {partProducts.map((product) => (
+                                                    <SelectItem key={product._id} value={product._id}>
+                                                        {product.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label className="text-right">Сони</Label>
+                                        <Input
+                                            type="number"
+                                            min="1"
+                                            value={part.quantity}
+                                            onChange={(e) => handlePartChange(index, 'quantity', e.target.value)}
+                                            className="col-span-3"
+                                        />
+                                    </div>
                                 </div>
-                                
-                                {newProduct.parts.map((part, index) => (
-                                    <div key={index} className="space-y-4 border rounded-lg p-4">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <Label>Qism</Label>
-                                                <Select
-                                                    value={part.productId}
-                                                    onValueChange={(value) => handlePartChange(index, 'productId', value)}
-                                                >
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Qismni tanlang" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {partProducts.map((product) => (
-                                                            <SelectItem 
-                                                                key={product._id} 
-                                                                value={product._id}
-                                                            >
-                                                                {product.name}
-                                                            </SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div>
-                                                <Label>Soni</Label>
-                                                <Input
-                                                    type="number"
-                                                    value={part.quantity}
-                                                    onChange={(e) => handlePartChange(index, 'quantity', e.target.value)}
-                                                    min="1"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <Label>Narxi</Label>
-                                                <Input
-                                                    type="number"
-                                                    value={part.dailyRate}
-                                                    onChange={(e) => handlePartChange(index, 'dailyRate', e.target.value)}
-                                                    min="0"
-                                                />
-                                            </div>
-                                            <div className="flex items-end">
-                                                <Button
-                                                    type="button"
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleRemovePart(index)}
-                                                    className="ml-auto"
-                                                >
-                                                    <X className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                        <div className="text-sm text-muted-foreground">
-                                            Jami: {(part.dailyRate || 0) * (part.quantity || 0)} so'm/kun
-                                        </div>
+                            ))}
+
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="dailyRate" className="text-right">
+                                    Нархи
+                                </Label>
+                                <div className="col-span-3 space-y-2">
+                                    <div className="text-sm text-muted-foreground">
+                                        Ҳисобланган нарх: {totalComboPrice?.toLocaleString()} сўм
                                     </div>
-                                ))}
-                                
-                                <div className="pt-2 border-t">
-                                    <div className="flex justify-between text-sm font-medium">
-                                        <span>Jami narx:</span>
-                                        <span>{totalComboPrice} so'm/kun</span>
-                                    </div>
+                                    <Input
+                                        id="dailyRate"
+                                        type="number"
+                                        min="0"
+                                        value={newProduct.dailyRate}
+                                        onChange={(e) => {
+                                            handleInputChange('manualPrice', true)
+                                            handleInputChange('dailyRate', e.target.value)
+                                        }}
+                                        required
+                                    />
                                 </div>
                             </div>
-                        )}
-                        {/* kunlik narx */}
+                        </div>
+                    ) : (
                         <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="dailyRate" className="text-right">
-                                Kunlik narx
+                                Нархи
                             </Label>
                             <Input
                                 id="dailyRate"
                                 type="number"
-                                value={newProduct.dailyRate || ''}
+                                min="0"
+                                value={newProduct.dailyRate}
                                 onChange={(e) => handleInputChange('dailyRate', e.target.value)}
                                 className="col-span-3"
-                                min="0"
                                 required
                             />
                         </div>
+                    )}
 
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="quantity" className="text-right">
-                                Soni
-                            </Label>
-                            <Input
-                                id="quantity"
-                                type="number"
-                                value={newProduct.quantity || ''}
-                                onChange={(e) => handleInputChange('quantity', e.target.value)}
-                                className="col-span-3"
-                                min="1"
-                                required
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="description" className="text-right">
-                                Tavsif
-                            </Label>
-                            <Input
-                                id="description"
-                                value={newProduct.description}
-                                onChange={(e) => handleInputChange('description', e.target.value)}
-                                className="col-span-3"
-                            />
-                        </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="description" className="text-right">
+                            Тавсиф
+                        </Label>
+                        <Input
+                            id="description"
+                            value={newProduct.description}
+                            onChange={(e) => handleInputChange('description', e.target.value)}
+                            className="col-span-3"
+                        />
                     </div>
-
-                    <DialogFooter>
-                        <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? 'Saqlanmoqda...' : 'Saqlash'}
-                        </Button>
-                    </DialogFooter>
                 </form>
+
+                <DialogFooter>
+                    <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                        Бекор қилиш
+                    </Button>
+                    <Button type="submit" onClick={handleSubmit} disabled={isSubmitting}>
+                        {isSubmitting ? (
+                            <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Сақланмоқда...
+                            </>
+                        ) : (
+                            'Сақлаш'
+                        )}
+                    </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     )
