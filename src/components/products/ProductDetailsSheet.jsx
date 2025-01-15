@@ -118,6 +118,35 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                     </CardContent>
                 </Card>
 
+                {/* Combo Parts */}
+                {product?.type === 'combo' && product.parts?.length > 0 && (
+                    <Card className="mb-6">
+                        <CardHeader>
+                            <CardTitle>Қисмлар</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Номи</TableHead>
+                                        <TableHead>Сони</TableHead>
+                                        <TableHead>Нархи</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {product.parts.map((part) => (
+                                        <TableRow key={part._id}>
+                                            <TableCell>{part.product?.name || 'Номаълум'}</TableCell>
+                                            <TableCell>{part.quantity} дона</TableCell>
+                                            <TableCell>{part.dailyRate?.toLocaleString()} сўм</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* Active Rentals */}
                 <Card className="mb-6">
                     <CardHeader>

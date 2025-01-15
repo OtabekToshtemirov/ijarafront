@@ -300,7 +300,9 @@ export default function ProductsPage() {
                                 <TableHead>Номи</TableHead>
                                 <TableHead>Тури</TableHead>
                                 <TableHead>Кунлик Нархи</TableHead>
-                                <TableHead>Сони</TableHead>
+                                <TableHead>Жами</TableHead>
+                                <TableHead>Ижарада</TableHead>
+                                <TableHead>Омбор</TableHead>
                                 <TableHead>Категория</TableHead>
                                 <TableHead>Ҳолати</TableHead>
                                 <TableHead>Амaллар</TableHead>
@@ -339,9 +341,11 @@ export default function ProductsPage() {
                                                 onChange={(e) => handleInputChange(e, 'quantity')}
                                             />
                                         ) : (
-                                            product.quantity
+                                            product.quantity.toString()
                                         )}
                                     </TableCell>
+                                    <TableCell>{product.rented.toString()}</TableCell>
+                                    <TableCell>{(product.quantity - product.rented).toString()}</TableCell>
                                     <TableCell>{product.category}</TableCell>
                                     <TableCell>
                                         <Badge 

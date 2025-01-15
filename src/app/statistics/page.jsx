@@ -109,25 +109,25 @@ export default function StatisticsPage() {
             {/* Revenue Statistics */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <StatCard
-                    title="Кунлик даромад"
+                    title="Кунлик тушум"
                     data={dailyRevenue.data}
                     loading={dailyRevenue.loading}
                     error={dailyRevenue.error}
                 />
                 <StatCard
-                    title="Ҳафталик даромад"
+                    title="Ҳафталик тушум"
                     data={weeklyRevenue.data}
                     loading={weeklyRevenue.loading}
                     error={weeklyRevenue.error}
                 />
                 <StatCard
-                    title="Ойлик даромад"
+                    title="Ойлик тушум"
                     data={monthlyRevenue.data}
                     loading={monthlyRevenue.loading}
                     error={monthlyRevenue.error}
                 />
                 <StatCard
-                    title="Йиллик даромад"
+                    title="Йиллик тушум"
                     data={yearlyRevenue.data}
                     loading={yearlyRevenue.loading}
                     error={yearlyRevenue.error}

@@ -387,7 +387,6 @@ export default function CustomerDetailsPage() {
                                         <TableRow className="dark:border-gray-700">
                                             <TableHead className="dark:text-gray-300">Сана</TableHead>
                                             <TableHead className="dark:text-gray-300">Маҳсулотлар</TableHead>
-                                            <TableHead className="dark:text-gray-300">Умумий нарх</TableHead>
                                             <TableHead className="dark:text-gray-300">Статус</TableHead>
                                         </TableRow>
                                     </TableHeader>
@@ -404,7 +403,6 @@ export default function CustomerDetailsPage() {
                                                         </div>
                                                     ))}
                                                 </TableCell>
-                                                <TableCell className="dark:text-gray-300">{rental.totalCost?.toLocaleString()} сўм</TableCell>
                                                 <TableCell>
                                                     <Badge 
                                                         variant={rental.status === 'active' ? 'default' : 'secondary'}
@@ -417,18 +415,7 @@ export default function CustomerDetailsPage() {
                                         ))}
                                     </TableBody>
                                 </Table>
-                                {/* Add total amount summary */}
-                                
-                                {/* Add returned products total */}
-                                <div className="mt-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                                    <div className="flex justify-between items-center">
-                                        <span className="text-gray-700 font-medium">Қайтаришлар учун ижара суммаси:</span>
-                                        <span className="text-lg font-semibold text-green-600">
-                                        {rentals.reduce((total, rental) => 
-                                                        total + (rental?.totalCost || 0), 0).toLocaleString()} сўм
-                                        </span>
-                                    </div>
-                                </div>
+                             
                             </div>
                         )}
                     </CardContent>

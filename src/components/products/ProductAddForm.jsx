@@ -14,7 +14,7 @@ import {
     DialogTrigger, 
     DialogFooter
 } from '@/components/ui/dialog'
-import { Plus, X } from 'lucide-react'
+import { Plus, X , Loader2} from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { addProduct, selectPartProducts } from '@/lib/features/products/productSlice'
 import {
@@ -78,19 +78,9 @@ export default function ProductAddForm() {
             if (!newProduct.parts?.length) {
                 errors.push('Комбинация мулк учун камида битта қисм киритилиши керак')
             }
-            newProduct.parts.forEach((part, index) => {
-                if (!part.productId) {
-                    errors.push(`${index + 1}-қисм танланмаган`)
-                }
-                if (!part.quantity || part.quantity < 1) {
-                    errors.push(`${index + 1}-қисм сони нотўғри`)
-                }
-                if (!part.dailyRate || part.dailyRate < 0) {
-                    errors.push(`${index + 1}-қисм нархи нотўғри`)
-                }
-            })
+            
         }
-
+        alert(errors)
         return errors
     }
 
@@ -100,6 +90,7 @@ export default function ProductAddForm() {
         
         if (validationErrors.length > 0) {
             validationErrors.forEach(error => {
+                alert(error)
                 toast({
                     title: 'Хатолик',
                     description: error,

@@ -870,7 +870,7 @@ export default function AddRentalPage() {
                             </div>
 
                             {/* Total Amount */}
-                            <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                            <div className="mt-4 p-4 bg-secondary rounded-lg">
                                 <div className="flex justify-between items-center">
                                     <h3 className="text-lg font-medium">Умумий сумма:</h3>
                                     <p className="text-xl font-bold">{rentalForm.totalCost.toLocaleString()} сўм</p>
