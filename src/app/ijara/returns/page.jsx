@@ -377,7 +377,7 @@ export default function Component() {
                                 <TableHead>Мижоз</TableHead>
                                 <TableHead>Телефон</TableHead>
                                 <TableHead>Фаол ижаралар</TableHead>
-                                <TableHead>Қайтарилмаган махсулотлар</TableHead>
+                                <TableHead>Қайтарилмаган ашё</TableHead>
                                 <TableHead></TableHead>
                             </TableRow>
                         </TableHeader>
@@ -460,7 +460,7 @@ export default function Component() {
 
                                 {returnedProducts.length > 0 && (
                                     <div className="w-full border rounded-md p-4 bg-white mb-4">
-                                        <h3 className="text-lg font-semibold mb-3">Қайтарилган маҳсулотлар</h3>
+                                        <h3 className="text-lg font-semibold mb-3">Қайтарилган Мулклар</h3>
                                         <div className="space-y-2">
                                             {returnedProducts.map((product, index) => (
                                                 <div key={index} 
@@ -591,7 +591,7 @@ export default function Component() {
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead>Махсулот</TableHead>
+                                        <TableHead>Мулк</TableHead>
                                         <TableHead>Иш бошлаш санаси</TableHead>
                                         <TableHead>Қайтариш санаси</TableHead>
                                         <TableHead>Жами кунлар</TableHead>

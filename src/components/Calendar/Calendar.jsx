@@ -196,17 +196,6 @@ export default function InteractiveCalendar() {
                     }}
                 />
 
-                {notes[format(date, 'yyyy-MM-dd')] && (
-                    <div className="mt-2 p-2 rounded-lg border text-sm">
-                        <p className={cn(
-                            "p-2 rounded",
-                            notes[format(date, 'yyyy-MM-dd')].color,
-                            "text-white"
-                        )}>
-                            {notes[format(date, 'yyyy-MM-dd')].note}
-                        </p>
-                    </div>
-                )}
             </div>
 
             <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

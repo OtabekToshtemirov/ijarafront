@@ -194,7 +194,7 @@ export default function ProductAddForm() {
                     Янги мулк
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] overflow-y-auto max-h-[90vh]">
                 <DialogHeader>
                     <DialogTitle>Янги мулк қўшиш</DialogTitle>
                     <DialogDescription>
@@ -330,9 +330,6 @@ export default function ProductAddForm() {
                                     Нархи
                                 </Label>
                                 <div className="col-span-3 space-y-2">
-                                    <div className="text-sm text-muted-foreground">
-                                        Ҳисобланган нарх: {totalComboPrice?.toLocaleString()} сўм
-                                    </div>
                                     <Input
                                         id="dailyRate"
                                         type="number"

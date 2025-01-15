@@ -62,7 +62,7 @@ export function AppSidebar() {
         <Sidebar>
             <SidebarContent className="flex flex-col h-full">
                 <SidebarGroup>
-                    <SidebarGroupLabel>Ижара маҳсулотлари</SidebarGroupLabel>
+                    <SidebarGroupLabel>Ижара маркази</SidebarGroupLabel>
                     <SidebarGroupContent>
                         <ModeToggle />
                         <SidebarMenu>
