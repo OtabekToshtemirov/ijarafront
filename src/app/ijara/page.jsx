@@ -396,6 +396,9 @@ export default function RentalsPage() {
           <div style={{ marginBottom: "10px" }}>
             Ижарага олувчи: {rental.customer.name}
           </div>
+          <div style={{ marginBottom: "10px" }}>
+            Транспорт: {rental.car.driverPhone}
+          </div>
           <div
             style={{
               fontWeight: "bold",

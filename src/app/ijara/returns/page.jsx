@@ -55,11 +55,11 @@ export default function Component() {
     // Get active rentals with unreturned products
     const activeRentals = localRentals.filter(rental => {
         if (rental.status !== 'active') return false;
-        
+
         // Check if there are any unreturned products
         return rental.borrowedProducts.some(prod => {
             if (!prod.product?._id) return false;
-            
+
             const returnedQuantity = rental.returnedProducts
                 .filter(rp => rp.product?.toString() === prod.product._id.toString())
                 .reduce((sum, rp) => sum + rp.quantity, 0);
@@ -83,7 +83,7 @@ export default function Component() {
 
         const unreturnedCount = rental.borrowedProducts.reduce((count, prod) => {
             if (!prod.product?._id) return count;
-            
+
             const returnedQuantity = (rental.returnedProducts || [])
                 .filter(rp => rp.product?._id?.toString() === prod.product._id.toString())
                 .reduce((sum, rp) => sum + (rp.quantity || 0), 0);
@@ -99,10 +99,102 @@ export default function Component() {
         return acc;
     }, {});
 
+
+    const PrintReturnedProductsOfRental = (returnedProducts) => {
+        // Create a new window for printing
+        const printWindow = window.open('', '_blank');
+        
+        // Generate the HTML content
+        const printContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <style>
+            @page { 
+            size: 80mm auto;
+            margin: 0;
+            }
+            body {
+            width: 80mm;
+            padding: 5mm;
+            font-family: Arial;
+            }
+            table { 
+            width: 100%;
+            font-size: 16px;
+            border-collapse: collapse;
+            }
+            th, td {
+            text-align: left;
+            padding: 5px;
+            }
+            .dates {
+            font-size: 12px;
+            color: #666;
+            }
+            </style>
+            </head>
+            <body>
+            <div style="text-align: center; margin-bottom: 15px">
+            <h3>Қайтарилган Маҳсулотлар</h3>
+            </div>
+
+            <table>
+            <tbody>
+            ${returnedProducts.map(product => `
+                <tr>
+                <td colspan="2">
+                <strong>${product.product.name}</strong>
+                <div style="font-size: 14px; color: #000">
+                ${product.days} кун × ${product.quantity} дона × ${product.dailyRate.toLocaleString()} сўм
+                </div>
+                <div class="dates">
+                    Бошланиш: <b>${new Date(product.startDate).toLocaleDateString()}</b> <br>
+                    Қайтариш: <b>${new Date(product.returnDate).toLocaleDateString()} </b>
+                </div>
+                </td>
+                <td style="text-align: right">
+                <strong>${product.totalCost.toLocaleString()} сўм</strong>
+                </td>
+                </tr>
+            `).join('')}
+            </tbody>
+            </table>
+
+            <div style="margin-top: 15px; font-size: 14px">
+            <div style="font-weight: bold; margin-bottom: 5px; font-size: 20px">
+            ИЖАРА ҲАҚИ: 
+            <span style="font-size: 20px; color: red">
+                ${returnedProducts.reduce((total, product) => total + product.totalCost, 0).toLocaleString()} сўм
+            </span>
+            </div>
+            <div style="text-align: center; margin-top: 10px; font-weight: bold; font-size: 30px">
+            (90) 222 80 86
+            </div>
+            </div>
+            </body>
+            </html>
+        `;
+
+        // Write content to the new window
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+
+        // Print after images and resources are loaded
+        printWindow.onload = function() {
+            printWindow.print();
+            printWindow.close();
+        };
+    };
+
+    const handlePrint = (returnedProducts) => {
+        PrintReturnedProductsOfRental(returnedProducts);
+    };
+
     const filteredCustomers = Object.values(customerRentals).filter(item => {
         const searchLower = searchQuery.toLowerCase();
         return item.customer?.name.toLowerCase().includes(searchLower) ||
-               item.customer?.phone.toLowerCase().includes(searchLower);
+            item.customer?.phone.toLowerCase().includes(searchLower);
     });
 
 
@@ -130,7 +222,7 @@ export default function Component() {
             [`${rentalId}-${productId}`]: newQuantity
         }));
     };
- 
+
 
     const handleDiscountDaysChange = (rentalId, days) => {
         if (days < 0) days = 0;
@@ -166,7 +258,7 @@ export default function Component() {
             // Kunlarni hisoblaymiz
             const startDate = new Date(rental.workStartDate);
             const { days, totalDays } = calculateDays(startDate.toISOString().split('T')[0], returnDate.toISOString().split('T')[0], discountDay);
-            
+
             // Kunlik narx va jami summani hisoblaymiz
             const dailyRate = Number(product.dailyRate) || 0;
             const totalCost = Number(totalDays * dailyRate * quantity);
@@ -201,7 +293,7 @@ export default function Component() {
                 }]);
 
                 // Update local state with the returned rental data
-                setLocalRentals(prev => prev.map(r => 
+                setLocalRentals(prev => prev.map(r =>
                     r._id === response.rental._id ? response.rental : r
                 ));
 
@@ -255,9 +347,9 @@ export default function Component() {
 
             // Calculate final amount after discount
             const finalAmount = totalAmount - (totalDiscount || 0);
-            
+
             // Prepare returned products summary for description
-            const productsSummary = returnedProducts.map(p => 
+            const productsSummary = returnedProducts.map(p =>
                 `${p.product?.name} (${p.quantity} dona)`
             ).join(', ');
 
@@ -277,7 +369,7 @@ export default function Component() {
 
             if (response.success) {
                 toast.success("Тўлов муваффақиятли сақланди");
-                
+
                 // Update data
                 await Promise.all([
                     dispatch(fetchRentalById(rental._id)),
@@ -393,7 +485,7 @@ export default function Component() {
                                         </Badge>
                                     </TableCell>
                                     <TableCell>
-                                        <Button 
+                                        <Button
                                             variant="outline"
                                             onClick={() => setSelectedCustomer(item)}
                                         >
@@ -405,7 +497,7 @@ export default function Component() {
                             {filteredCustomers.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-4">
-                                    Қайтарилмаган маҳсулотлари бор мижозлар топилмади
+                                        Қайтарилмаган маҳсулотлари бор мижозлар топилмади
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -418,7 +510,7 @@ export default function Component() {
                     <div className="flex items-center justify-between border-b pb-4">
                         <div className="space-y-1">
                             <h2 className="text-2xl font-semibold tracking-tight">
-                            Қайтарилган маҳсулотлар ҳисоботи
+                                Қайтарилган маҳсулотлар ҳисоботи
                             </h2>
                             <p className="text-sm text-muted-foreground">
                                 Барча ижара қайтаришлари бўйича умумий ҳисоб
@@ -460,16 +552,15 @@ export default function Component() {
 
                                 {returnedProducts.length > 0 && (
                                     <div className="w-full border rounded-md p-4 bg-white mb-4">
+                                        {/*  button for print returned products */}
+                                        <Button onClick={() => handlePrint(returnedProducts)} className="text-white hover:underline">Қайтарилган мулкларни чоп қилиш</Button>
                                         <h3 className="text-lg font-semibold mb-3">Қайтарилган Мулклар</h3>
                                         <div className="space-y-2">
                                             {returnedProducts.map((product, index) => (
-                                                <div key={index} 
-                                                     className="flex justify-between items-center border-b pb-2">
+                                                <div key={index}
+                                                    className="flex justify-between items-center border-b pb-2">
                                                     <div>
                                                         <div className="font-medium">{product.product.name}</div>
-                                                        <div className="text-sm text-muted-foreground">
-                                                            {(product.quantity || 0)} dona • {(product.days || 0)} кун
-                                                        </div>
                                                     </div>
                                                     <div className="text-right">
                                                         <div className="font-semibold">
@@ -539,10 +630,10 @@ export default function Component() {
                                         Ижара #{rental.rentalNumber}
                                     </h3>
                                     <h2>
-                                    Олиш санаси: {new Date(rental.createdAt).toLocaleDateString()}
+                                        Олиш санаси: {new Date(rental.createdAt).toLocaleDateString()}
                                     </h2>
                                     <p className="text-sm text-muted-foreground">
-                                    Иш бошланиш санаси: {new Date(rental.workStartDate).toLocaleDateString()}
+                                        Иш бошланиш санаси: {new Date(rental.workStartDate).toLocaleDateString()}
                                     </p>
                                 </div>
                                 <div className="flex items-center gap-4">
@@ -584,7 +675,7 @@ export default function Component() {
                                             </Button>
                                         </div>
                                     </div>
-                    
+
                                 </div>
                             </div>
 
@@ -608,7 +699,7 @@ export default function Component() {
                                 <TableBody>
                                     {rental.borrowedProducts.map((prod) => {
                                         if (!prod.product?._id) return null;
-                                        
+
                                         // Get all returned quantities for this product
                                         const returnedQuantity = (selectedCustomer?.rentals || [])
                                             .flatMap(r => r.returnedProducts || [])
@@ -624,9 +715,9 @@ export default function Component() {
                                         // Hide if all items are returned
                                         if (totalReturnedQuantity >= prod.quantity) return null;
 
-                                        const remainingQuantity = Math.max(0, prod.quantity - totalReturnedQuantity );
+                                        const remainingQuantity = Math.max(0, prod.quantity - totalReturnedQuantity);
                                         const key = `${rental._id}-${prod.product._id}`;
-                                        
+
                                         // Calculate days
                                         const returnDate = returnDates[key] || new Date().toISOString().split('T')[0];
                                         const { days, totalDays } = calculateDays(
@@ -677,7 +768,7 @@ export default function Component() {
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
-                                                        
+
                                                         <Input
                                                             type="number"
                                                             value={discountDays[rental._id] || 0}
@@ -688,7 +779,7 @@ export default function Component() {
                                                             min="0"
                                                             className="w-20 text-center"
                                                         />
-                                                    
+
                                                     </div>
                                                 </TableCell>
                                                 <TableCell className="text-center">
@@ -708,7 +799,7 @@ export default function Component() {
                                                             .filter(rp => rp.product?._id?.toString() === prod.product._id.toString())
                                                             .reduce((sum, rp) => sum + (rp.quantity || 0), 0);
 
-                                                        // Joriy qaytarish miqdorini hisoblash
+                                                        // Jorий qaytarish miqdorini hisoblash
                                                         const currentReturnQuantity = Number(returnQuantities[`${rental._id}-${prod.product._id}`]) || 0;
 
                                                         // Natijani ko'rsatish
@@ -721,7 +812,7 @@ export default function Component() {
                                                     })()}
                                                 </TableCell>
                                                 <TableCell className="text-center">
-                                                    {(remainingQuantity )}
+                                                    {(remainingQuantity)}
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex items-center gap-2">
@@ -777,7 +868,7 @@ export default function Component() {
                                                         >
                                                             +
                                                         </Button>
-                                                        <Button 
+                                                        <Button
                                                             variant="outline"
                                                             onClick={() => handleReturn(rental, prod)}
                                                             disabled={!returnQuantities[key]}
@@ -797,11 +888,11 @@ export default function Component() {
                                                     </div>
                                                 </TableCell>
                                             </TableRow>
-                                            
+
                                         );
                                     })}
                                 </TableBody>
-                                
+
                             </Table>
                             {rental.description && (
                                 <div className="mt-4 bg-yellow-200 rounded-lg p-4">
