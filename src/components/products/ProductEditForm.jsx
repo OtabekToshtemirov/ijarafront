@@ -34,7 +34,7 @@ export default function ProductEditForm({ product }) {
         parts: product.parts?.map(part => ({
             productId: part.product?._id || part.product,
             quantity: part.quantity,
-            dailyRate: part.product?.dailyRate || part.dailyRate || 0
+            dailyRate: 0
         })) || [],
         dailyRate: product.dailyRate || 0
     })
@@ -94,18 +94,35 @@ export default function ProductEditForm({ product }) {
 
         setIsSubmitting(true)
         try {
+            console.log('editProduct before formData:', editProduct);
+            
+            const dailyRate = Number(editProduct.dailyRate)
+            console.log('dailyRate after Number():', dailyRate);
+            
+            if (isNaN(dailyRate)) {
+                toast({
+                    title: 'Хатолик',
+                    description: 'Нархни тўғри киритинг',
+                    variant: 'destructive',
+                })
+                setIsSubmitting(false)
+                return
+            }
+
             const formData = {
                 ...editProduct,
-                dailyRate: Number(editProduct.dailyRate),
-                quantity: Number(editProduct.quantity),
+                _id: product._id,
+                dailyRate: dailyRate,
+                quantity: Number(editProduct.quantity) || 1,
                 parts: editProduct.type === 'combo' 
                     ? editProduct.parts.map(part => ({
                         product: part.productId,
-                        quantity: Number(part.quantity),
-                        dailyRate: Number(part.dailyRate)
+                        quantity: Number(part.quantity) || 1
                     }))
                     : []
             }
+            
+            console.log('Sending formData:', formData);
             
             await dispatch(updateProduct(formData)).unwrap()
             
@@ -128,32 +145,17 @@ export default function ProductEditForm({ product }) {
     }
 
     const handleInputChange = (field, value) => {
-        if (field === 'dailyRate' || field === 'quantity') {
-            value = value === '' ? '' : value === '0' ? 0 : Number(value)
-        }
+        console.log('handleInputChange field:', field);
+        console.log('handleInputChange value before:', value, typeof value);
         
-        if (field === 'type') {
-            if (value === 'single') {
-                setEditProduct(prev => ({
-                    ...prev,
-                    type: 'single',
-                    parts: [],
-                    dailyRate: prev.dailyRate || 0
-                }))
-                return
-            } else if (value === 'combo' && editProduct.parts.length === 0) {
-                setEditProduct(prev => ({
-                    ...prev,
-                    type: 'combo',
-                    parts: []
-                }))
-                return
-            }
+        if (field === 'dailyRate' || field === 'quantity') {
+            value = value === '' ? 0 : Number(value)
+            console.log('handleInputChange value after:', value, typeof value);
         }
         
         setEditProduct(prev => ({
             ...prev,
-            ...(typeof value === 'object' ? value : { [field]: value })
+            [field]: value
         }))
     }
 
@@ -165,24 +167,19 @@ export default function ProductEditForm({ product }) {
     }
 
     const handlePartChange = (index, field, value) => {
-        const updatedParts = [...editProduct.parts];
-        const part = updatedParts[index];
+        const updatedParts = [...editProduct.parts]
+        const part = updatedParts[index]
 
         if (field === 'productId') {
-            const selectedProduct = partProducts.find(p => p._id === value);
-            part.productId = value;
-            part.dailyRate = selectedProduct?.dailyRate || 0;
-            
-            // Qism nomini saqlash
-            part.productName = selectedProduct?.name;
+            part.productId = value
         } else {
-            part[field] = field === 'quantity' ? Number(value) : value;
+            part[field] = field === 'quantity' ? Number(value) : value
         }
 
         setEditProduct(prev => ({
             ...prev,
             parts: updatedParts
-        }));
+        }))
     }
 
     const handleRemovePart = (index) => {
@@ -342,12 +339,7 @@ export default function ProductEditForm({ product }) {
                                         type="number"
                                         min="0"
                                         value={editProduct.dailyRate}
-                                        onChange={(e) => {
-                                            setEditProduct(prev => ({
-                                                ...prev,
-                                                dailyRate: e.target.value
-                                            }));
-                                        }}
+                                        onChange={(e) => handleInputChange('dailyRate', e.target.value)}
                                         required
                                     />
                                     <p className="text-sm text-muted-foreground">

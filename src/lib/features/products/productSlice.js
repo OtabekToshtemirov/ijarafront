@@ -7,7 +7,11 @@ export const fetchProducts = createAsyncThunk(
     'products/fetchProducts',
     async (_, { rejectWithValue }) => {
         try {
-            const response = await axios.get(`${API_URL}/products`);
+            const response = await axios.get(`${API_URL}/products`, {
+                params: {
+                    populate: 'parts.product' // Qismlarni populate qilish
+                }
+            });
             return response.data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Mahsulotlarni yuklashda xatolik yuz berdi');

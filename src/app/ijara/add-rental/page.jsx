@@ -35,6 +35,8 @@ import Link from 'next/link';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Textarea } from "@/components/ui/textarea";
+import axios from 'axios';
+import { API_URL } from '@/lib/config';
 
 export default function AddRentalPage() {
     const dispatch = useDispatch();
@@ -118,21 +120,42 @@ export default function AddRentalPage() {
     }, [rentalForm.borrowedProducts]);
 
     // Handle product selection
-    const handleProductSelect = (product) => {
-        if (!rentalForm.borrowedProducts.find(p => p.product === product._id)) {
+    const handleProductSelect = async (product) => {
+        try {
+            // Mahsulot allaqachon tanlangan bo'lsa, uni o'chiramiz
+            if (rentalForm.borrowedProducts.some(item => item.product === product._id)) {
+                setRentalForm(prev => ({
+                    ...prev,
+                    borrowedProducts: prev.borrowedProducts.filter(item => item.product !== product._id)
+                }));
+                return;
+            }
+
+            // Yangi mahsulot qo'shish
+            const newProduct = {
+                product: product._id,
+                quantity: 1,
+                dailyRate: product.dailyRate
+            };
+
+            // Agar combo mahsulot bo'lsa, qismlarini qo'shamiz
+            if (product.type === 'combo' && Array.isArray(product.parts)) {
+                newProduct.parts = product.parts.map(part => ({
+                    product: part.product._id,
+                    quantity: part.quantity,
+                    originalQuantity: part.quantity, // Original miqdorni saqlash
+                    dailyRate: part.product.dailyRate
+                }));
+            }
+
             setRentalForm(prev => ({
                 ...prev,
-                borrowedProducts: [
-                    ...prev.borrowedProducts,
-                    {
-                        product: product._id,
-                        quantity: 1,
-                        dailyRate: product.dailyRate || product.price || 0,
-                        startDate: rentalForm.startDate,
-                        rentDate: new Date().toISOString().split('T')[0]
-                    }
-                ]
+                borrowedProducts: [...prev.borrowedProducts, newProduct]
             }));
+
+        } catch (error) {
+            console.error('Mahsulot qo\'shishda xatolik:', error);
+            toast.error('Mahsulot qo\'shishda xatolik yuz berdi');
         }
     };
 
@@ -140,12 +163,78 @@ export default function AddRentalPage() {
     const handleQuantityChange = (productId, quantity) => {
         setRentalForm(prev => ({
             ...prev,
-            borrowedProducts: prev.borrowedProducts.map(item => 
-                item.product === productId 
-                    ? { ...item, quantity: parseInt(quantity) || 1 }
-                    : item
-            )
+            borrowedProducts: prev.borrowedProducts.map(item => {
+                if (item.product === productId) {
+                    // Yangi miqdor
+                    const newQuantity = parseInt(quantity) || 1;
+                    
+                    // Asosiy mahsulot ma'lumotlarini yangilash
+                    const updatedItem = { ...item, quantity: newQuantity };
+                    
+                    // Agar combo mahsulot bo'lsa va qismlari bo'lsa
+                    if (item.parts && Array.isArray(item.parts)) {
+                        // Har bir qism uchun original nisbatni saqlagan holda yangi miqdorni hisoblaymiz
+                        updatedItem.parts = item.parts.map(part => {
+                            // Original nisbatni topish
+                            const originalRatio = part.originalQuantity || part.quantity;
+                            
+                            return {
+                                ...part,
+                                originalQuantity: originalRatio, // Original nisbatni saqlash
+                                quantity: originalRatio * newQuantity // Yangi miqdorni hisoblash
+                            };
+                        });
+                    }
+                    
+                    return updatedItem;
+                }
+                return item;
+            })
         }));
+    };
+
+    // Handle part quantity change
+    const handlePartQuantityChange = (productIndex, partIndex, action, value) => {
+        setRentalForm(prev => {
+            const newBorrowedProducts = [...prev.borrowedProducts];
+            const product = newBorrowedProducts[productIndex];
+            
+            if (!product || !product.parts) return prev;
+
+            // Maksimal miqdorni hisoblash
+            const maxQuantity = product.quantity * (products.find(p => p._id === product.product)?.parts?.[partIndex]?.quantity || 0);
+            
+            let newQuantity;
+            switch(action) {
+                case 'decrease':
+                    newQuantity = Math.max(0, (product.parts[partIndex]?.quantity || maxQuantity) - 1);
+                    break;
+                case 'increase':
+                    newQuantity = Math.min(maxQuantity, (product.parts[partIndex]?.quantity || 0) + 1);
+                    break;
+                case 'input':
+                    newQuantity = Math.min(maxQuantity, Math.max(0, parseInt(value) || 0));
+                    break;
+                default:
+                    return prev;
+            }
+
+            // Qism miqdorini yangilash
+            if (!product.parts[partIndex]) {
+                product.parts[partIndex] = { 
+                    product: products.find(p => p._id === product.product)?.parts?.[partIndex]?.product?._id,
+                    quantity: newQuantity,
+                    dailyRate: products.find(p => p._id === product.product)?.parts?.[partIndex]?.dailyRate || 0
+                };
+            } else {
+                product.parts[partIndex].quantity = newQuantity;
+            }
+
+            return {
+                ...prev,
+                borrowedProducts: newBorrowedProducts
+            };
+        });
     };
 
     // Handle daily rate change
@@ -205,7 +294,7 @@ export default function AddRentalPage() {
                 .map((product) => {
                     const productDetails = products.find((p) => p._id === product.product);
                     const partsDescription = productDetails.parts
-                        .map(part => `${part.product?.name || 'Noma\'lum qism'} x ${part.quantity}`)
+                        .map(part => `${part.product.name|| 'Noma\'lum qism'} x ${part.quantity}`)
                         .join(', ');
                     return `${productDetails.name} x ${product.quantity} (${partsDescription})`;
                 })
@@ -700,7 +789,12 @@ export default function AddRentalPage() {
                                                                 i === index ? { 
                                                                     ...item, 
                                                                     product: value,
-                                                                    dailyRate: selectedProduct?.dailyRate || selectedProduct?.price || 0
+                                                                    dailyRate: selectedProduct?.dailyRate || selectedProduct?.price || 0,
+                                                                    parts: selectedProduct?.type === 'combo' ? 
+                                                                        selectedProduct.parts?.map(part => ({
+                                                                            ...part,
+                                                                            quantity: part.quantity
+                                                                        })) : []
                                                                 } : item
                                                             )
                                                         }));
@@ -751,7 +845,11 @@ export default function AddRentalPage() {
                                                                 borrowedProducts: prev.borrowedProducts.map((item, i) => 
                                                                     i === index ? { 
                                                                         ...item, 
-                                                                        quantity: Math.max(1, (item.quantity || 1) - 1) 
+                                                                        quantity: Math.max(1, (item.quantity || 1) - 1),
+                                                                        parts: item.parts?.map(part => ({
+                                                                            ...part,
+                                                                            quantity: part.quantity * Math.max(1, (item.quantity || 1) - 1)
+                                                                        }))
                                                                     } : item
                                                                 )
                                                             }));
@@ -764,10 +862,18 @@ export default function AddRentalPage() {
                                                         name="quantity"
                                                         value={product.quantity}
                                                         onChange={(e) => {
+                                                            const newQuantity = parseInt(e.target.value) || 1;
                                                             setRentalForm(prev => ({
                                                                 ...prev,
                                                                 borrowedProducts: prev.borrowedProducts.map((item, i) => 
-                                                                    i === index ? { ...item, quantity: parseInt(e.target.value) || 1 } : item
+                                                                    i === index ? { 
+                                                                        ...item, 
+                                                                        quantity: newQuantity,
+                                                                        parts: item.parts?.map(part => ({
+                                                                            ...part,
+                                                                            quantity: part.quantity * newQuantity
+                                                                        }))
+                                                                    } : item
                                                                 )
                                                             }));
                                                         }}
@@ -785,7 +891,11 @@ export default function AddRentalPage() {
                                                                 borrowedProducts: prev.borrowedProducts.map((item, i) => 
                                                                     i === index ? { 
                                                                         ...item, 
-                                                                        quantity: (item.quantity || 1) + 1 
+                                                                        quantity: (item.quantity || 1) + 1,
+                                                                        parts: item.parts?.map(part => ({
+                                                                            ...part,
+                                                                            quantity: part.quantity * ((item.quantity || 1) + 1)
+                                                                        }))
                                                                     } : item
                                                                 )
                                                             }));
@@ -837,24 +947,106 @@ export default function AddRentalPage() {
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
                                             </div>
+                                            
+                                            {/* Combo mahsulot qismlari */}
+                                            {products.find(p => p._id === product.product)?.type === 'combo' && (
+                                                <div className="col-span-4 ml-8 space-y-4 mt-2 border-l-2 border-blue-200 pl-4">
+                                                    <p className="text-sm font-medium text-gray-500">Қисмлар:</p>
+                                                    {products.find(p => p._id === product.product)?.parts?.map((part, partIndex) => {
+                                                        const partProduct = products.find(p => p._id === part.product._id);
+                                                        const maxQuantity = part.quantity * product.quantity;
+                                                        return (
+                                                            <div key={partIndex} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-2 bg-gray-50 rounded-lg">
+                                                                <div>
+                                                                    <span className="text-sm text-gray-600">{partProduct?.name || 'Noma\'lum qism'}</span>
+
+                                                                </div>
+                                                                <div className="space-y-2">
+                                                                    <div className="flex items-center space-x-2">
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            size="icon"
+                                                                            onClick={() => handlePartQuantityChange(index, partIndex, 'decrease')}
+                                                                        >
+                                                                            <Minus className="h-4 w-4" />
+                                                                        </Button>
+                                                                        <Input
+                                                                            type="number"
+                                                                            value={rentalForm.borrowedProducts[index].parts?.[partIndex]?.quantity || 0}
+                                                                            onChange={(e) => handlePartQuantityChange(index, partIndex, 'input', e.target.value)}
+                                                                            min="0"
+                                                                            max={maxQuantity}
+                                                                            className="w-20 text-center"
+                                                                        />
+                                                                        <Button
+                                                                            type="button"
+                                                                            variant="outline"
+                                                                            size="icon"
+                                                                            onClick={() => handlePartQuantityChange(index, partIndex, 'increase')}
+                                                                        >
+                                                                            <Plus className="h-4 w-4" />
+                                                                        </Button>
+                                                                    </div>
+                                                                    <span className="text-xs text-gray-500">
+                                                                        Максимум: {maxQuantity} дона
+                                                                    </span>
+                                                                </div>
+                                                                <div>
+                                                                    <span className="text-sm text-gray-600">
+                                                                        Кунлик нарх: {part.dailyRate?.toLocaleString()} сўм
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            )}
                                         </div>
                                     ))}
                                     {products.product && products.find(p => p._id === product.product)?.type === 'combo' && (
                                                <div className="ml-8 space-y-4 mt-2 border-l-2 border-blue-200 pl-4">
                                                 <p className="text-sm font-medium text-gray-500">Қисмлар:</p>
                                                 {products.find(p => p._id === product.product)?.parts?.map((part, partIndex) => {
-                                                    const partProduct = products.find(p => p._id === part.product);
+                                                    const partProduct = products.find(p => p._id === part.product._id);
                                                     return (
                                                         <div key={partIndex} className="grid grid-cols-1 md:grid-cols-4 gap-4 p-2 bg-gray-50 rounded-lg">
                                                             <div>
                                                                 <span className="text-sm text-gray-600">{partProduct?.name}</span>
                                                             </div>
-                                                            <div>
-                                                                <span className="text-sm text-gray-600">Миқдор: {part.quantity}</span>
+                                                            <div className="space-y-2">
+                                                                <div className="flex items-center space-x-2">
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="icon"
+                                                                        onClick={() => handlePartQuantityChange(index, partIndex, 'decrease')}
+                                                                    >
+                                                                        <Minus className="h-4 w-4" />
+                                                                    </Button>
+                                                                    <Input
+                                                                        type="number"
+                                                                        value={rentalForm.borrowedProducts[index].parts?.[partIndex]?.quantity || part.quantity * rentalForm.borrowedProducts[index].quantity}
+                                                                        onChange={(e) => handlePartQuantityChange(index, partIndex, 'input', e.target.value)}
+                                                                        min="0"
+                                                                        className="w-20 text-center"
+                                                                    />
+                                                                    <Button
+                                                                        type="button"
+                                                                        variant="outline"
+                                                                        size="icon"
+                                                                        onClick={() => handlePartQuantityChange(index, partIndex, 'increase')}
+                                                                    >
+                                                                        <Plus className="h-4 w-4" />
+                                                                    </Button>
+                                                                </div>
+                                                                <span className="text-xs text-gray-500">
+                                                                    Максимум: {part.quantity * rentalForm.borrowedProducts[index].quantity} дона
+                                                                </span>
                                                             </div>
                                                             <div>
                                                                 <span className="text-sm text-gray-600">
-                                                                Кунлик нарх: {part.dailyRate?.toLocaleString()} сўм
+                                                                    Кунлик нарх: {part.dailyRate?.toLocaleString()} сўм
                                                                 </span>
                                                             </div>
                                                         </div>

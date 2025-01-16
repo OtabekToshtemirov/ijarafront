@@ -356,48 +356,88 @@ export default function RentalsPage() {
           </thead>
           <tbody>
             {rental.borrowedProducts.map((product, index) => (
-              <tr key={index}>
-                <td style={{ padding: "5px", borderBottom: "1px solid #eee" }}>
-                  {index + 1}.
-                </td>
-                <td
-                  style={{
-                    padding: "5px",
-                    borderBottom: "1px solid #eee",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {product.product.name}
-                </td>
-                <td
-                  style={{
-                    padding: "5px",
-                    borderBottom: "1px solid #eee",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {product.quantity}
-                </td>
-                <td
-                  style={{
-                    padding: "5px",
-                    borderBottom: "1px solid #eee",
-                    fontWeight: "bold",
-                  }}
-                >
-                  {product.product.dailyRate * product.quantity} сўм
-                </td>
-              </tr>
+              <React.Fragment key={index}>
+                <tr>
+                  <td style={{ padding: "5px", borderBottom: "1px solid #eee" }}>
+                    {index + 1}.
+                  </td>
+                  <td
+                    style={{
+                      padding: "5px",
+                      borderBottom: "1px solid #eee",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {product.product.name}
+                  </td>
+                  <td
+                    style={{
+                      padding: "5px",
+                      borderBottom: "1px solid #eee",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {product.quantity}
+                  </td>
+                  <td
+                    style={{
+                      padding: "5px",
+                      borderBottom: "1px solid #eee",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    {product.product.dailyRate * product.quantity} сўм
+                  </td>
+                </tr>
+                {product.product.type === "combo" &&
+                  product.product.parts?.map((part, partIndex) => (
+                    <tr key={`${index}-${partIndex}`}>
+                      <td style={{ padding: "5px", borderBottom: "1px solid #eee" }}></td>
+                      <td
+                        style={{
+                          padding: "5px 5px 5px 20px",
+                          borderBottom: "1px solid #eee",
+                          fontSize: "12px",
+                          color: "#666",
+                        }}
+                      >
+                        - {part.product.name}
+                      </td>
+                      <td
+                        style={{
+                          padding: "5px",
+                          borderBottom: "1px solid #eee",
+                          fontSize: "12px",
+                          color: "#666",
+                        }}
+                      >
+                        {part.quantity * product.quantity}
+                      </td>
+                      <td
+                        style={{
+                          padding: "5px",
+                          borderBottom: "1px solid #eee",
+                          fontSize: "12px",
+                          color: "#666",
+                        }}
+                      >
+                        0 сўм
+                      </td>
+                    </tr>
+                  ))}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
 
         <div style={{ marginTop: "15px", fontSize: "14px" }}>
-          <div style={{ marginBottom: "10px" }}>
-            Ижарага олувчи: {rental.customer.name}
-          </div>
-          <div style={{ marginBottom: "10px" }}>
-            Транспорт: {rental.car.driverPhone}
+          <div style={{ textAlign: "center", marginBottom: "10px" }}>
+            <h2 style={{ margin: 0, fontSize: "16px", fontWeight: "bold" }}>
+              Ижарага олувчи: {rental.customer.name}
+            </h2>
+            <div style={{ fontSize: "14px" }}>
+              Транспорт: {rental.car.driverPhone}
+            </div>
           </div>
           <div
             style={{
