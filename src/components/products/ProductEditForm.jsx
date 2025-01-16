@@ -14,9 +14,9 @@ import {
     DialogTrigger, 
     DialogFooter
 } from '@/components/ui/dialog'
-import { Plus, X , Loader2} from 'lucide-react'
+import { Plus, X, Loader2, Pencil } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
-import { addProduct, selectPartProducts } from '@/lib/features/products/productSlice'
+import { updateProduct, selectPartProducts } from '@/lib/features/products/productSlice'
 import {
     Select,
     SelectContent,
@@ -25,35 +25,33 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 
-const initialProductState = {
-    name: '',
-    type: 'single',
-    dailyRate: 0,
-    quantity: 1,
-    parts: [],
-    availability: true,
-    description: '',
-    category: ''
-}
-
-export default function ProductAddForm() {
+export default function ProductEditForm({ product }) {
     const dispatch = useDispatch()
     const partProducts = useSelector(selectPartProducts)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [newProduct, setNewProduct] = useState(initialProductState)
+    const [editProduct, setEditProduct] = useState({
+        ...product,
+        parts: product.parts?.map(part => ({
+            productId: part.product?._id || part.product,
+            quantity: part.quantity,
+            dailyRate: part.product?.dailyRate || part.dailyRate || 0
+        })) || [],
+        dailyRate: product.dailyRate || 0
+    })
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [totalComboPrice, setTotalComboPrice] = useState(0)
 
     useEffect(() => {
-        if (newProduct.type === 'combo') {
-            const total = newProduct.parts.reduce((sum, part) => {
+        if (editProduct.type === 'combo') {
+            const total = editProduct.parts.reduce((sum, part) => {
                 const selectedProduct = partProducts.find(p => p._id === part.productId);
                 const partDailyRate = selectedProduct?.dailyRate || 0;
                 return sum + (partDailyRate * (part.quantity || 0));
             }, 0);
+            
             setTotalComboPrice(total);
         }
-    }, [newProduct.parts, partProducts]);
+    }, [editProduct.parts, partProducts]);
 
     const validateProduct = () => {
         const errors = []
@@ -63,21 +61,19 @@ export default function ProductAddForm() {
         }
 
         Object.entries(requiredFields).forEach(([field, label]) => {
-            if (!newProduct[field]?.trim()) {
+            if (!editProduct[field]?.trim()) {
                 errors.push(`${label} киритилиши керак`)
             }
         })
 
-        if (newProduct.quantity < 1) {
+        if (editProduct.quantity < 1) {
             errors.push('Мулк сони 1 дан катта бўлиши керак')
         }
 
-        if (newProduct.type === 'combo') {
-            if (!newProduct.parts?.length) {
-                errors.push('Комбинация мулк учун камида битта қисм киритилиши керак')
-            }
-            
+        if (editProduct.type === 'combo' && !editProduct.parts?.length) {
+            errors.push('Комбинация мулк учун камида битта қисм киритилиши керак')
         }
+
         return errors
     }
 
@@ -99,33 +95,31 @@ export default function ProductAddForm() {
         setIsSubmitting(true)
         try {
             const formData = {
-                ...newProduct,
-                dailyRate: Number(newProduct.dailyRate),
-                quantity: Number(newProduct.quantity),
-                parts: newProduct.type === 'combo' 
-                    ? newProduct.parts.map(part => ({
+                ...editProduct,
+                dailyRate: Number(editProduct.dailyRate),
+                quantity: Number(editProduct.quantity),
+                parts: editProduct.type === 'combo' 
+                    ? editProduct.parts.map(part => ({
                         product: part.productId,
-                        quantity: Number(part.quantity)
+                        quantity: Number(part.quantity),
+                        dailyRate: Number(part.dailyRate)
                     }))
                     : []
             }
-
-            console.log('Saving product:', formData);
             
-            await dispatch(addProduct(formData)).unwrap()
+            await dispatch(updateProduct(formData)).unwrap()
             
             toast({
                 title: 'Муваффақият',
-                description: 'Мулк муваффақиятли қўшилди',
+                description: 'Мулк муваффақиятли янгиланди',
             })
             
-            setNewProduct(initialProductState)
             setIsDialogOpen(false)
         } catch (error) {
-            console.error('Мулк қўшишда хатолик:', error)
+            console.error('Мулк янгилашда хатолик:', error)
             toast({
                 title: 'Хатолик',
-                description: error.message || 'Мулк қўшишда хатолик юз берди',
+                description: error.message || 'Мулк янгилашда хатолик юз берди',
                 variant: 'destructive',
             })
         } finally {
@@ -138,54 +132,78 @@ export default function ProductAddForm() {
             value = value === '' ? '' : value === '0' ? 0 : Number(value)
         }
         
-        setNewProduct(prev => ({
+        if (field === 'type') {
+            if (value === 'single') {
+                setEditProduct(prev => ({
+                    ...prev,
+                    type: 'single',
+                    parts: [],
+                    dailyRate: prev.dailyRate || 0
+                }))
+                return
+            } else if (value === 'combo' && editProduct.parts.length === 0) {
+                setEditProduct(prev => ({
+                    ...prev,
+                    type: 'combo',
+                    parts: []
+                }))
+                return
+            }
+        }
+        
+        setEditProduct(prev => ({
             ...prev,
             ...(typeof value === 'object' ? value : { [field]: value })
         }))
     }
 
     const handleAddPart = () => {
-        setNewProduct(prev => ({
+        setEditProduct(prev => ({
             ...prev,
             parts: [...prev.parts, { productId: '', quantity: 1, dailyRate: 0 }]
         }))
     }
 
     const handlePartChange = (index, field, value) => {
-        const updatedParts = [...newProduct.parts]
-        const part = updatedParts[index]
+        const updatedParts = [...editProduct.parts];
+        const part = updatedParts[index];
 
         if (field === 'productId') {
-            const selectedProduct = partProducts.find(p => p._id === value)
-            part.productId = value
-            part.dailyRate = selectedProduct?.dailyRate || 0
+            const selectedProduct = partProducts.find(p => p._id === value);
+            part.productId = value;
+            part.dailyRate = selectedProduct?.dailyRate || 0;
+            
+            // Qism nomini saqlash
+            part.productName = selectedProduct?.name;
         } else {
-            part[field] = field === 'quantity' ? Number(value) : value
+            part[field] = field === 'quantity' ? Number(value) : value;
         }
 
-        setNewProduct(prev => ({
+        setEditProduct(prev => ({
             ...prev,
             parts: updatedParts
-        }))
+        }));
     }
 
     const handleRemovePart = (index) => {
-        handleInputChange('parts', newProduct.parts.filter((_, i) => i !== index))
+        setEditProduct(prev => ({
+            ...prev,
+            parts: prev.parts.filter((_, i) => i !== index)
+        }))
     }
 
     return (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-                <Button>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Янги мулк
+                <Button variant="ghost" size="icon">
+                    <Pencil className="w-4 h-4" />
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px] overflow-y-auto max-h-[90vh]">
                 <DialogHeader>
-                    <DialogTitle>Янги мулк қўшиш</DialogTitle>
+                    <DialogTitle>Мулкни таҳрирлаш</DialogTitle>
                     <DialogDescription>
-                        Янги мулк қўшиш учун қуйидаги майдонларни тўлдиринг
+                        Мулк маълумотларини таҳрирлаш учун қуйидаги майдонларни тўлдиринг
                     </DialogDescription>
                 </DialogHeader>
 
@@ -196,7 +214,7 @@ export default function ProductAddForm() {
                         </Label>
                         <Input
                             id="name"
-                            value={newProduct.name}
+                            value={editProduct.name}
                             onChange={(e) => handleInputChange('name', e.target.value)}
                             className="col-span-3"
                             required
@@ -208,7 +226,7 @@ export default function ProductAddForm() {
                             Тури
                         </Label>
                         <Select
-                            value={newProduct.type}
+                            value={editProduct.type}
                             onValueChange={(value) => handleInputChange('type', value)}
                         >
                             <SelectTrigger className="col-span-3">
@@ -226,7 +244,7 @@ export default function ProductAddForm() {
                             Категория
                         </Label>
                         <Select
-                            value={newProduct.category}
+                            value={editProduct.category}
                             onValueChange={(value) => handleInputChange('category', value)}
                         >
                             <SelectTrigger className="col-span-3">
@@ -251,14 +269,14 @@ export default function ProductAddForm() {
                             id="quantity"
                             type="number"
                             min="1"
-                            value={newProduct.quantity}
+                            value={editProduct.quantity}
                             onChange={(e) => handleInputChange('quantity', e.target.value)}
                             className="col-span-3"
                             required
                         />
                     </div>
 
-                    {newProduct.type === 'combo' ? (
+                    {editProduct.type === 'combo' ? (
                         <div className="space-y-4">
                             <div className="flex justify-between items-center">
                                 <Label>Қисмлар</Label>
@@ -268,7 +286,7 @@ export default function ProductAddForm() {
                                 </Button>
                             </div>
 
-                            {newProduct.parts.map((part, index) => (
+                            {editProduct.parts.map((part, index) => (
                                 <div key={index} className="space-y-2 p-4 border rounded-lg relative">
                                     <Button
                                         type="button"
@@ -323,8 +341,13 @@ export default function ProductAddForm() {
                                         id="dailyRate"
                                         type="number"
                                         min="0"
-                                        value={newProduct.dailyRate}
-                                        onChange={(e) => handleInputChange('dailyRate', e.target.value)}
+                                        value={editProduct.dailyRate}
+                                        onChange={(e) => {
+                                            setEditProduct(prev => ({
+                                                ...prev,
+                                                dailyRate: e.target.value
+                                            }));
+                                        }}
                                         required
                                     />
                                     <p className="text-sm text-muted-foreground">
@@ -342,7 +365,7 @@ export default function ProductAddForm() {
                                 id="dailyRate"
                                 type="number"
                                 min="0"
-                                value={newProduct.dailyRate}
+                                value={editProduct.dailyRate}
                                 onChange={(e) => handleInputChange('dailyRate', e.target.value)}
                                 className="col-span-3"
                                 required
@@ -356,7 +379,7 @@ export default function ProductAddForm() {
                         </Label>
                         <Input
                             id="description"
-                            value={newProduct.description}
+                            value={editProduct.description}
                             onChange={(e) => handleInputChange('description', e.target.value)}
                             className="col-span-3"
                         />

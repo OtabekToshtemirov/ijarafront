@@ -32,7 +32,9 @@ import {
 import { fetchProducts, updateProduct, deleteProduct } from '@/lib/features/products/productSlice'
 import ProductAddForm from '@/components/products/ProductAddForm'
 import ProductDetailsSheet from '@/components/products/ProductDetailsSheet'
+import ProductEditForm from '@/components/products/ProductEditForm'
 import { toast } from '@/hooks/use-toast'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, Label } from '@/components/ui/dialog'
 
 export default function ProductsPage() {
     const dispatch = useDispatch()
@@ -369,38 +371,14 @@ export default function ProductsPage() {
                                             >
                                                 <Eye className="h-4 w-4" />
                                             </Button>
-                                            {editingProduct?._id === product._id ? (
-                                                <>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={handleSaveEdit}
-                                                    >
-                                                        <Check className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        onClick={handleCancelEdit}
-                                                    >
-                                                        <X className="h-4 w-4" />
-                                                    </Button>
-                                                </>
-                                            ) : (
-                                                <Button
-                                                    variant="ghost"
-                                                    size="icon"
-                                                    onClick={() => handleEditProduct(product)}
-                                                >
-                                                    <Edit2 className="h-4 w-4" />
-                                                </Button>
-                                            )}
+                                            <ProductDetailsSheet product={product} />
+                                            <ProductEditForm product={product} />
                                             <Button
                                                 variant="ghost"
                                                 size="icon"
                                                 onClick={() => handleDelete(product._id)}
                                             >
-                                                <Trash2 className="h-4 w-4" />
+                                                <Trash2 className="w-4 h-4 text-red-500" />
                                             </Button>
                                         </div>
                                     </TableCell>
