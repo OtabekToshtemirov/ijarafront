@@ -31,6 +31,10 @@ import {
   fetchRentalsByCarId,
   updateRental,
   returnProduct,
+  selectRentals,
+  selectRentalsStatus,
+  selectTodayStats,
+  fetchTodayStatistics,
 } from "@/lib/features/rentals/rentalsSlice";
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { toast } from "sonner";
@@ -45,18 +49,23 @@ import {
 import { Label } from "@/components/ui/label";
 import { useReactToPrint } from "react-to-print";
 import axios from "axios";
+import { fetchDailyRevenue } from '@/lib/features/statistics/statisticsSlice';
 
 export default function RentalsPage() {
   const dispatch = useDispatch();
-  const rentals = useSelector((state) => state.rentals.rentals);
+  const rentals = useSelector(selectRentals);
   const products = useSelector((state) => state.products.products);
+  const { dailyRevenue } = useSelector((state) => state.statistics);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedRental, setSelectedRental] = useState(null);
+  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
+  const [returnedProducts, setReturnedProducts] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editFormData, setEditFormData] = useState({});
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
-  const [selectedRental, setSelectedRental] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPrintRental, setSelectedPrintRental] = useState(null);
   const [error, setError] = useState(null);
@@ -69,19 +78,40 @@ export default function RentalsPage() {
         await Promise.all([
           dispatch(fetchRentals()),
           dispatch(fetchProducts()),
+          dispatch(fetchDailyRevenue()),
         ]);
         setLoading(false);
       } catch (err) {
+        console.error(err);
         setError(err.message);
         setLoading(false);
-        toast.error("Ma'lumotlarni yuklashda xatolik");
       }
     };
 
     fetchData();
   }, [dispatch]);
 
-  // Get filtered and searched rentals
+  // Kunlik statistikani hisoblash
+  const getTodayStats = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const todayRentals = rentals.filter(rental => {
+      const rentalDate = new Date(rental.createdAt);
+      return rentalDate >= today && rentalDate < tomorrow && rental.status !== 'cancelled';
+    });
+
+    return {
+      totalRentals: todayRentals.length,
+      totalAmount: dailyRevenue?.stats?.totalAmount || 0
+    };
+  };
+
+  const todayStats = getTodayStats();
+
   const filteredRentals = useMemo(() => {
     return rentals.filter((rental) => {
       // First apply status filter
@@ -90,10 +120,10 @@ export default function RentalsPage() {
       }
 
       // Then apply search filter if there's a search query
-      if (searchQuery) {
+      if (searchTerm) {
         const customer = rental.customer?.name?.toLowerCase() || "";
         const rentalNumber = rental.rentalNumber?.toLowerCase() || "";
-        const searchLower = searchQuery.toLowerCase();
+        const searchLower = searchTerm.toLowerCase();
         const rentalCar = rental.car?.carNumber?.toLowerCase() || "";
         const rentalDriver = rental.car?.driverName?.toLowerCase() || "";
         const rentalDriverPhone = rental.car?.driverPhone?.toLowerCase() || "";
@@ -111,7 +141,7 @@ export default function RentalsPage() {
 
       return true;
     });
-  }, [rentals, filter, searchQuery]);
+  }, [rentals, filter, searchTerm]);
 
   const handleFilterChange = (value) => {
     setFilter(value);
@@ -193,7 +223,7 @@ export default function RentalsPage() {
             ? "Фаол"
             : newStatus === "completed"
             ? "Якунланган"
-            : "Бекор қилинди"
+            : "Бекор қилинган"
         } га ўзгартирилди`
       );
 
@@ -554,14 +584,21 @@ export default function RentalsPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-6">
-        <div className="space-y-1">
-          <h2 className="text-2xl font-semibold tracking-tight">Ижара</h2>
-          <p className="text-sm text-muted-foreground">
-            Барча ижаралар рўйхати
-          </p>
-        </div>
+      <div className="flex justify-between items-start mb-6">
+          <div className="space-y-1 mb-4">
+            <h2 className="text-2xl font-semibold tracking-tight">Ижара</h2>
+            <p className="text-sm text-muted-foreground">
+              Барча ижаралар рўйхати
+            </p>
+          </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg p-4 border">
+              <h3 className="text-sm font-medium text-gray-500 mb-1">Bugungi ijaralar</h3>
+              <p className="text-2xl font-bold text-blue-600">{todayStats.totalRentals}</p>
+            </div>
+          </div>
+          
         <div className="flex items-center gap-4">
           <Select value={filter} onValueChange={handleFilterChange}>
             <SelectTrigger className="w-[180px]">
@@ -589,8 +626,8 @@ export default function RentalsPage() {
         <Input
           className="max-w-md"
           placeholder="Мижоз, Транспорт ёки мулк бўйича қидириш"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 

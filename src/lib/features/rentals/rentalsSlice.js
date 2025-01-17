@@ -129,7 +129,6 @@ export const returnProduct = createAsyncThunk(
     }
 );
 
-
 export const deleteRental = createAsyncThunk(
     'rentals/deleteRental',
     async (id) => {
@@ -200,6 +199,19 @@ export const createPayment = createAsyncThunk(
     }
 );
 
+export const fetchTodayStatistics = createAsyncThunk(
+    'rentals/fetchTodayStatistics',
+    async () => {
+        try {
+            const response = await axios.get(`${BASE_URL}/statistics/today`);
+            return response.data.data;
+        } catch (error) {
+            console.error('Error fetching today statistics:', error);
+            throw error;
+        }
+    }
+);
+
 const formatRentalData = (rental) => ({
     ...rental,
     borrowedProducts: (rental.borrowedProducts || []).map(bp => ({
@@ -214,6 +226,10 @@ const formatRentalData = (rental) => ({
 
 const initialState = {
     rentals: [],
+    todayStats: {
+        totalRentals: 0,
+        totalAmount: 0
+    },
     status: 'idle',
     error: null,
     currentRental: null,
@@ -441,6 +457,11 @@ const rentalsSlice = createSlice({
             .addCase(createPayment.rejected, (state, action) => {
                 state.paymentStatus = 'failed';
                 state.paymentError = action.error.message;
+            })
+
+            // Fetch today's statistics
+            .addCase(fetchTodayStatistics.fulfilled, (state, action) => {
+                state.todayStats = action.payload;
             });
     }
 });
@@ -459,6 +480,7 @@ export const selectCustomerRentalsStatus = (state) => state.rentals.customerRent
 export const selectCustomerRentalsError = (state) => state.rentals.customerRentalsError;
 export const selectPaymentStatus = (state) => state.rentals.paymentStatus;
 export const selectPaymentError = (state) => state.rentals.paymentError;
+export const selectTodayStats = (state) => state.rentals.todayStats;
 
 export const { clearRentalSummary, clearAddStatus, clearUpdateStatus, clearReturnStatus, clearPaymentStatus } = rentalsSlice.actions;
 

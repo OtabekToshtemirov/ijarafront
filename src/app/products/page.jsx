@@ -35,6 +35,13 @@ import ProductDetailsSheet from '@/components/products/ProductDetailsSheet'
 import ProductEditForm from '@/components/products/ProductEditForm'
 import { toast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, Label } from '@/components/ui/dialog'
+import {
+    Carousel,
+    CarouselContent,
+    CarouselItem,
+    CarouselNext,
+    CarouselPrevious,
+} from "@/components/ui/carousel";
 
 export default function ProductsPage() {
     const dispatch = useDispatch()
@@ -102,13 +109,22 @@ export default function ProductsPage() {
 
     // Get unique values for filters
     const types = ['all', ...new Set(products.map(p => p.type))]
-    const categories = ['all', ...new Set(products.map(p => p.category))]
+    const categories = ['Барчаси', ...new Set(products.map(p => p.category))]; 
     const statuses = [
         { value: 'all', label: 'Барчаси' },
         { value: 'mavjud', label: 'Мавжуд' },
-        { value: 'oz_qoldi', label: 'Оз қолди' },
         { value: 'mavjud_emas', label: 'Мавжуд эмас' }
     ]
+
+    // Kategoriya bo'yicha umumiy sonni hisoblash
+    const getCategoryTotal = (category) => {
+        if (category === 'Барчаси') {
+            return products.reduce((total, product) => total + (product.quantity || 0), 0);
+        }
+        return products
+            .filter(product => product.category === category)
+            .reduce((total, product) => total + (product.quantity || 0), 0);
+    };
 
     const handleFilterChange = (field, value) => {
         setFilters(prev => ({ ...prev, [field]: value }))
@@ -292,6 +308,31 @@ export default function ProductsPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Kategoriyalar statistikasi */}
+            <div className="w-full max-w-5xl mx-auto mb-8">
+                <Carousel opts={{ align: "start", slidesToScroll: 4 }}>
+                    <CarouselContent className="-ml-2 md:-ml-4">
+                        {categories.map((category) => (
+                            <CarouselItem key={category} className="pl-2 md:pl-4 basis-1/2 md:basis-1/4">
+                                <Card className="p-3">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <h3 className="font-medium text-sm">{category}</h3>
+                                            <p className="text-xl font-bold">{getCategoryTotal(category)}</p>
+                                        </div>
+                                        <div className="text-muted-foreground text-sm">
+                                            дона
+                                        </div>
+                                    </div>
+                                </Card>
+                            </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="hidden md:flex -left-12" />
+                    <CarouselNext className="hidden md:flex -right-12" />
+                </Carousel>
+            </div>
 
             {/* Products Table */}
             <Card>

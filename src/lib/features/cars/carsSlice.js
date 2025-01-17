@@ -32,7 +32,7 @@ export const updateCar = createAsyncThunk(
     'cars/updateCar',
     async ({ id, data }) => {
         const response = await axios.put(`${BASE_URL}/${id}`, data);
-        return response.data;
+        return response.data.data;
     }
 );
 
@@ -48,12 +48,13 @@ export const fetchTopRentedCars = createAsyncThunk(
     'cars/fetchTopRentedCars',
     async (limit = 10) => {
         const response = await axios.get(`${BASE_URL}/top?limit=${limit}`);
-        return response.data;
+        return response.data.data;
     }
 );
 
 const initialState = {
     cars: [],
+    currentCar: null,
     status: 'idle',
     error: null,
     addStatus: 'idle',
@@ -85,26 +86,34 @@ const carsSlice = createSlice({
             })
             .addCase(fetchCars.fulfilled, (state, action) => {
                 state.status = 'succeeded';
-                // Use the exact API response structure
-                state.cars = Array.isArray(action.payload) ? action.payload : [];
+                state.cars = action.payload;
                 state.error = null;
             })
             .addCase(fetchCars.rejected, (state, action) => {
                 state.status = 'failed';
                 state.error = action.error.message;
-                state.cars = [];
             })
             // Fetch car by id
+            .addCase(fetchCarById.pending, (state) => {
+                state.status = 'loading';
+            })
             .addCase(fetchCarById.fulfilled, (state, action) => {
+                state.status = 'succeeded';
                 state.currentCar = action.payload;
+            })
+            .addCase(fetchCarById.rejected, (state, action) => {
+                state.status = 'failed';
+                state.error = action.error.message;
             })
             // Create car
             .addCase(createCar.pending, (state) => {
                 state.addStatus = 'loading';
+                state.addError = null;
             })
             .addCase(createCar.fulfilled, (state, action) => {
                 state.addStatus = 'succeeded';
                 state.cars.push(action.payload);
+                state.addError = null;
             })
             .addCase(createCar.rejected, (state, action) => {
                 state.addStatus = 'failed';
@@ -113,6 +122,7 @@ const carsSlice = createSlice({
             // Update car
             .addCase(updateCar.pending, (state) => {
                 state.updateStatus = 'loading';
+                state.updateError = null;
             })
             .addCase(updateCar.fulfilled, (state, action) => {
                 state.updateStatus = 'succeeded';
@@ -120,6 +130,7 @@ const carsSlice = createSlice({
                 if (index !== -1) {
                     state.cars[index] = action.payload;
                 }
+                state.updateError = null;
             })
             .addCase(updateCar.rejected, (state, action) => {
                 state.updateStatus = 'failed';
@@ -137,16 +148,5 @@ const carsSlice = createSlice({
 });
 
 export const { clearAddStatus, clearUpdateStatus } = carsSlice.actions;
-
-// Selectors
-export const selectAllCars = state => state.cars.cars;
-export const selectCarById = (state, carId) => state.cars.cars.find(car => car._id === carId);
-export const selectCarsStatus = state => state.cars.status;
-export const selectCarsError = state => state.cars.error;
-export const selectAddCarStatus = state => state.cars.addStatus;
-export const selectAddCarError = state => state.cars.addError;
-export const selectUpdateCarStatus = state => state.cars.updateStatus;
-export const selectUpdateCarError = state => state.cars.updateError;
-export const selectTopRentedCars = state => state.cars.topRentedCars;
 
 export default carsSlice.reducer;
