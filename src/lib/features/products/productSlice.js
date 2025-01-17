@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 const API_URL = 'http://localhost:5000/api';
@@ -131,8 +131,11 @@ const productSlice = createSlice({
     },
 });
 
-export const selectPartProducts = (state) => 
-    state.products.products.filter(product => product.category === 'qism')
+// Memoizatsiya qilingan selector
+export const selectPartProducts = createSelector(
+    [(state) => state.products.products],
+    (products) => products.filter(product => product.type !== 'combo')
+);
 
 export const { clearError } = productSlice.actions;
 export default productSlice.reducer;

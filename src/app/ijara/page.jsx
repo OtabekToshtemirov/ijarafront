@@ -31,8 +31,8 @@ import {
   fetchRentalsByCarId,
   updateRental,
   returnProduct,
-  fetchProducts,
 } from "@/lib/features/rentals/rentalsSlice";
+import { fetchProducts } from "@/lib/features/products/productSlice";
 import { toast } from "sonner";
 import { Loader2, Plus, Edit, Eye, Printer } from "lucide-react";
 import moment from "moment";
@@ -633,7 +633,6 @@ export default function RentalsPage() {
                     </span>
                   </div>
                 </TableCell>
-              
                 <TableCell>
                   <div className="flex flex-col">
                     <span>{rental.rentalDays} кун</span>
@@ -861,6 +860,16 @@ export default function RentalsPage() {
                         <div className="text-sm text-gray-500">
                           Кунлик нарх: {item.dailyRate?.toLocaleString()} сўм
                         </div>
+                        {item.product?.type === "combo" && item.product?.parts && (
+                          <div className="mt-2 pl-4 border-l-2 border-gray-200">
+                            <div className="text-sm font-medium text-gray-700 mb-1">Таркиби:</div>
+                            {item.product.parts.map((component, idx) => (
+                              <div key={idx} className="text-sm text-gray-600">
+                                • {component.product?.name} - {component.quantity} дона
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -887,6 +896,16 @@ export default function RentalsPage() {
                         <div className="text-sm text-gray-500">
                           Кунлик нарх: {item.dailyRate?.toLocaleString()} сўм
                         </div>
+                        {item.product?.type === "combo" && item.product?.parts && (
+                          <div className="mt-2 pl-4 border-l-2 border-gray-200">
+                            <div className="text-sm font-medium text-gray-700 mb-1">Таркиби:</div>
+                            {item.product.parts.map((component, idx) => (
+                              <div key={idx} className="text-sm text-gray-600">
+                                • {component.product?.name} - {component.quantity} дона
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

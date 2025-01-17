@@ -26,7 +26,7 @@ import {
 import { fetchCustomers } from "@/lib/features/customers/customerSlice";
 import {
   fetchRentalsByCustomerId,
-  addReturnedProduct,
+  returnProduct,
   clearReturnStatus,
   fetchRentals,
 } from "@/lib/features/rentals/rentalsSlice";
@@ -226,7 +226,7 @@ export default function CustomerDetailsPage() {
 
     try {
       await dispatch(
-        addReturnedProduct({
+        returnProduct({
           rentalId: selectedRental._id,
           productId: selectedProduct.product._id,
           quantity: returnQuantity,
