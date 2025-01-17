@@ -687,7 +687,7 @@ export default function Component() {
                                         <TableHead>Қайтариш санаси</TableHead>
                                         <TableHead>Жами кунлар</TableHead>
                                         <TableHead>Чегирма кунлар</TableHead>
-                                        <TableHead>Ҳисобланадиган кунлар</TableHead>
+                                        <TableHead>Кунлар</TableHead>
                                         <TableHead>Кунлик нарх</TableHead>
                                         <TableHead>Микдор</TableHead>
                                         <TableHead>Қайтариш</TableHead>

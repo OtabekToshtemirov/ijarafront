@@ -119,10 +119,14 @@ export default function AddRentalPage() {
         }));
     }, [rentalForm.borrowedProducts]);
 
+    // State o'zgarishini kuzatish
+    useEffect(() => {
+        console.log('RentalForm updated:', rentalForm.borrowedProducts);
+    }, [rentalForm.borrowedProducts]);
+
     // Handle product selection
     const handleProductSelect = async (product) => {
         try {
-            // Mahsulot allaqachon tanlangan bo'lsa, uni o'chiramiz
             if (rentalForm.borrowedProducts.some(item => item.product === product._id)) {
                 setRentalForm(prev => ({
                     ...prev,
@@ -131,7 +135,6 @@ export default function AddRentalPage() {
                 return;
             }
 
-            // Yangi mahsulot qo'shish
             const newProduct = {
                 product: product._id,
                 quantity: 1,
@@ -142,9 +145,8 @@ export default function AddRentalPage() {
             if (product.type === 'combo' && Array.isArray(product.parts)) {
                 newProduct.parts = product.parts.map(part => ({
                     product: part.product._id,
-                    quantity: part.quantity,
-                    originalQuantity: part.quantity, // Original miqdorni saqlash
-                    dailyRate: part.product.dailyRate
+                    quantity: part.quantity || 0,
+                    dailyRate: part.product.dailyRate || 0
                 }));
             }
 
@@ -178,10 +180,11 @@ export default function AddRentalPage() {
                             // Original nisbatni topish
                             const originalRatio = part.originalQuantity || part.quantity;
                             
+
                             return {
                                 ...part,
                                 originalQuantity: originalRatio, // Original nisbatni saqlash
-                                quantity: originalRatio * newQuantity // Yangi miqdorni hisoblash
+                                quantity:  newQuantity // Yangi miqdorni hisoblash
                             };
                         });
                     }
@@ -194,46 +197,45 @@ export default function AddRentalPage() {
     };
 
     // Handle part quantity change
-    const handlePartQuantityChange = (productIndex, partIndex, action, value) => {
-        setRentalForm(prev => {
-            const newBorrowedProducts = [...prev.borrowedProducts];
-            const product = newBorrowedProducts[productIndex];
-            
-            if (!product || !product.parts) return prev;
+    const [forceUpdate, setForceUpdate] = useState(0);
 
-            // Maksimal miqdorni hisoblash
-            const maxQuantity = product.quantity * (products.find(p => p._id === product.product)?.parts?.[partIndex]?.quantity || 0);
+    const handlePartQuantityChange = (productIndex, partIndex, action, value) => {
+        console.log('Params:', { productIndex, partIndex, action, value });
+        
+        setRentalForm(prev => {
+            // Deep clone qilish
+            const newForm = JSON.parse(JSON.stringify(prev));
+            const product = newForm.borrowedProducts[productIndex];
             
+            if (!product?.parts?.[partIndex]) {
+                console.log('Product or part not found');
+                return prev;
+            }
+
             let newQuantity;
+            const currentQuantity = parseInt(product.parts[partIndex].quantity) || 0;
+            
             switch(action) {
                 case 'decrease':
-                    newQuantity = Math.max(0, (product.parts[partIndex]?.quantity || maxQuantity) - 1);
+                    newQuantity = Math.max(0, currentQuantity - 1);
                     break;
                 case 'increase':
-                    newQuantity = Math.min(maxQuantity, (product.parts[partIndex]?.quantity || 0) + 1);
-                    break;
-                case 'input':
-                    newQuantity = Math.min(maxQuantity, Math.max(0, parseInt(value) || 0));
+                    newQuantity = currentQuantity + 1; // Cheklovni olib tashladik
                     break;
                 default:
-                    return prev;
+                    newQuantity = Math.max(0, parseInt(value) || 0); // Faqat 0 dan katta bo'lishi kerak
             }
 
-            // Qism miqdorini yangilash
-            if (!product.parts[partIndex]) {
-                product.parts[partIndex] = { 
-                    product: products.find(p => p._id === product.product)?.parts?.[partIndex]?.product?._id,
-                    quantity: newQuantity,
-                    dailyRate: products.find(p => p._id === product.product)?.parts?.[partIndex]?.dailyRate || 0
-                };
-            } else {
-                product.parts[partIndex].quantity = newQuantity;
-            }
+            console.log('Current quantity:', currentQuantity);
+            console.log('New quantity:', newQuantity);
+            
+            // To'g'ridan-to'g'ri qiymatni o'zgartirish
+            product.parts[partIndex].quantity = newQuantity;
+            
+            // Force update
+            setForceUpdate(prev => prev + 1);
 
-            return {
-                ...prev,
-                borrowedProducts: newBorrowedProducts
-            };
+            return newForm;
         });
     };
 
@@ -972,11 +974,11 @@ export default function AddRentalPage() {
                                                                             <Minus className="h-4 w-4" />
                                                                         </Button>
                                                                         <Input
+                                                                            key={`part-quantity-${index}-${partIndex}-${forceUpdate}`}
                                                                             type="number"
-                                                                            value={rentalForm.borrowedProducts[index].parts?.[partIndex]?.quantity || 0}
+                                                                            value={rentalForm.borrowedProducts[index]?.parts?.[partIndex]?.quantity || 0}
                                                                             onChange={(e) => handlePartQuantityChange(index, partIndex, 'input', e.target.value)}
                                                                             min="0"
-                                                                            max={maxQuantity}
                                                                             className="w-20 text-center"
                                                                         />
                                                                         <Button
@@ -1025,8 +1027,9 @@ export default function AddRentalPage() {
                                                                         <Minus className="h-4 w-4" />
                                                                     </Button>
                                                                     <Input
+                                                                        key={`part-quantity-${index}-${partIndex}-${forceUpdate}`}
                                                                         type="number"
-                                                                        value={rentalForm.borrowedProducts[index].parts?.[partIndex]?.quantity || part.quantity * rentalForm.borrowedProducts[index].quantity}
+                                                                        value={rentalForm.borrowedProducts[index].parts?.[partIndex]?.quantity || 0}
                                                                         onChange={(e) => handlePartQuantityChange(index, partIndex, 'input', e.target.value)}
                                                                         min="0"
                                                                         className="w-20 text-center"

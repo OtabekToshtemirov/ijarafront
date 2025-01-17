@@ -390,7 +390,7 @@ export default function RentalsPage() {
                   </td>
                 </tr>
                 {product.product.type === "combo" &&
-                  product.product.parts?.map((part, partIndex) => (
+                  product.parts?.map((part, partIndex) => (
                     <tr key={`${index}-${partIndex}`}>
                       <td style={{ padding: "5px", borderBottom: "1px solid #eee" }}></td>
                       <td
@@ -401,7 +401,7 @@ export default function RentalsPage() {
                           color: "#666",
                         }}
                       >
-                        - {part.product.name}
+                        - {products.find((p) => p._id === part.product)?.name || "Noma'lum qism"}
                       </td>
                       <td
                         style={{
@@ -657,20 +657,20 @@ export default function RentalsPage() {
                       >
                         <div>
                           <span>
-                            {item.product?.name || "Noma'lum mahsulot"}{" "}
+                            {item.product?.name || "Noma'lum mahsulot"}{" "} 
                             {item.quantity} dona
                           </span>
-                          {item.product?.type === "combo" &&
-                            item.product.parts?.length > 0 && (
-                              <div className="ml-4 text-xs text-muted-foreground">
-                                {item.product.parts.map((part, idx) => (
-                                  <div key={idx}>
-                                    {part.product?.name || "Noma'lum qism"} (
-                                    {part.quantity} dona)
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+                          {item.parts?.length > 0 && (
+                            <div className="ml-4 text-xs text-muted-foreground">
+                              {item.parts.map((part, idx) => (
+                                <div key={idx}>
+                                  {products.find((p) => p._id === part.product)
+                                    ?.name || "Noma'lum qism"} (
+                                  {part.quantity}-dona)
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <span className="text-muted-foreground ml-2">
                           {new Date(item.rentDate).toLocaleDateString()}
@@ -863,9 +863,9 @@ export default function RentalsPage() {
                         {item.product?.type === "combo" && item.product?.parts && (
                           <div className="mt-2 pl-4 border-l-2 border-gray-200">
                             <div className="text-sm font-medium text-gray-700 mb-1">Таркиби:</div>
-                            {item.product.parts.map((component, idx) => (
+                            {item.parts.map((component, idx) => (
                               <div key={idx} className="text-sm text-gray-600">
-                                • {component.product?.name} - {component.quantity} дона
+                                • {products.find((p) => p._id === component.product)?.name || "Noma'lum qism"} - {component.quantity} дона
                               </div>
                             ))}
                           </div>
