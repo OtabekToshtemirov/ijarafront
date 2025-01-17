@@ -311,6 +311,7 @@ export default function Component() {
                         <TableRow>
                             <TableHead>Исм</TableHead>
                             <TableHead>Телефон</TableHead>
+                            {editingCustomer && <TableHead>Изоҳ</TableHead>}
                             <TableHead>Статус</TableHead>
                             <TableHead>Молиявий холат</TableHead>
                             <TableHead>Манзил</TableHead>
@@ -336,6 +337,12 @@ export default function Component() {
                                             />
                                         </TableCell>
                                         <TableCell>
+                                        <Input
+                                                value={editingCustomer.description}
+                                                onChange={(e) => setEditingCustomer({ ...editingCustomer, description: e.target.value })}
+                                            />
+                                        </TableCell>
+                                        <TableCell>
                                             <Select
                                                 value={editingCustomer.status}
                                                 onValueChange={(value) => setEditingCustomer({ ...editingCustomer, status: value })}
@@ -351,11 +358,17 @@ export default function Component() {
                                             </Select>
                                         </TableCell>
                                         <TableCell>
-                                            <Input
-                                                type="number"
-                                                value={editingCustomer.balance}
-                                                onChange={(e) => setEditingCustomer({ ...editingCustomer, balance: parseFloat(e.target.value) })}
-                                            />
+                                           <div>
+                                            {editingCustomer.balance >= 0 ? (
+                                                <Badge variant="success">
+                                                    Баланс: {editingCustomer.balance?.toLocaleString()} сўм
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="destructive">
+                                                    Баланс: {editingCustomer.balance?.toLocaleString()} сўм
+                                                </Badge>     )
+                                            } 
+                                           </div>
                                         </TableCell>
                                         <TableCell>
                                             <Input

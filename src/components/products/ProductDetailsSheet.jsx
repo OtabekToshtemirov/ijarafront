@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
@@ -8,11 +7,12 @@ import { Loader2 } from "lucide-react";
 import {
     Sheet,
     SheetContent,
+    SheetDescription,
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Table,
     TableBody,
@@ -23,11 +23,7 @@ import {
 } from "@/components/ui/table";
 import { fetchRentalsByProductId } from "@/lib/features/rentals/rentalsSlice";
 
-const ProductDetailsSheet = ({ product, isOpen, onOpenChange }) => {
-    if (!product) return null;
-
-    console.log('Full Product Data:', product); // Debug uchun
-
+export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
     const dispatch = useDispatch();
     const rentals = useSelector((state) => state.rentals.rentals);
     const status = useSelector((state) => state.rentals.status);
@@ -73,212 +69,187 @@ const ProductDetailsSheet = ({ product, isOpen, onOpenChange }) => {
         return borrowed - returned;
     };
 
-    // Combo Parts Section
-    const renderComboParts = () => {
-        // Agar mahsulot combo type bo'lmasa yoki qismlari bo'lmasa, hech narsa ko'rsatmaymiz
-        if (product.type !== 'combo' || !Array.isArray(product.parts) || product.parts.length === 0) {
-            return null;
-        }
-
-        return (
-            <div className="border rounded-lg p-4 mt-4">
-                <h3 className="text-lg font-semibold mb-4">Qismlar</h3>
-                <div className="space-y-4">
-                    {product.parts.map((part, index) => {
-                        // Qism mahsulot ma'lumotlarini olish
-                        const partProduct = part.product;
-                        
-                        if (!partProduct) {
-                            return null;
-                        }
-
-                        return (
-                            <div key={index} className="bg-gray-50 rounded-lg p-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div>
-                                        <p className="text-sm text-gray-500">Nomi</p>
-                                        <p className="font-medium">{partProduct.name || 'Noma\'lum'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-sm text-gray-500">Soni</p>
-                                        <p className="font-medium">{part.quantity || 0} dona</p>
-                                    </div>
-                                    {partProduct.dailyRate && (
-                                        <>
-                                            <div>
-                                                <p className="text-sm text-gray-500">Kunlik narx</p>
-                                                <p className="font-medium">{partProduct.dailyRate?.toLocaleString() || '0'} so'm</p>
-                                            </div>
-                                            <div>
-                                                <p className="text-sm text-gray-500">Umumiy narx</p>
-                                                <p className="font-medium">
-                                                    {((partProduct.dailyRate || 0) * (part.quantity || 0)).toLocaleString()} so'm
-                                                </p>
-                                            </div>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-        );
-    };
-
     return (
         <Sheet open={isOpen} onOpenChange={onOpenChange}>
-            <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
-                <SheetHeader>
-                    <SheetTitle className="text-xl font-bold">{product?.name}</SheetTitle>
+            <SheetContent className="w-[90%] sm:max-w-2xl overflow-y-auto">
+                <SheetHeader className="mb-6">
+                    <SheetTitle>{product?.name}</SheetTitle>
+                    <SheetDescription>
+                    Мулк маълумотлари ва ижаралар тарихи
+                    </SheetDescription>
                 </SheetHeader>
-                <ScrollArea className="h-[calc(100vh-120px)] pr-4">
-                    <div className="space-y-6 mt-6">
-                        {/* Asosiy ma'lumotlar */}
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-lg">Asosiy ma'lumotlar</h3>
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm text-gray-500">Mahsulot kodi</p>
-                                    <p className="font-medium">{product?.code || 'Mavjud emas'}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Turi</p>
-                                    <Badge variant={product?.type === 'combo' ? 'secondary' : 'default'}>
-                                        {product?.type === 'combo' ? 'Combo' : 'Oddiy'}
-                                    </Badge>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Kunlik narx</p>
-                                    <p className="font-medium">{product?.dailyRate?.toLocaleString() || '0'} so'm</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Mavjud soni</p>
-                                    <p className="font-medium">{product?.quantity || 0} dona</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Ijarada</p>
-                                    <p className="font-medium">{product?.rented || 0} dona</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-gray-500">Status</p>
-                                    <Badge variant={product?.isAvailable ? 'success' : 'destructive'}>
-                                        {product?.isAvailable ? 'Mavjud' : 'Mavjud emas'}
-                                    </Badge>
-                                </div>
+
+                {/* Product Details */}
+                <Card className="mb-6">
+                    <CardHeader>
+                        <CardTitle>Мулк маълумотлари</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <p className="text-sm font-medium">Категория:</p>
+                                <p>{product?.category || '-'}</p>
                             </div>
+                            <div>
+                                <p className="text-sm font-medium">Кунлик нарх:</p>
+                                <p>{product?.dailyRate?.toLocaleString()} сўм</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium">Умумий сони:</p>
+                                <p>{product?.quantity} дона</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium">Марта ижарага берилган:</p>
+                                <p>{product?.rentalCount}</p>
+                            </div>
+                            <div>
+                                <p className="text-sm font-medium">Ҳолати:</p>
+                                <Badge variant={product?.isAvailable ? "default" : "secondary"}>
+                                    {product?.isAvailable ? 'Мавжуд' : 'Мавжуд эмас'}
+                                </Badge>
+                            </div>
+                            {product?.description && (
+                                <div className="col-span-2">
+                                    <p className="text-sm font-medium">Изоҳ:</p>
+                                    <p>{product.description}</p>
+                                </div>
+                            )}
                         </div>
+                    </CardContent>
+                </Card>
 
-                        {/* Combo qismlari */}
-                        {renderComboParts()}
+                {/* Combo Parts */}
+                {product?.type === 'combo' && product.parts?.length > 0 && (
+                    <Card className="mb-6">
+                        <CardHeader>
+                            <CardTitle>Қисмлар</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Номи</TableHead>
+                                        <TableHead>Сони</TableHead>
+                                        <TableHead>Нархи</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {product.parts.map((part) => (
+                                        <TableRow key={part._id}>
+                                            <TableCell>{part.product?.name || 'Номаълум'}</TableCell>
+                                            <TableCell>{part.quantity} дона</TableCell>
+                                            <TableCell>{part.dailyRate?.toLocaleString()} сўм</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                )}
 
-                        {/* Tavsif */}
-                        {product?.description && (
-                            <div className="space-y-2">
-                                <h3 className="font-semibold text-lg">Tavsif</h3>
-                                <p className="text-gray-600 whitespace-pre-wrap">{product.description}</p>
+                {/* Active Rentals */}
+                <Card className="mb-6">
+                    <CardHeader>
+                        <CardTitle>Фаол ижаралар</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {status === 'loading' ? (
+                            <div className="flex justify-center py-4">
+                                <Loader2 className="h-6 w-6 animate-spin" />
                             </div>
-                        )}
-
-                        {/* Faol ijaralar */}
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-lg">Faol ijaralar</h3>
-                            {status === 'loading' ? (
-                                <div className="flex justify-center py-4">
-                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                </div>
-                            ) : getActiveRentals().length === 0 ? (
-                                <p className="text-center text-muted-foreground py-4">
-                                    Faol ijaralar mavjud emas
-                                </p>
-                            ) : (
-                                <div className="space-y-4">
-                                    {getActiveRentals().map((rental) => (
-                                        <div 
-                                            key={rental._id} 
-                                            className="border rounded-lg p-4"
-                                        >
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div>
-                                                    <p className="font-medium">{rental.rentalNumber}</p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        {rental.customer?.name}
-                                                    </p>
-                                                </div>
-                                                <div className="text-right">
-                                                    <p className="font-medium">
-                                                        {getBorrowedQuantity(rental)} dona
-                                                    </p>
-                                                    <p className="text-sm text-muted-foreground">
-                                                        Qoldi: {getRemainingQuantity(rental)} dona
-                                                    </p>
-                                                </div>
+                        ) : getActiveRentals().length === 0 ? (
+                            <p className="text-center text-muted-foreground py-4">
+                                Фаол ижаралар мавжуд эмас
+                            </p>
+                        ) : (
+                            <div className="space-y-4">
+                                {getActiveRentals().map((rental) => (
+                                    <div 
+                                        key={rental._id} 
+                                        className="border rounded-lg p-4"
+                                    >
+                                        <div className="flex justify-between items-start mb-2">
+                                            <div>
+                                                <p className="font-medium">{rental.rentalNumber}</p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {rental.customer?.name}
+                                                </p>
                                             </div>
-                                            <div className="text-sm text-muted-foreground">
-                                                Sana: {formatDate(rental.startDate)}
+                                            <div className="text-right">
+                                                <p className="font-medium">
+                                                    {getBorrowedQuantity(rental)} дона
+                                                </p>
+                                                <p className="text-sm text-muted-foreground">
+                                                    Қолди: {getRemainingQuantity(rental)} дона
+                                                </p>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                        <div className="text-sm text-muted-foreground">
+                                            Сана: {formatDate(rental.startDate)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
-                        {/* Ijara tarixi */}
-                        <div className="space-y-2">
-                            <h3 className="font-semibold text-lg">Ijara tarixi</h3>
-                            {status === 'loading' ? (
-                                <div className="flex justify-center py-4">
-                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                </div>
-                            ) : rentals.length === 0 ? (
-                                <p className="text-center text-muted-foreground py-4">
-                                    Ijara tarixi mavjud emas
-                                </p>
-                            ) : (
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Sana</TableHead>
-                                            <TableHead>Mijoz</TableHead>
-                                            <TableHead>Ijara raqami</TableHead>
-                                            <TableHead>Soni</TableHead>
-                                            <TableHead>Holati</TableHead>
+                {/* Rental History */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Ижаралар тарихи</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {status === 'loading' ? (
+                            <div className="flex justify-center py-4">
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            </div>
+                        ) : rentals.length === 0 ? (
+                            <p className="text-center text-muted-foreground py-4">
+                                Ижаралар тарихи мавжуд эмас
+                            </p>
+                        ) : (
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Сана</TableHead>
+                                        <TableHead>Мижоз</TableHead>
+                                        <TableHead>Ижара рақами</TableHead>
+                                        <TableHead>Сони</TableHead>
+                                        <TableHead>Ҳолати</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {rentals.map((rental) => (
+                                        <TableRow key={rental._id}>
+                                            <TableCell>
+                                            {formatDate(rental.startDate)}
+                                            </TableCell>
+                                            <TableCell>{rental.customer?.name}</TableCell>
+                                            <TableCell>{rental.rentalNumber}</TableCell>
+                                            <TableCell>
+                                                <div className="space-y-1">
+                                                    <p>{getBorrowedQuantity(rental)} дона</p>
+                                                    {rental.status === 'active' && (
+                                                        <p className="text-sm text-muted-foreground">
+                                                            Қолди: {getRemainingQuantity(rental)} дона
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge variant={rental.status === 'active' ? "default" : "secondary"}>
+                                                    {rental.status === 'active' ? 'Фаол' : 'Якунланган'}
+                                                </Badge>
+                                            </TableCell>
                                         </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {rentals.map((rental) => (
-                                            <TableRow key={rental._id}>
-                                                <TableCell>
-                                                    {formatDate(rental.startDate)}
-                                                </TableCell>
-                                                <TableCell>{rental.customer?.name}</TableCell>
-                                                <TableCell>{rental.rentalNumber}</TableCell>
-                                                <TableCell>
-                                                    <div className="space-y-1">
-                                                        <p>{getBorrowedQuantity(rental)} dona</p>
-                                                        {rental.status === 'active' && (
-                                                            <p className="text-sm text-muted-foreground">
-                                                                Qoldi: {getRemainingQuantity(rental)} dona
-                                                            </p>
-                                                        )}
-                                                    </div>
-                                                </TableCell>
-                                                <TableCell>
-                                                    <Badge variant={rental.status === 'active' ? "default" : "secondary"}>
-                                                        {rental.status === 'active' ? 'Faol' : 'Yakunlangan'}
-                                                    </Badge>
-                                                </TableCell>
-                                            </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
-                            )}
-                        </div>
-                    </div>
-                </ScrollArea>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
             </SheetContent>
         </Sheet>
     );
-};
-
-export default ProductDetailsSheet;
+}

@@ -601,7 +601,6 @@ export default function RentalsPage() {
               <TableHead>Рақами</TableHead>
               <TableHead>Мижоз</TableHead>
               <TableHead>Транспорт</TableHead>
-              <TableHead>Кунлик нархи</TableHead>
               <TableHead>Кун</TableHead>
               <TableHead>Олинган мулклар</TableHead>
               <TableHead>Амаллар</TableHead>
@@ -634,11 +633,7 @@ export default function RentalsPage() {
                     </span>
                   </div>
                 </TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span>{rental.totalCost?.toLocaleString()} сўм</span>
-                  </div>
-                </TableCell>
+              
                 <TableCell>
                   <div className="flex flex-col">
                     <span>{rental.rentalDays} кун</span>
