@@ -149,7 +149,7 @@ export default function Component() {
                 ${product.days} кун × ${product.quantity} дона × ${product.dailyRate.toLocaleString()} сўм
                 </div>
                 <div class="dates" style="font-size: 12px; color: #000">
-                    Бошланиш: <b>${new Date(product.startDate).toLocaleDateString()}</b> <br>
+                    
                     Қайтариш: <b>${new Date(product.returnDate).toLocaleDateString()} </b>
                 </div>
                 </td>
