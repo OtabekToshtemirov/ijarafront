@@ -223,7 +223,7 @@ export default function ProductDetailsSheet({ product, isOpen, onOpenChange }) {
                                     {rentals.map((rental) => (
                                         <TableRow key={rental._id}>
                                             <TableCell>
-                                            {formatDate(rental.startDate)}
+                                            {formatDate(rental.createdAt)}
                                             </TableCell>
                                             <TableCell>{rental.customer?.name}</TableCell>
                                             <TableCell>{rental.rentalNumber}</TableCell>

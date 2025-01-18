@@ -148,7 +148,7 @@ export default function Component() {
                 <div style="font-size: 14px; color: #000">
                 ${product.days} кун × ${product.quantity} дона × ${product.dailyRate.toLocaleString()} сўм
                 </div>
-                <div class="dates">
+                <div class="dates" style="font-size: 12px; color: #000">
                     Бошланиш: <b>${new Date(product.startDate).toLocaleDateString()}</b> <br>
                     Қайтариш: <b>${new Date(product.returnDate).toLocaleDateString()} </b>
                 </div>
@@ -164,7 +164,7 @@ export default function Component() {
             <div style="margin-top: 15px; font-size: 14px">
             <div style="font-weight: bold; margin-bottom: 5px; font-size: 20px">
             ИЖАРА ҲАҚИ: 
-            <span style="font-size: 20px; color: red">
+            <span style="font-size: 20px; color: black">
                 ${returnedProducts.reduce((total, product) => total + product.totalCost, 0).toLocaleString()} сўм
             </span>
             </div>
@@ -257,6 +257,7 @@ export default function Component() {
         try {
             // Kunlarni hisoblaymiz
             const startDate = new Date(rental.workStartDate);
+            console.log(startDate);
             const { days, totalDays } = calculateDays(startDate.toISOString().split('T')[0], returnDate.toISOString().split('T')[0], discountDay);
 
             // Kunlik narx va jami summani hisoblaymiz

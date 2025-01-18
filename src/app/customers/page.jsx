@@ -323,7 +323,6 @@ export default function Component() {
                             <TableRow key={customer._id}>
                                 {editingCustomer && editingCustomer._id === customer._id ? (
                                     <>
-
                                         <TableCell>
                                             <Input
                                                 value={editingCustomer.name}
@@ -337,7 +336,7 @@ export default function Component() {
                                             />
                                         </TableCell>
                                         <TableCell>
-                                        <Input
+                                            <Input
                                                 value={editingCustomer.description}
                                                 onChange={(e) => setEditingCustomer({ ...editingCustomer, description: e.target.value })}
                                             />
@@ -364,10 +363,10 @@ export default function Component() {
                                                     Баланс: {editingCustomer.balance?.toLocaleString()} сўм
                                                 </Badge>
                                             ) : (
-                                                <Badge variant="destructive">
+                                                <Badge variant="danger">
                                                     Баланс: {editingCustomer.balance?.toLocaleString()} сўм
-                                                </Badge>     )
-                                            } 
+                                                </Badge>
+                                            )}
                                            </div>
                                         </TableCell>
                                         <TableCell>
@@ -385,10 +384,8 @@ export default function Component() {
                                             </Button>
                                         </TableCell>
                                     </>
-
                                 ) : (
                                     <>
-
                                         <TableCell>
                                             <Link
                                                 href={`/customers/${customer._id}`}
@@ -399,24 +396,26 @@ export default function Component() {
                                         </TableCell>
                                         <TableCell>{customer.phone}</TableCell>
                                         <TableCell>
-                                            <Badge variant={getStatusColor(customer.status)}>
+                                            <Badge variant={
+                                                customer.status === 'VIP'
+                                                    ? 'success'
+                                                    : customer.status === 'bad'
+                                                    ? 'danger'
+                                                    : 'outline'
+                                            }>
                                                 {customer.status === 'oddiy' ? 'Oddiy' :
                                                     customer.status === 'VIP' ? 'VIP' : 'Yomon'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
                                             <div className="space-y-1">
-                                                <Badge variant={customer.balance >= 0 ? "success" : "destructive"}>
+                                                <Badge variant={customer.balance >= 0 ? "success" : "danger"}>
                                                 Баланс: {customer.balance?.toLocaleString()} сўм
                                                 </Badge>
-                                                <div className="text-xs text-muted-foreground">
-
-                                                </div>
                                             </div>
                                         </TableCell>
                                         <TableCell>{customer.address}</TableCell>
                                         <TableCell className="text-right space-x-2">
-
                                             <Button onClick={() => handleEditCustomer(customer)} size="sm">
                                                 <Edit className="w-4 h-4" />
                                             </Button>
@@ -425,7 +424,6 @@ export default function Component() {
                                             </Button>
                                         </TableCell>
                                     </>
-
                                 )}
                             </TableRow>
                         ))}

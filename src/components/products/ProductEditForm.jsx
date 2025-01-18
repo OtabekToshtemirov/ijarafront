@@ -1,34 +1,32 @@
-'use client'
-
-import { useState, useEffect } from 'react'
-import { useDispatch, useSelector } from 'react-redux'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { 
-    Dialog, 
-    DialogContent, 
-    DialogHeader, 
-    DialogTitle, 
+import { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
     DialogDescription,
-    DialogTrigger, 
+    DialogTrigger,
     DialogFooter
-} from '@/components/ui/dialog'
-import { Plus, X, Loader2, Pencil } from 'lucide-react'
-import { toast } from '@/hooks/use-toast'
-import { updateProduct, selectPartProducts } from '@/lib/features/products/productSlice'
+} from '@/components/ui/dialog';
+import { Plus, X, Loader2, Pencil } from 'lucide-react';
+import { toast } from '@/hooks/use-toast';
+import { updateProduct, selectPartProducts, updateProductAvailability } from '@/lib/features/products/productSlice';
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui/select";
 
 export default function ProductEditForm({ product }) {
-    const dispatch = useDispatch()
-    const partProducts = useSelector(selectPartProducts)
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const dispatch = useDispatch();
+    const partProducts = useSelector(selectPartProducts);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editProduct, setEditProduct] = useState({
         ...product,
         parts: product.parts?.map(part => ({
@@ -36,50 +34,75 @@ export default function ProductEditForm({ product }) {
             quantity: part.quantity,
             dailyRate: 0
         })) || [],
-        dailyRate: product.dailyRate || 0
-    })
-    const [isSubmitting, setIsSubmitting] = useState(false)
-    const [totalComboPrice, setTotalComboPrice] = useState(0)
+        dailyRate: product.dailyRate || 0,
+        isAvailable: product.isAvailable || false,
+    });
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [totalComboPrice, setTotalComboPrice] = useState(0);
 
     useEffect(() => {
         if (editProduct.type === 'combo') {
             const total = editProduct.parts.reduce((sum, part) => {
                 const selectedProduct = partProducts.find(p => p._id === part.productId);
-                const partDailyRate = selectedProduct?.dailyRate || 0;
-                return sum + (partDailyRate * (part.quantity || 0));
+                const partDailyRate = Number(selectedProduct?.dailyRate) || 0;
+                const quantity = Number(part.quantity) || 0;
+                console.log('Part calculation:', {
+                    productId: part.productId,
+                    partDailyRate,
+                    quantity,
+                    subtotal: partDailyRate * quantity
+                });
+                return sum + (partDailyRate * quantity);
             }, 0);
             
             setTotalComboPrice(total);
+            setEditProduct(prev => ({
+                ...prev,
+                dailyRate: total
+            }));
         }
     }, [editProduct.parts, partProducts]);
 
     const validateProduct = () => {
-        const errors = []
+        const errors = [];
         const requiredFields = {
             name: 'Мулк номи',
-            category: 'Мулк категорияси'
-        }
+            category: 'Мулк категорияси',
+            type: 'Мулк тури'
+        };
 
         Object.entries(requiredFields).forEach(([field, label]) => {
             if (!editProduct[field]?.trim()) {
-                errors.push(`${label} киритилиши керак`)
+                errors.push(`${label} киритилиши керак`);
             }
-        })
+        });
 
         if (editProduct.quantity < 1) {
-            errors.push('Мулк сони 1 дан катта бўлиши керак')
+            errors.push('Мулк сони 1 дан катта бўлиши керак');
         }
 
-        if (editProduct.type === 'combo' && !editProduct.parts?.length) {
-            errors.push('Комбинация мулк учун камида битта қисм киритилиши керак')
+        if (editProduct.type === 'combo') {
+            if (!editProduct.parts?.length) {
+                errors.push('Комбинация мулк учун камида битта қисм киритилиши керак');
+            } else {
+                // Combo qismlarini tekshirish
+                editProduct.parts.forEach((part, index) => {
+                    if (!part.productId) {
+                        errors.push(`${index + 1}-қисм учун маҳсулот танланмаган`);
+                    }
+                    if (!part.quantity || part.quantity < 1) {
+                        errors.push(`${index + 1}-қисм учун миқдор нотўғри`);
+                    }
+                });
+            }
         }
 
-        return errors
-    }
+        return errors;
+    };
 
     const handleSubmit = async (e) => {
-        e.preventDefault()
-        const validationErrors = validateProduct()
+        e.preventDefault();
+        const validationErrors = validateProduct();
         
         if (validationErrors.length > 0) {
             validationErrors.forEach(error => {
@@ -87,107 +110,111 @@ export default function ProductEditForm({ product }) {
                     title: 'Хатолик',
                     description: error,
                     variant: 'destructive',
-                })
-            })
-            return
+                });
+            });
+            return;
         }
 
-        setIsSubmitting(true)
+        setIsSubmitting(true);
         try {
-            console.log('editProduct before formData:', editProduct);
             
-            const dailyRate = Number(editProduct.dailyRate)
-            console.log('dailyRate after Number():', dailyRate);
-            
-            if (isNaN(dailyRate)) {
-                toast({
-                    title: 'Хатолик',
-                    description: 'Нархни тўғри киритинг',
-                    variant: 'destructive',
-                })
-                setIsSubmitting(false)
-                return
-            }
 
             const formData = {
                 ...editProduct,
                 _id: product._id,
-                dailyRate: dailyRate,
+                dailyRate: Number(editProduct.dailyRate) || 0,
                 quantity: Number(editProduct.quantity) || 1,
                 parts: editProduct.type === 'combo' 
-                    ? editProduct.parts.map(part => ({
-                        product: part.productId,
-                        quantity: Number(part.quantity) || 1
-                    }))
+                    ? editProduct.parts.map(part => {
+                        const selectedProduct = partProducts.find(p => p._id === part.productId);
+                        return {
+                            product: part.productId,
+                            quantity: Number(part.quantity) || 1,
+                            dailyRate: Number(selectedProduct?.dailyRate) || 0
+                        };
+                    })
                     : []
+            };
+            console.log('Form data:', formData);
+            
+            const result = await dispatch(updateProduct(formData)).unwrap();
+            if (result) {
+                toast({
+                    title: 'Муваффақият',
+                    description: 'Мулк муваффақиятли янгиланди',
+                });
+                setIsDialogOpen(false);
             }
-            
-            console.log('Sending formData:', formData);
-            
-            await dispatch(updateProduct(formData)).unwrap()
-            
-            toast({
-                title: 'Муваффақият',
-                description: 'Мулк муваффақиятли янгиланди',
-            })
-            
-            setIsDialogOpen(false)
         } catch (error) {
-            console.error('Мулк янгилашда хатолик:', error)
             toast({
                 title: 'Хатолик',
                 description: error.message || 'Мулк янгилашда хатолик юз берди',
                 variant: 'destructive',
-            })
+            });
         } finally {
-            setIsSubmitting(false)
+            setIsSubmitting(false);
         }
-    }
+    };
 
     const handleInputChange = (field, value) => {
-        console.log('handleInputChange field:', field);
-        console.log('handleInputChange value before:', value, typeof value);
-        
         if (field === 'dailyRate' || field === 'quantity') {
-            value = value === '' ? 0 : Number(value)
-            console.log('handleInputChange value after:', value, typeof value);
+            value = value === '' ? 0 : parseFloat(value);
         }
-        
         setEditProduct(prev => ({
             ...prev,
             [field]: value
-        }))
-    }
+        }));
+    };
+
+    const handleAvailabilityChange = async () => {
+        try {
+            await dispatch(updateProductAvailability({ productId: product._id, isAvailable: !editProduct.isAvailable })).unwrap();
+            setEditProduct(prev => ({
+                ...prev,
+                isAvailable: !prev.isAvailable
+            }));
+            toast({
+                title: 'Муваффақият',
+                description: 'Мулк мавжудлиги муваффақиятли янгиланди',
+            });
+        } catch (error) {
+            toast({
+                title: 'Хатолик',
+                description: error.message || 'Мулк мавжудлигини янгилашда хатолик юз берди',
+                variant: 'destructive',
+            });
+        }
+    };
 
     const handleAddPart = () => {
         setEditProduct(prev => ({
             ...prev,
             parts: [...prev.parts, { productId: '', quantity: 1, dailyRate: 0 }]
-        }))
-    }
+        }));
+    };
 
     const handlePartChange = (index, field, value) => {
-        const updatedParts = [...editProduct.parts]
-        const part = updatedParts[index]
+        const updatedParts = [...editProduct.parts];
+        const part = updatedParts[index];
 
         if (field === 'productId') {
-            part.productId = value
+            part.productId = value;
         } else {
-            part[field] = field === 'quantity' ? Number(value) : value
+            part[field] = field === 'quantity' ? Number(value) : value;
         }
 
         setEditProduct(prev => ({
             ...prev,
             parts: updatedParts
-        }))
-    }
+        }));
+    };
 
     const handleRemovePart = (index) => {
         setEditProduct(prev => ({
             ...prev,
             parts: prev.parts.filter((_, i) => i !== index)
-        }))
-    }
+        }));
+    };
 
     return (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -376,6 +403,7 @@ export default function ProductEditForm({ product }) {
                             className="col-span-3"
                         />
                     </div>
+
                 </form>
 
                 <DialogFooter>
@@ -395,5 +423,5 @@ export default function ProductEditForm({ product }) {
                 </DialogFooter>
             </DialogContent>
         </Dialog>
-    )
+    );
 }

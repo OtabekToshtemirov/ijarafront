@@ -145,32 +145,15 @@ export default function CarDetailsSheet({ isOpen, onClose, car }) {
                         <div>
                             <h3 className="text-lg font-semibold mb-2">Қўшимча маълумотлар</h3>
                             <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Яратилган сана</p>
-                                    {isLoading ? (
-                                        <Skeleton className="h-6 w-40" />
-                                    ) : (
-                                        <p className="font-medium">{formatDate(displayCar.createdAt)}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Сўнги янгиланиш</p>
-                                    {isLoading ? (
-                                        <Skeleton className="h-6 w-40" />
-                                    ) : (
-                                        <p className="font-medium">{formatDate(displayCar.updatedAt)}</p>
-                                    )}
-                                </div>
-                                {displayCar.description && (
+                                {displayCar.description ? ( 
                                     <div className="col-span-2">
-                                        <p className="text-sm text-muted-foreground">Изоҳ</p>
                                         {isLoading ? (
-                                            <Skeleton className="h-20 w-full" />
+                                            <Skeleton className="h-6 w-full" />
                                         ) : (
                                             <p className="font-medium">{displayCar.description}</p>
                                         )}
                                     </div>
-                                )}
+                                ) : (<p>Ҳозирча маълумотлар йўқ</p>)}
                             </div>
                         </div>
 

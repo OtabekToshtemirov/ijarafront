@@ -23,18 +23,9 @@ import {
 import { Input } from "@/components/ui/input";
 import {
   fetchRentals,
-  fetchActiveRentals,
-  fetchCompleteRentals,
-  fetchCanceledRentals,
-  fetchRentalsByCustomerId,
-  fetchRentalsByProductId,
-  fetchRentalsByCarId,
   updateRental,
   returnProduct,
   selectRentals,
-  selectRentalsStatus,
-  selectTodayStats,
-  fetchTodayStatistics,
 } from "@/lib/features/rentals/rentalsSlice";
 import { fetchProducts } from "@/lib/features/products/productSlice";
 import { toast } from "sonner";
@@ -48,20 +39,16 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { useReactToPrint } from "react-to-print";
-import axios from "axios";
 import { fetchDailyRevenue } from '@/lib/features/statistics/statisticsSlice';
 
 export default function RentalsPage() {
   const dispatch = useDispatch();
   const rentals = useSelector(selectRentals);
   const products = useSelector((state) => state.products.products);
-  const { dailyRevenue } = useSelector((state) => state.statistics);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRental, setSelectedRental] = useState(null);
-  const [isReturnDialogOpen, setIsReturnDialogOpen] = useState(false);
-  const [returnedProducts, setReturnedProducts] = useState([]);
   const [editingId, setEditingId] = useState(null);
   const [editingProduct, setEditingProduct] = useState(null);
   const [editFormData, setEditFormData] = useState({});
@@ -91,26 +78,21 @@ export default function RentalsPage() {
     fetchData();
   }, [dispatch]);
 
-  // Kunlik statistikani hisoblash
+  // Kunlik tushumni hisoblash
   const getTodayStats = () => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    const todayRentals = rentals.filter(rental => {
-      const rentalDate = new Date(rental.createdAt);
-      return rentalDate >= today && rentalDate < tomorrow && rental.status !== 'cancelled';
-    });
-
     return {
-      totalRentals: todayRentals.length,
-      totalAmount: dailyRevenue?.stats?.totalAmount || 0
+      totalRentals: rentals.filter(rental => {
+        const rentalDate = new Date(rental.createdAt);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        return rentalDate >= today && rentalDate < tomorrow && rental.status !== 'cancelled';
+      }).length,
     };
   };
 
-  const todayStats = getTodayStats();
+  const todayStats = getTodayStats()
 
   const filteredRentals = useMemo(() => {
     return rentals.filter((rental) => {
@@ -594,7 +576,7 @@ export default function RentalsPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white rounded-lg p-4 border">
-              <h3 className="text-sm font-medium text-gray-500 mb-1">Bugungi ijaralar</h3>
+              <h3 className="text-sm font-medium text-gray-500 mb-1">Бугунги ижаралар</h3>
               <p className="text-2xl font-bold text-blue-600">{todayStats.totalRentals}</p>
             </div>
           </div>

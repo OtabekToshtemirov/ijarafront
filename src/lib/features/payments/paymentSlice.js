@@ -43,6 +43,24 @@ export const createPayment = createAsyncThunk(
     }
 );
 
+export const updatePayment = createAsyncThunk(
+    'payments/updatePayment',
+    async ({ id, data }) => {
+        try {
+            const response = await axios.put(`${BASE_URL}/payments/${id}`, data);
+            return response.data;
+        } catch (error) {
+            if (!error.response) {
+                throw new Error('Server bilan bog\'lanishda xatolik');
+            }
+            throw new Error(
+                error.response?.data?.message || 
+                error.message || 
+                'To\'lovni yangilashda xatolik'
+            )
+    }}
+);
+
 export const deletePayment = createAsyncThunk(
     'payments/deletePayment',
     async (id) => {

@@ -819,7 +819,7 @@ export default function AddRentalPage() {
                                                         {filteredProducts.length > 0 ? (
                                                             filteredProducts.map((product) => (
                                                                 <SelectItem key={product._id} value={product._id}>
-                                                                    {product.name} - {product.quantity} dona
+                                                                    {product.name} - {product.quantity-product.rented} dona
                                                                 </SelectItem>
                                                             ))
                                                         ) : (
