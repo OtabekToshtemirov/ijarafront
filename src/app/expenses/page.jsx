@@ -193,6 +193,7 @@ export default function ExpensesPage() {
             setIsAddDialogOpen(false);
             setEditingExpense(null);
             form.reset();
+            dispatch(fetchExpenses(filters));
         } catch (error) {
             toast({
                 title: "Хатолик юз берди",
@@ -253,9 +254,9 @@ export default function ExpensesPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Барчаси</SelectItem>
-                                {EXPENSE_CATEGORIES.map((category) => (
+                                {EXPENSE_CATEGORIES.map((category, index) => (
                                     <SelectItem 
-                                        key={`filter-category-${category.value}`} 
+                                        key={index}
                                         value={category.value}
                                     >
                                         {category.label}
@@ -276,9 +277,9 @@ export default function ExpensesPage() {
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">Барчаси</SelectItem>
-                                {PAYMENT_METHODS.map((method) => (
+                                {PAYMENT_METHODS.map((method, index) => (
                                     <SelectItem 
-                                        key={`filter-payment-${method.value}`} 
+                                        key={index}
                                         value={method.value}
                                     >
                                         {method.label}
@@ -340,8 +341,8 @@ export default function ExpensesPage() {
                             </TableBody>
                         ) : (
                             <TableBody>
-                                {expenses.map((expense) => (
-                                    <TableRow key={expense._id}>
+                                {expenses.map((expense, index) => (
+                                    <TableRow key={index}>
                                         <TableCell>
                                             {formatDate(expense.date)}
                                         </TableCell>
@@ -368,6 +369,7 @@ export default function ExpensesPage() {
                                                 minute: '2-digit',
                                                 hour12: false
                                             }) : '-'}
+
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
@@ -494,9 +496,9 @@ export default function ExpensesPage() {
                                                         <SelectValue placeholder="Категорияни танланг" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {EXPENSE_CATEGORIES.map((category) => (
+                                                        {EXPENSE_CATEGORIES.map((category, index) => (
                                                             <SelectItem 
-                                                                key={`category-${category.value}`} 
+                                                                key={index}
                                                                 value={category.value}
                                                             >
                                                                 {category.label}
@@ -521,9 +523,9 @@ export default function ExpensesPage() {
                                                         <SelectValue placeholder="Тўлов турини танланг" />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        {PAYMENT_METHODS.map((method) => (
+                                                        {PAYMENT_METHODS.map((method, index) => (
                                                             <SelectItem 
-                                                                key={`payment-${method.value}`} 
+                                                                key={index}
                                                                 value={method.value}
                                                             >
                                                                 {method.label}
