@@ -281,14 +281,14 @@ export default function ProductAddForm() {
                                     </Button>
 
                                     <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label className="text-right">Маҳсулот</Label>
+                                        <Label className="text-right">Ашё</Label>
                                         <Select
                                             value={part.productId}
                                             onValueChange={(value) => handlePartChange(index, 'productId', value)}
                                         >
                                             <SelectTrigger className="col-span-3">
-                                                <SelectValue placeholder="Маҳсулотни танланг">
-                                                    {partProducts.find(p => p._id === part.productId)?.name || "Маҳсулотни танланг"}
+                                                <SelectValue placeholder="Ашёни танланг">
+                                                    {partProducts.find(p => p._id === part.productId)?.name || "Ашёни танланг"}
                                                 </SelectValue>
                                             </SelectTrigger>
                                             <SelectContent>

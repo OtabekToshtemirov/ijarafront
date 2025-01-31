@@ -193,7 +193,7 @@ export default function RentalsPage() {
         };
 
         await dispatch(returnProduct(returnData)).unwrap();
-        toast.success("Маҳсулотлар муваффакиятли қайтарилди");
+        toast.success("Ашёлар муваффакиятли қайтарилди");
       }
 
       await dispatch(
@@ -259,7 +259,7 @@ export default function RentalsPage() {
       await dispatch(
         updateRental({ id: rental._id, data: updateData })
       ).unwrap();
-      toast.success("Маҳсулот миқдори муваффакиятли ўзгартирилди");
+      toast.success("Ашё миқдори муваффакиятли ўзгартирилди");
 
       setEditingProduct(null);
       dispatch(fetchRentals());
@@ -860,7 +860,7 @@ export default function RentalsPage() {
 
                 <div className="bg-blue-200 p-4 rounded-lg shadow-sm">
                   <Label className="text-sm font-semibold text-gray-600">
-                    Олинган маҳсулотлар
+                    Олинган Ашёлар
                   </Label>
                   {selectedRental.borrowedProducts.map((item, index) => (
                     <div
@@ -870,7 +870,7 @@ export default function RentalsPage() {
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-gray-800 font-medium">
-                            {item.product?.name || "Номаълум маҳсулот"}
+                            {item.product?.name || "Номаълум Ашё"}
                           </span>
                           <span className="text-gray-600">
                             {item.quantity} дона
@@ -896,7 +896,7 @@ export default function RentalsPage() {
 
                 <div className="bg-red-200 p-4 rounded-lg shadow-sm">
                   <Label className="text-sm font-semibold text-gray-600">
-                    Қайтарилган маҳсулотлар
+                    Қайтарилган Ашёлар
                   </Label>
                   {selectedRental.returnedProducts.map((item, index) => (
                     <div
@@ -906,7 +906,7 @@ export default function RentalsPage() {
                       <div className="flex-1 space-y-1">
                         <div className="flex items-center justify-between">
                           <span className="text-gray-800 font-medium">
-                            {item.product?.name || "Номаълум маҳсулот"}
+                            {item.product?.name || "Номаълум Ашё"}
                           </span>
                           <span className="text-gray-600">
                             {item.quantity} дона

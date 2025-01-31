@@ -234,7 +234,7 @@ export default function CustomerDetailsPage() {
         })
       ).unwrap();
 
-      toast.success("Маҳсулот муваффақиятли қайтарилди");
+      toast.success("Ашё муваффақиятли қайтарилди");
       setReturnDialogOpen(false);
       setSelectedRental(null);
       setSelectedProduct(null);
@@ -400,7 +400,7 @@ export default function CustomerDetailsPage() {
                   </p>
                   <p className="text-gray-700 dark:text-gray-300">
                     <span className="font-medium">
-                      Қайтарилмаган маҳсулотлар:
+                      Қайтарилмаган Ашёлар:
                     </span>
                     <span className="text-purple-600 dark:text-purple-400">
                       {" "}
@@ -435,7 +435,7 @@ export default function CustomerDetailsPage() {
                         Ижара рақами
                       </TableHead>
                       <TableHead className="dark:text-gray-300">
-                        Маҳсулотлар
+                        Ашёлар
                       </TableHead>
                       <TableHead className="dark:text-gray-300">
                         Умумий нарх
@@ -479,13 +479,13 @@ export default function CustomerDetailsPage() {
         <Card className="border-t-4 border-t-red-500 shadow-lg dark:bg-gray-800">
           <CardHeader className="bg-gradient-to-r from-red-50 to-white dark:from-red-900/50 dark:to-gray-800">
             <CardTitle className="text-red-700 dark:text-red-300">
-              Қайтарилмаган маҳсулотлар
+              Қайтарилмаган Ашёлар
             </CardTitle>
           </CardHeader>
           <CardContent>
             {getUnreturnedProducts().length === 0 ? (
               <div className="text-center py-4 text-muted-foreground dark:text-gray-400">
-                Қайтарилмаган маҳсулотлар мавжуд эмас
+                Қайтарилмаган Ашёлар мавжуд эмас
               </div>
             ) : (
               <div className="rounded-md border dark:border-gray-700">
@@ -493,7 +493,7 @@ export default function CustomerDetailsPage() {
                   <TableHeader>
                     <TableRow className="dark:border-gray-700">
                       <TableHead className="dark:text-gray-300">
-                        Маҳсулот
+                        Ашё
                       </TableHead>
                       <TableHead className="dark:text-gray-300">
                         Ижара санаси
@@ -546,7 +546,7 @@ export default function CustomerDetailsPage() {
                     <TableRow className="dark:border-gray-700">
                       <TableHead className="dark:text-gray-300">Сана</TableHead>
                       <TableHead className="dark:text-gray-300">
-                        Маҳсулотлар
+                        Ашёлар
                       </TableHead>
                       <TableHead className="dark:text-gray-300">
                         Статус
@@ -711,7 +711,7 @@ export default function CustomerDetailsPage() {
                 <TableRow>
                   <TableHead>Сана</TableHead>
                   <TableHead>Ижара №</TableHead>
-                  <TableHead>Маҳсулот</TableHead>
+                  <TableHead>Ашё</TableHead>
                   <TableHead>Миқдор</TableHead>
                   <TableHead>Кунлар</TableHead>
                   <TableHead>Кунлик нарх</TableHead>
@@ -802,7 +802,7 @@ export default function CustomerDetailsPage() {
           <DialogContent className="bg-white dark:bg-gray-800">
             <DialogHeader className="bg-gradient-to-r from-blue-50 to-white dark:from-blue-900/50 dark:to-gray-800 border-b dark:border-gray-700 pb-4">
               <DialogTitle className="text-blue-700 dark:text-blue-300">
-                Маҳсулотни қайтариш
+                Ашёни қайтариш
               </DialogTitle>
             </DialogHeader>
             {selectedRental && selectedProduct && (
@@ -817,7 +817,7 @@ export default function CustomerDetailsPage() {
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                   <Label className="text-gray-600 dark:text-gray-300">
-                    Маҳсулот
+                    Ашё
                   </Label>
                   <p className="text-lg font-medium text-gray-900 dark:text-gray-100">
                     {selectedProduct.product?.name}

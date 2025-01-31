@@ -136,7 +136,7 @@ export default function Component() {
             </head>
             <body>
             <div style="text-align: center; margin-bottom: 15px">
-            <h3>Қайтарилган Маҳсулотлар</h3>
+            <h3>Қайтарилган Ашёлар</h3>
             </div>
 
             <table>
@@ -312,7 +312,7 @@ export default function Component() {
                     [key]: ''
                 }));
 
-                toast.success("Маҳсулот муваффақиятли қайтарилди");
+                toast.success("Ашё муваффақиятли қайтарилди");
             }
         } catch (error) {
             toast.error(error.message || "Хатолик юз берди");
@@ -498,7 +498,7 @@ export default function Component() {
                             {filteredCustomers.length === 0 && (
                                 <TableRow>
                                     <TableCell colSpan={5} className="text-center py-4">
-                                        Қайтарилмаган маҳсулотлари бор мижозлар топилмади
+                                        Қайтарилмаган Ашёлари бор мижозлар топилмади
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -511,7 +511,7 @@ export default function Component() {
                     <div className="flex items-center justify-between border-b pb-4">
                         <div className="space-y-1">
                             <h2 className="text-2xl font-semibold tracking-tight">
-                                Қайтарилган маҳсулотлар ҳисоботи
+                                Қайтарилган Ашёлар ҳисоботи
                             </h2>
                             <p className="text-sm text-muted-foreground">
                                 Барча ижара қайтаришлари бўйича умумий ҳисоб

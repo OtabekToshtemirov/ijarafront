@@ -176,12 +176,12 @@ export default function ProductsPage() {
             setEditingParts([])
             toast({
                 title: 'Муваффақият',
-                description: 'Маҳсулот муваффақиятли таҳрирланди',
+                description: 'Ашё муваффақиятли таҳрирланди',
             })
         } catch (error) {
             toast({
                 title: 'Хато',
-                description: 'Маҳсулотни таҳрирлашда хатолик юз берди',
+                description: 'Ашёни таҳрирлашда хатолик юз берди',
                 variant: 'destructive',
             })
         }
